@@ -1,5 +1,6 @@
 import type { PlayerAction, ScenarioDefinition, SimState } from "@ikaros/contracts";
 import { formatNumber } from "./format";
+import { tr } from "../i18n";
 
 /** Ranuras del hangar leídas del escenario del motor; cada elección va al motor con select-component. */
 export function HangarSlots({
@@ -24,7 +25,7 @@ export function HangarSlots({
           <fieldset key={slot.id} className="slot">
             <legend>
               {slot.label}
-              {slot.required ? " (obligatorio)" : ""}
+              {slot.required ? ` (${tr("obligatorio", "required")})` : ""}
             </legend>
             {options.map((c) => {
               const on = current === c.id;
@@ -49,14 +50,20 @@ export function HangarSlots({
                     {c.name}{" "}
                     {c.origin === "real" ? (
                       <span className="tag tag-real" title={c.source}>
-                        real
+                        {tr("real", "real")}
                       </span>
                     ) : (
-                      <span className="tag tag-theory">⚗ teórico</span>
+                      <span className="tag tag-theory">⚗ {tr("teórico", "theoretical")}</span>
                     )}
                     {c.figures_origin === "theoretical" && (
-                      <span className="tag tag-test" title="Masa, costo y potencia son supuestos del juego">
-                        cifras supuestas
+                      <span
+                        className="tag tag-test"
+                        title={tr(
+                          "Masa, costo y potencia son supuestos del juego",
+                          "Mass, cost and power are game assumptions",
+                        )}
+                      >
+                        {tr("cifras supuestas", "assumed figures")}
                       </span>
                     )}
                   </span>
@@ -76,7 +83,7 @@ export function HangarSlots({
                   checked={!current}
                   onChange={() => act({ type: "select-component", slot: slot.id, componentId: "none" })}
                 />
-                <span className="pn">Ninguno</span>
+                <span className="pn">{tr("Ninguno", "None")}</span>
               </label>
             )}
           </fieldset>

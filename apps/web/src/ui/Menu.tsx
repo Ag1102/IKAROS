@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { LEVELS, type MenuLevel } from "../menu/levels";
+import { LEVELS, menuLevels, type MenuLevel } from "../menu/levels";
+import { setLang, tr, useLang } from "../i18n";
 
 const MenuScene = lazy(() => import("../menu/MenuScene"));
 
@@ -17,7 +18,9 @@ export function Menu({
   onGlossary: () => void;
 }) {
   const [selected, setSelected] = useState<LevelN>(3);
-  const current = LEVELS.find((l) => l.n === selected)!;
+  const lang = useLang();
+  const levels = menuLevels();
+  const current = levels.find((l) => l.n === selected)!;
   const canPlay = (l: MenuLevel) => l.ready && webgl;
   const enter = (n: LevelN) => {
     const l = LEVELS.find((x) => x.n === n);
@@ -60,20 +63,36 @@ export function Menu({
 
       <header className="menu3d-brand">
         <h1>IKAROS</h1>
-        <p>Diseña, lanza y opera una misión espacial.</p>
+        <p>{tr("Diseña, lanza y opera una misión espacial.", "Design, launch and operate a space mission.")}</p>
       </header>
+
+      <div className="scale lang-switch" role="group" aria-label={tr("Idioma", "Language")}>
+        {(["es", "en"] as const).map((l) => (
+          <button
+            key={l}
+            className={l === lang ? "on" : ""}
+            aria-pressed={l === lang}
+            lang={l}
+            onClick={() => setLang(l)}
+          >
+            {l.toUpperCase()}
+          </button>
+        ))}
+      </div>
 
       {!webgl && (
         <p className="warn menu3d-warn" role="alert">
-          Este navegador no tiene WebGL activado, y los niveles necesitan gráficos 3D. Prueba con una versión reciente
-          de Chrome, Edge, Firefox o Safari, o activa la aceleración por hardware.
+          {tr(
+            "Este navegador no tiene WebGL activado, y los niveles necesitan gráficos 3D. Prueba con una versión reciente de Chrome, Edge, Firefox o Safari, o activa la aceleración por hardware.",
+            "This browser does not have WebGL enabled, and the levels need 3D graphics. Try a recent version of Chrome, Edge, Firefox or Safari, or turn on hardware acceleration.",
+          )}
         </p>
       )}
 
-      <nav className="missions" aria-label="Misiones">
-        <p className="missions-title">Selección de misión</p>
+      <nav className="missions" aria-label={tr("Misiones", "Missions")}>
+        <p className="missions-title">{tr("Selección de misión", "Mission select")}</p>
         <ol>
-          {LEVELS.map((l) => {
+          {levels.map((l) => {
             const active = l.n === selected;
             return (
               <li key={l.n} className={`mission${active ? " active" : ""}${l.ready ? "" : " locked"}`}>
@@ -85,13 +104,13 @@ export function Menu({
                 >
                   <span className="mission-num">{String(l.n).padStart(2, "0")}</span>
                   <span className="mission-name">{l.name}</span>
-                  <span className="mission-tag">{l.ready ? l.tag : "Bloqueada"}</span>
+                  <span className="mission-tag">{l.ready ? l.tag : tr("Bloqueada", "Locked")}</span>
                 </button>
                 {active && (
                   <div className="mission-detail">
                     <p>{l.text}</p>
                     <button className="mission-go" disabled={!canPlay(l)} onClick={() => enter(l.n)}>
-                      {l.ready ? "Entrar" : "Pendiente"}
+                      {l.ready ? tr("Entrar", "Enter") : tr("Pendiente", "Coming soon")}
                       {canPlay(l) && <kbd>⏎</kbd>}
                     </button>
                   </div>
@@ -106,27 +125,34 @@ export function Menu({
         <p className="hints" aria-hidden="true">
           <span>
             <kbd>↑</kbd>
-            <kbd>↓</kbd> Elegir
+            <kbd>↓</kbd> {tr("Elegir", "Select")}
           </span>
           <span>
-            <kbd>⏎</kbd> Entrar
+            <kbd>⏎</kbd> {tr("Entrar", "Enter")}
           </span>
-          <span>Clic en la escena para elegir · Doble clic para entrar</span>
+          <span>
+            {tr(
+              "Clic en la escena para elegir · Doble clic para entrar",
+              "Click the scene to select · Double-click to enter",
+            )}
+          </span>
         </p>
         <p className="note">
-          Proyecto educativo del NASA Space Apps Challenge 2026. No está respaldado por NASA. Las tecnologías marcadas
-          con ⚗ son teóricas.{" "}
+          {tr(
+            "Proyecto educativo del NASA Space Apps Challenge 2026. No está respaldado por NASA. Las tecnologías marcadas con ⚗ son teóricas.",
+            "Educational project for the NASA Space Apps Challenge 2026. Not endorsed by NASA. Technologies marked ⚗ are theoretical.",
+          )}{" "}
           <button className="link" onClick={onCredits}>
-            Créditos y recursos
+            {tr("Créditos y recursos", "Credits and resources")}
           </button>{" "}
           ·{" "}
           <button className="link" onClick={onGlossary}>
-            Glosario
+            {tr("Glosario", "Glossary")}
           </button>
         </p>
       </footer>
       <p className="sr-only" aria-live="polite">
-        Misión {current.n}: {current.name}
+        {tr("Misión", "Mission")} {current.n}: {current.name}
       </p>
     </main>
   );

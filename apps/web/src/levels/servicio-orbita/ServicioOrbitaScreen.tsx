@@ -15,13 +15,10 @@ import { useHotkey } from "../../hooks/useHotkey";
 import { MODELS } from "../../ships/models";
 import { HangarLayout, focusName } from "../../ui/hangar/HangarLayout";
 import { usePreview } from "../../ships/usePreview";
+import { phaseLabel } from "../../ui/Panels";
+import { tr } from "../../i18n";
 
-const STEPS = [
-  { phase: "hangar", label: "Hangar" },
-  { phase: "transfer", label: "Transferencia" },
-  { phase: "repair", label: "Reparación" },
-  { phase: "complete", label: "Informe" },
-];
+const STEPS = ["hangar", "transfer", "repair", "complete"];
 
 /** Altitud que alcanzaría una transferencia de Hohmann con este Δv, km (física del motor). */
 function altitudeAfter(state: SimState, dv_m_s: number): number {
@@ -40,12 +37,12 @@ function inTransfer(state: SimState): boolean {
 }
 
 function Stepper({ phase }: { phase: string }) {
-  const idx = STEPS.findIndex((s) => s.phase === phase);
+  const idx = STEPS.indexOf(phase);
   return (
-    <ol className="stepper" aria-label="Fases del nivel">
+    <ol className="stepper" aria-label={tr("Fases del nivel", "Level phases")}>
       {STEPS.map((s, i) => (
-        <li key={s.phase} className={i < idx ? "done" : i === idx ? "now" : ""}>
-          {s.label}
+        <li key={s} className={i < idx ? "done" : i === idx ? "now" : ""}>
+          {phaseLabel(s)}
         </li>
       ))}
     </ol>
@@ -109,12 +106,14 @@ export function ServicioOrbitaScreen({ onExit }: { onExit: () => void }) {
         <EventLog events={state.events} />
       </aside>
       <footer className="orbit-note">
-        Tierra y órbitas a escala real; naves con tamaño mínimo para verlas · Arrastra: girar · Rueda: zoom · Clic
-        derecho: desplazar · H: paneles
+        {tr(
+          "Tierra y órbitas a escala real; naves con tamaño mínimo para verlas · Arrastra: girar · Rueda: zoom · Clic derecho: desplazar · H: paneles",
+          "Earth and orbits to real scale; spacecraft drawn at a minimum size so you can see them · Drag: rotate · Wheel: zoom · Right-click: pan · H: panels",
+        )}
       </footer>
       <aside className="guide-wrap">
         <section className="panel guide" aria-labelledby="guide-h">
-          <h2 id="guide-h">Guía de misión</h2>
+          <h2 id="guide-h">{tr("Guía de misión", "Mission guide")}</h2>
           <Stepper phase={state.phase} />
           {state.phase === "transfer" && (
             <TransferStep
@@ -157,7 +156,7 @@ function HangarPage({
   const blocked =
     attemptFrom === null
       ? []
-      : state.events.slice(attemptFrom).filter((e) => e.kind === "warning" && /bloqueado/i.test(e.text));
+      : state.events.slice(attemptFrom).filter((e) => e.kind === "warning" && /bloqueado|blocked/i.test(e.text));
   const cargo = def.components.filter((c) => state.selected?.[c.slot] === c.id).reduce((m, c) => m + c.mass_kg, 0);
   const cap = state.mass_capacity_kg ?? 0;
   const budget = state.budget_remaining_usd_m ?? 0;
@@ -166,18 +165,23 @@ function HangarPage({
   return (
     <HangarLayout
       levelTitle={def.title}
-      heading="Carga del transbordador"
-      stage="Etapa de diseño: estudio de compromisos (CML 3)."
+      heading={tr("Carga del transbordador", "Shuttle cargo")}
+      stage={tr("Etapa de diseño: estudio de compromisos (CML 3).", "Design stage: trade study (CML 3).")}
       briefing={def.briefing}
       objectives={def.objectives}
       model={MODELS.shuttle}
       focus={focusName(def, preview, highlight)}
       slots={<HangarSlots def={def} state={state} act={act} onPreview={onPreview} />}
       stats={[
-        { label: "Carga en bodega", value: cargo, max: cap, unit: "kg", warn: cargo > cap },
-        { label: "Δv disponible", value: state.delta_v_remaining_m_s ?? 0, digits: 1, unit: "m/s" },
+        { label: tr("Carga en bodega", "Cargo in bay"), value: cargo, max: cap, unit: "kg", warn: cargo > cap },
         {
-          label: "Presupuesto restante",
+          label: tr("Δv disponible", "Available Δv"),
+          value: state.delta_v_remaining_m_s ?? 0,
+          digits: 1,
+          unit: "m/s",
+        },
+        {
+          label: tr("Presupuesto restante", "Budget left"),
           value: budget,
           max: def.params.budget_usd_m?.value ?? budget,
           unit: "M USD",
@@ -186,11 +190,14 @@ function HangarPage({
       ]}
       extra={
         <p className="note">
-          Cada kilo en la bodega reduce el Δv (ecuación de Tsiolkovsky). Lleva solo lo que piden las reparaciones.
+          {tr(
+            "Cada kilo en la bodega reduce el Δv (ecuación de Tsiolkovsky). Lleva solo lo que piden las reparaciones.",
+            "Every kilogram in the bay reduces Δv (Tsiolkovsky equation). Carry only what the repairs need.",
+          )}
         </p>
       }
       problems={blocked.map((e) => e.text)}
-      launchLabel="Lanzar"
+      launchLabel={tr("Lanzar", "Launch")}
       onLaunch={() => {
         setAttemptFrom(state.events.length);
         act({ type: "launch" });
@@ -226,25 +233,30 @@ function TransferStep({
       <table className="mini">
         <tbody>
           <tr>
-            <th>Altitud actual</th>
+            <th>{tr("Altitud actual", "Current altitude")}</th>
             <td className="num">{formatNumber(alt, 1)} km</td>
           </tr>
           <tr>
-            <th>Altitud del satélite</th>
+            <th>{tr("Altitud del satélite", "Satellite altitude")}</th>
             <td className="num">{formatNumber(target, 1)} km</td>
           </tr>
           <tr>
-            <th>Diferencia</th>
+            <th>{tr("Diferencia", "Difference")}</th>
             <td className="num">{formatNumber(target - alt, 1)} km</td>
           </tr>
         </tbody>
       </table>
       {transferring ? (
-        <p className="note">Transferencia en curso. Puedes acelerar el tiempo hasta la llegada.</p>
+        <p className="note">
+          {tr(
+            "Transferencia en curso. Puedes acelerar el tiempo hasta la llegada.",
+            "Transfer in progress. You can speed up time until arrival.",
+          )}
+        </p>
       ) : (
         <div className="burn">
           <label htmlFor="dv">
-            Δv del encendido <span className="num">{formatNumber(dv, 1)} m/s</span>
+            {tr("Δv del encendido", "Burn Δv")} <span className="num">{formatNumber(dv, 1)} m/s</span>
           </label>
           <input
             id="dv"
@@ -256,12 +268,15 @@ function TransferStep({
             onChange={(e) => setDv(Number(e.target.value))}
           />
           <p className="note">
-            Altitud tras la transferencia:{" "}
-            <span className="num">{preview === null ? "—" : `${formatNumber(preview, 1)} km`}</span> (línea punteada).
-            Hay que quedar a ±2 km del satélite.
+            {tr("Altitud tras la transferencia:", "Altitude after the transfer:")}{" "}
+            <span className="num">{preview === null ? "—" : `${formatNumber(preview, 1)} km`}</span>{" "}
+            {tr(
+              "(línea punteada). Hay que quedar a ±2 km del satélite.",
+              "(dotted line). You must end up within ±2 km of the satellite.",
+            )}
           </p>
           <button className="primary" disabled={dv === 0} onClick={onBurn}>
-            Encender
+            {tr("Encender", "Burn")}
           </button>
         </div>
       )}
@@ -274,10 +289,10 @@ function RepairStep({ state }: { state: SimState }) {
   return (
     <>
       <p>
-        Acoplado.{" "}
+        {tr("Acoplado.", "Docked.")}{" "}
         {state.comm_window_open
-          ? "Estación terrena a la vista: se repara."
-          : "Sin enlace: la reparación espera al siguiente pase."}
+          ? tr("Estación terrena a la vista: se repara.", "Ground station in view: repairing.")
+          : tr("Sin enlace: la reparación espera al siguiente pase.", "No link: the repair waits for the next pass.")}
       </p>
       <div
         className="bar"
@@ -289,7 +304,8 @@ function RepairStep({ state }: { state: SimState }) {
         <div style={{ width: `${progress}%` }} />
       </div>
       <p className="note">
-        Progreso <span className="num">{formatNumber(progress, 0)} %</span> · datos enviados{" "}
+        {tr("Progreso", "Progress")} <span className="num">{formatNumber(progress, 0)} %</span> ·{" "}
+        {tr("datos enviados", "data sent")}{" "}
         <span className="num">{formatNumber(state.data_downlinked_mb ?? 0, 1)} MB</span>
       </p>
     </>

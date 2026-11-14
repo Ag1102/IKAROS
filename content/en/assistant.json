@@ -1,0 +1,157 @@
+[
+  {
+    "id": "l1-start",
+    "text": "On-orbit servicing is not science fiction: astronauts visited Hubble five times between 1993 and 2009 to repair and upgrade it.",
+    "source": "NASA, Hubble servicing missions"
+  },
+  {
+    "id": "l1-launch",
+    "text": "To move from one circular orbit to another with the least fuel you use a Hohmann transfer: one burn to enter an ellipse and another to circularize.",
+    "source": "Hohmann transfer; NASA, Basics of Space Flight (JPL)"
+  },
+  {
+    "id": "l1-burn",
+    "text": "Every m/s costs propellant. The Tsiolkovsky equation tells you how much: Δv = Isp · g0 · ln(m0/mf).",
+    "source": "Tsiolkovsky rocket equation; NASA Glenn, Beginner's Guide to Rockets"
+  },
+  {
+    "id": "l1-docked",
+    "text": "On Servicing Mission 4 (2009) the Atlantis crew performed five spacewalks on Hubble.",
+    "source": "NASA, Hubble Servicing Mission 4 (STS-125)"
+  },
+  {
+    "id": "l1-aos",
+    "text": "A satellite in low orbit passes over a ground station for a few minutes per orbit. Outside that window there is no link.",
+    "source": "NASA, CubeSat 101: Basic Concepts and Processes for First-Time CubeSat Developers"
+  },
+  {
+    "id": "l1-los",
+    "text": "Loss of signal (LOS): the station has dropped below the horizon. The work waits for the next pass.",
+    "source": "NASA, CubeSat 101"
+  },
+  {
+    "id": "l1-miss",
+    "text": "Overshot? A negative burn lowers the orbit with the same Hohmann logic.",
+    "source": "Hohmann transfer"
+  },
+  {
+    "id": "l1-overweight",
+    "text": "Mass rules: everything you take up has to be pushed. That is why every mission has a mass budget.",
+    "source": "NASA, Design and Develop Science Missions (space segment)"
+  },
+  {
+    "id": "l1-complete",
+    "text": "Servicing mission complete. Hubble is still operating decades after its 1990 launch thanks to those repairs.",
+    "source": "NASA, Hubble Space Telescope"
+  },
+  {
+    "id": "l2-start",
+    "text": "Missions are designed by segments: launch, space, ground and user. This level goes through all of them.",
+    "source": "NASA, Design and Develop Science Missions"
+  },
+  {
+    "id": "l2-launch",
+    "text": "A sun-synchronous orbit passes over each latitude at the same local solar time: ideal for comparing images from different days.",
+    "source": "NASA Earth Observatory, Catalog of Earth Satellite Orbits"
+  },
+  {
+    "id": "l2-coverage",
+    "text": "Inclination limits the latitudes you can see: at 0° you only cover the equatorial band.",
+    "source": "NASA Earth Observatory, Catalog of Earth Satellite Orbits"
+  },
+  {
+    "id": "l2-storage",
+    "text": "Data that does not fit in memory is lost. The downlink matters as much as the instrument.",
+    "source": "NASA, CubeSat 101"
+  },
+  {
+    "id": "l2-brownout",
+    "text": "In low orbit, about a third of each orbit can be in eclipse: the battery keeps the spacecraft alive in Earth's shadow.",
+    "source": "Eclipse geometry in a circular orbit"
+  },
+  {
+    "id": "l3-start",
+    "text": "Ikaros is based on the power system design of Solar Probe+, the mission that flew as Parker Solar Probe.",
+    "source": "Landis et al., AIAA 2008-5712; NASA, Parker Solar Probe"
+  },
+  {
+    "id": "l3-theory",
+    "text": "⚗ The reactor, the HTS field, the nanobots and the return capsule are theoretical extensions of the game, not NASA data.",
+    "source": "Ikaros team"
+  },
+  {
+    "id": "l3-launch",
+    "text": "Solar Probe+ is a mass-limited mission: it needs a very high launch C3.",
+    "source": "Landis et al., AIAA 2008-5712, p. 6"
+  },
+  {
+    "id": "l3-venus",
+    "text": "Each Venus flyby slows the spacecraft relative to the Sun and lowers the perihelion. The real design uses 7; here there are 3.",
+    "source": "Landis et al., AIAA 2008-5712, p. 2"
+  },
+  {
+    "id": "l3-flyby",
+    "text": "Parker Solar Probe made its seventh and final Venus flyby in November 2024.",
+    "source": "NASA, Parker Solar Probe"
+  },
+  {
+    "id": "l3-encounter",
+    "text": "At 0.25 AU sunlight is 16 times stronger than at Earth. The main array is no longer usable and folds behind the shield.",
+    "source": "Landis et al., AIAA 2008-5712, p. 4"
+  },
+  {
+    "id": "l3-stowed",
+    "text": "From here on only the secondary array works: ~1 cm² concentrator cells with a coolant loop.",
+    "source": "Landis et al., AIAA 2008-5712, p. 6"
+  },
+  {
+    "id": "l3-main-hot",
+    "text": "Tilting the array reduces the light it receives: the paper goes up to ~74° to keep it below 180 °C.",
+    "source": "Landis et al., AIAA 2008-5712, p. 4"
+  },
+  {
+    "id": "l3-cell-hot",
+    "text": "The cells operate at 120 °C. Heat that is not turned into electricity is rejected by radiators at 100 °C.",
+    "source": "Landis et al., AIAA 2008-5712, p. 6-7"
+  },
+  {
+    "id": "l3-cell-degrading",
+    "text": "Above ~350 °C the cells degrade permanently.",
+    "source": "Landis et al., AIAA 2008-5712, p. 3"
+  },
+  {
+    "id": "l3-low-power",
+    "text": "The spacecraft needs at least 482 W during the encounter. Retracting too much is also a mistake.",
+    "source": "Landis et al., AIAA 2008-5712, p. 4"
+  },
+  {
+    "id": "l3-cme",
+    "text": "Parker Solar Probe has flown through coronal mass ejections and measured their plasma from the inside.",
+    "source": "NASA, Parker Solar Probe"
+  },
+  {
+    "id": "l3-attitude",
+    "text": "Turning to transmit takes the radiators out of the shield's shadow: close to the Sun, heat rises within minutes.",
+    "source": "Landis et al., AIAA 2008-5712, p. 7 (radiators behind the shield)"
+  },
+  {
+    "id": "l3-storage",
+    "text": "Parker stores its perihelion data and sends it to Earth once it moves away from the Sun.",
+    "source": "NASA, Parker Solar Probe: operations"
+  },
+  {
+    "id": "l3-stirling",
+    "text": "The paper ruled out the Stirling converter for lack of flight heritage, even though its efficiency was good.",
+    "source": "Landis et al., AIAA 2008-5712, p. 5-6"
+  },
+  {
+    "id": "l3-ejection",
+    "text": "⚗ The module ejection and the return capsule are game fiction: Parker does not return to Earth.",
+    "source": "Ikaros team"
+  },
+  {
+    "id": "l3-end",
+    "text": "Only ~10 h of each pass is spent within 10 solar radii. That is the core of the mission.",
+    "source": "Landis et al., AIAA 2008-5712, p. 2"
+  }
+]

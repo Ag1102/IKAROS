@@ -1,5 +1,5 @@
 import type { EventChoice, MissionReport, PlayerAction, SimEvent, SimState } from "@ikaros/contracts";
-import { C, missions, paper, sourceOf, value } from "../data";
+import { C, missions, paper, sourceOf, value, type Lang } from "../data";
 import {
   distanceAt,
   equilibriumTemperature,
@@ -47,8 +47,8 @@ export class Level3 extends Level {
   private dataDownlinked = 0;
   private capsuleRecovered = false;
 
-  constructor(seed: number) {
-    super("level3-ikaros", seed);
+  constructor(seed: number, lang: Lang = "es") {
+    super("level3-ikaros", seed, lang);
   }
 
   protected initialState(): SimState {
@@ -141,12 +141,18 @@ export class Level3 extends Level {
     const cap = this.param("launcher_capacity_kg");
     if (mass > cap) {
       problems.push(
-        `La nave pesa ${mass} kg y el lanzador lleva ${cap} kg (misión limitada por masa, ${PAPER}, p. 6).`,
+        this.L(
+          `La nave pesa ${mass} kg y el lanzador lleva ${cap} kg (misión limitada por masa, ${PAPER}, p. 6).`,
+          `The spacecraft weighs ${mass} kg and the launcher carries ${cap} kg (mass-limited mission, ${PAPER}, p. 6).`,
+        ),
       );
     }
     if (cost > this.param("budget_usd_m")) {
       problems.push(
-        `El diseño cuesta ${cost} M USD y el presupuesto es ${this.param("budget_usd_m")} M USD.`,
+        this.L(
+          `El diseño cuesta ${cost} M USD y el presupuesto es ${this.param("budget_usd_m")} M USD.`,
+          `The design costs ${cost} M USD and the budget is ${this.param("budget_usd_m")} M USD.`,
+        ),
       );
     }
     return problems;
@@ -167,7 +173,7 @@ export class Level3 extends Level {
         if (!this.state.main_array_stowed) {
           this.state.main_array_stowed = true;
           this.info(
-            "Matriz principal plegada tras el escudo.",
+            this.L("Matriz principal plegada tras el escudo.", "Main array folded behind the shield."),
             "info",
             "level3:main-stowed",
             sourceOf(paper, "main_array_limit_au"),
@@ -180,8 +186,11 @@ export class Level3 extends Level {
         this.state.radiators_shaded = action.attitude === "shield-to-sun";
         this.info(
           action.attitude === "shield-to-sun"
-            ? "Escudo al Sol: radiadores en la umbra."
-            : "Antena a la Tierra: radiadores fuera de la umbra.",
+            ? this.L("Escudo al Sol: radiadores en la umbra.", "Shield to the Sun: radiators in the umbra.")
+            : this.L(
+                "Antena a la Tierra: radiadores fuera de la umbra.",
+                "Antenna to Earth: radiators out of the umbra.",
+              ),
           action.attitude === "shield-to-sun" ? "info" : "warning",
           `level3:attitude-${action.attitude}`,
         );
@@ -200,7 +209,12 @@ export class Level3 extends Level {
     if (this.state.phase !== "hangar") return;
     const problems = this.launchProblems();
     if (problems.length) {
-      for (const p of problems) this.info(`Lanzamiento bloqueado: ${p}`, "warning", "level3:launch-blocked");
+      for (const p of problems)
+        this.info(
+          this.L(`Lanzamiento bloqueado: ${p}`, `Launch blocked: ${p}`),
+          "warning",
+          "level3:launch-blocked",
+        );
       return;
     }
     this.launchedAt = this.t;
@@ -211,7 +225,10 @@ export class Level3 extends Level {
         : value(paper, "cell_efficiency");
     this.nextFlybyAt = this.t + this.param("flyby_interval_s");
     this.info(
-      `Lanzamiento. Primer perihelio a ${value(paper, "first_perihelion_au")} AU (${this.param("perihelion_start_rsun")} R☉).`,
+      this.L(
+        `Lanzamiento. Primer perihelio a ${value(paper, "first_perihelion_au")} AU (${this.param("perihelion_start_rsun")} R☉).`,
+        `Launch. First perihelion at ${value(paper, "first_perihelion_au")} AU (${this.param("perihelion_start_rsun")} R☉).`,
+      ),
       "info",
       "level3:launch",
       sourceOf(paper, "first_perihelion_au"),
@@ -255,7 +272,10 @@ export class Level3 extends Level {
       const next = this.param(`perihelion_after_flyby_${this.flybyWindows}_rsun`);
       this.emit(
         "crisis",
-        `Ventana de Venus ${this.flybyWindows} de ${FLYBYS}: el sobrevuelo puede bajar el perihelio a ${next} R☉.`,
+        this.L(
+          `Ventana de Venus ${this.flybyWindows} de ${FLYBYS}: el sobrevuelo puede bajar el perihelio a ${next} R☉.`,
+          `Venus window ${this.flybyWindows} of ${FLYBYS}: the flyby can lower the perihelion to ${next} R☉.`,
+        ),
         {
           trigger: "level3:venus-window",
           source: sourceOf(paper, "venus_flybys"),
@@ -263,11 +283,19 @@ export class Level3 extends Level {
           choices: [
             {
               id: "execute",
-              label: "Ejecutar sobrevuelo",
-              detail: `Maniobra de corrección de ${this.param("flyby_tcm_delta_v_m_s")} m/s.`,
+              label: this.L("Ejecutar sobrevuelo", "Execute flyby"),
+              detail: this.L(
+                `Maniobra de corrección de ${this.param("flyby_tcm_delta_v_m_s")} m/s.`,
+                `Correction maneuver of ${this.param("flyby_tcm_delta_v_m_s")} m/s.`,
+              ),
               origin: "real",
             },
-            { id: "skip", label: "Dejar pasar", detail: "El perihelio no cambia.", origin: "theoretical" },
+            {
+              id: "skip",
+              label: this.L("Dejar pasar", "Let it pass"),
+              detail: this.L("El perihelio no cambia.", "The perihelion does not change."),
+              origin: "theoretical",
+            },
           ],
         },
       );
@@ -289,19 +317,32 @@ export class Level3 extends Level {
       s.venus_flybys_done = (s.venus_flybys_done ?? 0) + 1;
       s.perihelion_rsun = this.param(`perihelion_after_flyby_${this.flybyWindows}_rsun`);
       this.info(
-        `Sobrevuelo de Venus completo. Nuevo perihelio: ${s.perihelion_rsun} R☉.`,
+        this.L(
+          `Sobrevuelo de Venus completo. Nuevo perihelio: ${s.perihelion_rsun} R☉.`,
+          `Venus flyby complete. New perihelion: ${s.perihelion_rsun} R☉.`,
+        ),
         "info",
         "level3:venus-flyby",
         sourceOf(paper, "venus_flybys"),
       );
     } else if (choice === "execute") {
       this.info(
-        "Sin delta-V para la maniobra de corrección: se pierde la ventana.",
+        this.L(
+          "Sin delta-V para la maniobra de corrección: se pierde la ventana.",
+          "No delta-V for the correction maneuver: the window is lost.",
+        ),
         "warning",
         "level3:venus-missed",
       );
     } else {
-      this.info("Ventana de Venus perdida: el perihelio no cambia.", "warning", "level3:venus-missed");
+      this.info(
+        this.L(
+          "Ventana de Venus perdida: el perihelio no cambia.",
+          "Venus window missed: the perihelion does not change.",
+        ),
+        "warning",
+        "level3:venus-missed",
+      );
     }
     if (this.flybyWindows < FLYBYS) {
       this.nextFlybyAt = this.t + this.param("flyby_interval_s");
@@ -331,7 +372,10 @@ export class Level3 extends Level {
       this.state.array_tilt_deg = maxTilt;
     }
     this.info(
-      `Entrada a ${limit} AU (16 soles): la matriz principal debe plegarse o inclinarse hasta ${value(paper, "main_array_max_tilt_deg")}°.`,
+      this.L(
+        `Entrada a ${limit} AU (16 soles): la matriz principal debe plegarse o inclinarse hasta ${value(paper, "main_array_max_tilt_deg")}°.`,
+        `Crossing ${limit} AU (16 suns): the main array must be folded or tilted up to ${value(paper, "main_array_max_tilt_deg")}°.`,
+      ),
       "warning",
       "level3:encounter-start",
       sourceOf(paper, "main_array_limit_au"),
@@ -372,7 +416,10 @@ export class Level3 extends Level {
     if (this.stirlingFailAt !== null && !this.stirlingFailed && this.t >= this.stirlingFailAt) {
       this.stirlingFailed = true;
       this.info(
-        "Falla del convertidor Stirling: sin herencia de vuelo, se detuvo el pistón.",
+        this.L(
+          "Falla del convertidor Stirling: sin herencia de vuelo, se detuvo el pistón.",
+          "Stirling converter failure: with no flight heritage, the piston stopped.",
+        ),
         "failure",
         "level3:stirling-failed",
         sourceOf(paper, "stirling_system_efficiency"),
@@ -392,7 +439,10 @@ export class Level3 extends Level {
       if (s.main_array_temperature_c > value(paper, "cell_degradation_c")) {
         this.mainArrayLost = true;
         this.info(
-          "Matriz principal destruida por calor: superó ~350 °C.",
+          this.L(
+            "Matriz principal destruida por calor: superó ~350 °C.",
+            "Main array destroyed by heat: it exceeded ~350 °C.",
+          ),
           "failure",
           "level3:main-lost",
           sourceOf(paper, "cell_degradation_c"),
@@ -401,7 +451,10 @@ export class Level3 extends Level {
         if (s.main_array_temperature_c > value(paper, "main_array_temp_limit_c")) {
           this.warnOnce(
             "main-hot",
-            `Matriz principal a ${Math.round(s.main_array_temperature_c)} °C: inclínala o pliégala.`,
+            this.L(
+              `Matriz principal a ${Math.round(s.main_array_temperature_c)} °C: inclínala o pliégala.`,
+              `Main array at ${Math.round(s.main_array_temperature_c)} °C: tilt it or fold it.`,
+            ),
             3600,
             "level3:main-hot",
             sourceOf(paper, "main_array_temp_limit_c"),
@@ -447,7 +500,10 @@ export class Level3 extends Level {
       this.cellEfficiency *= Math.exp(-dt / 1800);
       this.warnOnce(
         "cell-degrade",
-        `Celdas a ${Math.round(s.cell_temperature_c)} °C: degradación irreversible.`,
+        this.L(
+          `Celdas a ${Math.round(s.cell_temperature_c)} °C: degradación irreversible.`,
+          `Cells at ${Math.round(s.cell_temperature_c)} °C: irreversible degradation.`,
+        ),
         1800,
         "level3:cell-degrading",
         sourceOf(paper, "cell_degradation_c"),
@@ -456,7 +512,10 @@ export class Level3 extends Level {
       this.secondsOverCellLimit += dt;
       this.warnOnce(
         "cell-hot",
-        `Celdas a ${Math.round(s.cell_temperature_c)} °C, límite de diseño ${limit} °C: retrae la matriz.`,
+        this.L(
+          `Celdas a ${Math.round(s.cell_temperature_c)} °C, límite de diseño ${limit} °C: retrae la matriz.`,
+          `Cells at ${Math.round(s.cell_temperature_c)} °C, design limit ${limit} °C: retract the array.`,
+        ),
         1800,
         "level3:cell-hot",
         sourceOf(paper, "cell_design_limit_c"),
@@ -474,7 +533,10 @@ export class Level3 extends Level {
     if (power < value(paper, "min_power_w")) {
       this.warnOnce(
         "low-power",
-        `Potencia ${Math.round(power)} W, por debajo de los ${value(paper, "min_power_w")} W requeridos.`,
+        this.L(
+          `Potencia ${Math.round(power)} W, por debajo de los ${value(paper, "min_power_w")} W requeridos.`,
+          `Power ${Math.round(power)} W, below the required ${value(paper, "min_power_w")} W.`,
+        ),
         1800,
         "level3:low-power",
         sourceOf(paper, "min_power_w"),
@@ -482,11 +544,21 @@ export class Level3 extends Level {
     }
     if ((s.battery_wh ?? 0) <= 0 && power < load) {
       if (this.brownout_s === 0)
-        this.info("Batería agotada: se apagan la defensa y la ciencia.", "failure", "level3:brownout");
+        this.info(
+          this.L(
+            "Batería agotada: se apagan la defensa y la ciencia.",
+            "Battery drained: defense and science shut down.",
+          ),
+          "failure",
+          "level3:brownout",
+        );
       this.brownout_s += dt;
       if (this.brownout_s >= this.param("power_loss_limit_s")) {
         return this.fail(
-          "Pérdida de potencia: la nave quedó sin energía en el encuentro.",
+          this.L(
+            "Pérdida de potencia: la nave quedó sin energía en el encuentro.",
+            "Loss of power: the spacecraft ran out of energy during the encounter.",
+          ),
           "level3:power-lost",
         );
       }
@@ -511,7 +583,14 @@ export class Level3 extends Level {
       );
     }
     s.hull_durability_pct = hull;
-    if (hull <= 0) return this.fail("El casco cedió: la nave quedó expuesta al Sol.", "level3:hull-lost");
+    if (hull <= 0)
+      return this.fail(
+        this.L(
+          "El casco cedió: la nave quedó expuesta al Sol.",
+          "The hull gave way: the spacecraft was exposed to the Sun.",
+        ),
+        "level3:hull-lost",
+      );
 
     // Ciencia y comunicaciones
     const scienceOn = this.t >= this.safeModeUntil && this.brownout_s === 0;
@@ -525,7 +604,10 @@ export class Level3 extends Level {
       if (room <= 0)
         this.warnOnce(
           "storage-full",
-          "Memoria llena: la ciencia se detiene hasta bajar datos.",
+          this.L(
+            "Memoria llena: la ciencia se detiene hasta bajar datos.",
+            "Memory full: science stops until data is downlinked.",
+          ),
           7200,
           "level3:storage-full",
         );
@@ -563,37 +645,56 @@ export class Level3 extends Level {
     if (this.chosen("defense")) {
       choices.push({
         id: "hts",
-        label: "Sobrecargar el campo HTS",
-        detail: `Casco protegido; se pierde el ${this.param("cme_hts_data_loss") * 100} % de los datos guardados.`,
+        label: this.cmeLabel("hts"),
+        detail: this.L(
+          `Casco protegido; se pierde el ${this.param("cme_hts_data_loss") * 100} % de los datos guardados.`,
+          `Hull protected; ${this.param("cme_hts_data_loss") * 100} % of the stored data is lost.`,
+        ),
         origin: "theoretical",
       });
     }
     if (this.chosen("repair")) {
       choices.push({
         id: "nanobots",
-        label: "Inyectar nanobots",
-        detail: `Repara el daño; gasta el ${this.param("cme_nanobot_reserve_cost_pct")} % de la reserva.`,
+        label: this.cmeLabel("nanobots"),
+        detail: this.L(
+          `Repara el daño; gasta el ${this.param("cme_nanobot_reserve_cost_pct")} % de la reserva.`,
+          `Repairs the damage; uses ${this.param("cme_nanobot_reserve_cost_pct")} % of the reserve.`,
+        ),
         origin: "theoretical",
       });
     }
     choices.push({
       id: "assistant",
-      label: "Delegar al asistente de misión",
-      detail: `${this.param("cme_assistant_success") * 100} % de éxito.`,
+      label: this.cmeLabel("assistant"),
+      detail: this.L(
+        `${this.param("cme_assistant_success") * 100} % de éxito.`,
+        `${this.param("cme_assistant_success") * 100} % chance of success.`,
+      ),
       origin: "theoretical",
     });
     choices.push({
       id: "safe-mode",
-      label: "Modo seguro",
-      detail: "Escudo al Sol e instrumentos apagados 6 h. Daño menor.",
+      label: this.cmeLabel("safe-mode"),
+      detail: this.L(
+        "Escudo al Sol e instrumentos apagados 6 h. Daño menor.",
+        "Shield to the Sun and instruments off for 6 h. Minor damage.",
+      ),
       origin: "real",
     });
-    this.emit("crisis", "Eyección de masa coronal detectada. Impacto en 2 h.", {
-      trigger: "level3:cme",
-      source: "NASA, Parker Solar Probe: paso a través de eyecciones de masa coronal",
-      deadline_s: this.t + this.param("cme_deadline_s"),
-      choices,
-    });
+    this.emit(
+      "crisis",
+      this.L(
+        "Eyección de masa coronal detectada. Impacto en 2 h.",
+        "Coronal mass ejection detected. Impact in 2 h.",
+      ),
+      {
+        trigger: "level3:cme",
+        source: "NASA, Parker Solar Probe: paso a través de eyecciones de masa coronal",
+        deadline_s: this.t + this.param("cme_deadline_s"),
+        choices,
+      },
+    );
   }
 
   private resolveCme(choice: string): void {
@@ -621,33 +722,69 @@ export class Level3 extends Level {
     s.hull_durability_pct = (s.hull_durability_pct ?? 100) - damage;
     this.info(
       choice === "timeout"
-        ? `La CME golpeó sin respuesta: casco −${damage} %.`
-        : `CME resuelta (${choice}): casco −${damage} %.`,
+        ? this.L(
+            `La CME golpeó sin respuesta: casco −${damage} %.`,
+            `The CME hit with no response: hull −${damage} %.`,
+          )
+        : this.L(
+            `CME resuelta (${this.cmeLabel(choice)}): casco −${damage} %.`,
+            `CME resolved (${this.cmeLabel(choice)}): hull −${damage} %.`,
+          ),
       damage >= full ? "failure" : "info",
       "level3:cme-resolved",
     );
-    if ((s.hull_durability_pct ?? 0) <= 0) this.fail("El casco cedió tras la CME.", "level3:hull-lost");
+    if ((s.hull_durability_pct ?? 0) <= 0)
+      this.fail(
+        this.L("El casco cedió tras la CME.", "The hull gave way after the CME."),
+        "level3:hull-lost",
+      );
+  }
+
+  /** Nombre de cada respuesta a la CME, para las opciones, el registro y el informe. */
+  private cmeLabel(choice: string): string {
+    switch (choice) {
+      case "hts":
+        return this.L("Sobrecargar el campo HTS", "Overload the HTS field");
+      case "nanobots":
+        return this.L("Inyectar nanobots", "Inject nanobots");
+      case "assistant":
+        return this.L("Delegar al asistente de misión", "Delegate to the mission assistant");
+      case "safe-mode":
+        return this.L("Modo seguro", "Safe mode");
+      case "timeout":
+        return this.L("sin respuesta", "no response");
+      default:
+        return choice;
+    }
   }
 
   private leaveEncounter(): void {
     const s = this.state;
     s.phase = "exit";
-    this.info("Salida del encuentro: de vuelta a 0.25 AU.", "info", "level3:encounter-end");
+    this.info(
+      this.L("Salida del encuentro: de vuelta a 0.25 AU.", "Leaving the encounter: back at 0.25 AU."),
+      "info",
+      "level3:encounter-end",
+    );
     if (this.chosen("science")?.id === "sensors-capsule") {
-      this.emit("crisis", "⚗ Ventana de eyección: separar el módulo y liberar la cápsula de 450 kg.", {
+      const text = this.L(
+        "⚗ Ventana de eyección: separar el módulo y liberar la cápsula de 450 kg.",
+        "⚗ Ejection window: separate the module and release the 450 kg capsule.",
+      );
+      this.emit("crisis", text, {
         trigger: "level3:ejection",
         deadline_s: this.t + this.param("ejection_window_s"),
         choices: [
           {
             id: "eject",
-            label: "Eyectar módulo",
-            detail: "La cápsula vuelve con las muestras.",
+            label: this.L("Eyectar módulo", "Eject module"),
+            detail: this.L("La cápsula vuelve con las muestras.", "The capsule returns with the samples."),
             origin: "theoretical",
           },
           {
             id: "hold",
-            label: "Conservar el módulo",
-            detail: "La cápsula se queda a bordo.",
+            label: this.L("Conservar el módulo", "Keep the module"),
+            detail: this.L("La cápsula se queda a bordo.", "The capsule stays on board."),
             origin: "theoretical",
           },
         ],
@@ -660,7 +797,12 @@ export class Level3 extends Level {
   private resolveEjection(choice: string): void {
     this.capsuleRecovered = choice === "eject";
     this.info(
-      this.capsuleRecovered ? "⚗ Cápsula liberada en trayectoria de retorno." : "La cápsula no se liberó.",
+      this.capsuleRecovered
+        ? this.L(
+            "⚗ Cápsula liberada en trayectoria de retorno.",
+            "⚗ Capsule released on a return trajectory.",
+          )
+        : this.L("La cápsula no se liberó.", "The capsule was not released."),
       this.capsuleRecovered ? "info" : "warning",
       "level3:ejection-resolved",
     );
@@ -709,7 +851,10 @@ export class Level3 extends Level {
       causes.push({ text: this.failureReason, segment: "space", origin: "theoretical" });
     if (this.encounterStart === 0 && !this.failureReason) {
       causes.push({
-        text: "La misión no llegó al encuentro solar.",
+        text: this.L(
+          "La misión no llegó al encuentro solar.",
+          "The mission did not reach the solar encounter.",
+        ),
         segment: "launch",
         origin: "theoretical",
       });
@@ -718,13 +863,19 @@ export class Level3 extends Level {
       causes.push(
         reachedTarget
           ? {
-              text: `Perihelio de ${target} R☉ alcanzado, como en el diseño de Solar Probe+.`,
+              text: this.L(
+                `Perihelio de ${target} R☉ alcanzado, como en el diseño de Solar Probe+.`,
+                `${target} R☉ perihelion reached, as in the Solar Probe+ design.`,
+              ),
               source: sourceOf(paper, "perihelion_rsun"),
               segment: "space",
               origin: "real",
             }
           : {
-              text: `El perihelio quedó en ${s.perihelion_rsun} R☉: faltaron sobrevuelos de Venus para bajar a ${target} R☉.`,
+              text: this.L(
+                `El perihelio quedó en ${s.perihelion_rsun} R☉: faltaron sobrevuelos de Venus para bajar a ${target} R☉.`,
+                `The perihelion stayed at ${s.perihelion_rsun} R☉: more Venus flybys were needed to get down to ${target} R☉.`,
+              ),
               source: sourceOf(paper, "venus_flybys"),
               segment: "space",
               origin: "real",
@@ -732,21 +883,30 @@ export class Level3 extends Level {
       );
       if (this.secondsDegrading > 0) {
         causes.push({
-          text: `Las celdas pasaron ~350 °C durante ${Math.round(this.secondsDegrading / 60)} min: degradación irreversible.`,
+          text: this.L(
+            `Las celdas pasaron ~350 °C durante ${Math.round(this.secondsDegrading / 60)} min: degradación irreversible.`,
+            `The cells exceeded ~350 °C for ${Math.round(this.secondsDegrading / 60)} min: irreversible degradation.`,
+          ),
           source: sourceOf(paper, "cell_degradation_c"),
           segment: "space",
           origin: "real",
         });
       } else if (this.secondsOverCellLimit > 0) {
         causes.push({
-          text: `Las celdas superaron el límite de diseño durante ${Math.round(this.secondsOverCellLimit / 60)} min.`,
+          text: this.L(
+            `Las celdas superaron el límite de diseño durante ${Math.round(this.secondsOverCellLimit / 60)} min.`,
+            `The cells exceeded the design limit for ${Math.round(this.secondsOverCellLimit / 60)} min.`,
+          ),
           source: sourceOf(paper, "cell_design_limit_c"),
           segment: "space",
           origin: "real",
         });
       } else {
         causes.push({
-          text: "Las celdas se mantuvieron bajo el límite de diseño todo el encuentro.",
+          text: this.L(
+            "Las celdas se mantuvieron bajo el límite de diseño todo el encuentro.",
+            "The cells stayed below the design limit for the whole encounter.",
+          ),
           source: sourceOf(paper, "cell_design_limit_c"),
           segment: "space",
           origin: "real",
@@ -754,7 +914,10 @@ export class Level3 extends Level {
       }
       if (this.minPower < value(paper, "min_power_w")) {
         causes.push({
-          text: `La potencia bajó a ${Math.round(this.minPower)} W, por debajo de los ${value(paper, "min_power_w")} W requeridos.`,
+          text: this.L(
+            `La potencia bajó a ${Math.round(this.minPower)} W, por debajo de los ${value(paper, "min_power_w")} W requeridos.`,
+            `Power dropped to ${Math.round(this.minPower)} W, below the required ${value(paper, "min_power_w")} W.`,
+          ),
           source: sourceOf(paper, "min_power_w"),
           segment: "space",
           origin: "real",
@@ -762,7 +925,10 @@ export class Level3 extends Level {
       }
       if (this.mainArrayLost) {
         causes.push({
-          text: "La matriz principal no se plegó a tiempo y se destruyó.",
+          text: this.L(
+            "La matriz principal no se plegó a tiempo y se destruyó.",
+            "The main array was not folded in time and was destroyed.",
+          ),
           source: sourceOf(paper, "main_array_limit_au"),
           segment: "space",
           origin: "real",
@@ -770,7 +936,10 @@ export class Level3 extends Level {
       }
       if (this.stirlingFailed) {
         causes.push({
-          text: "El convertidor Stirling falló: el paper lo descarta por falta de herencia de vuelo.",
+          text: this.L(
+            "El convertidor Stirling falló: el paper lo descarta por falta de herencia de vuelo.",
+            "The Stirling converter failed: the paper rules it out for lack of flight heritage.",
+          ),
           source: sourceOf(paper, "stirling_system_efficiency"),
           segment: "space",
           origin: "real",
@@ -778,7 +947,10 @@ export class Level3 extends Level {
       }
       if (this.cmeOutcome) {
         causes.push({
-          text: `Respuesta a la CME: ${this.cmeOutcome}.`,
+          text: this.L(
+            `Respuesta a la CME: ${this.cmeLabel(this.cmeOutcome)}.`,
+            `CME response: ${this.cmeLabel(this.cmeOutcome)}.`,
+          ),
           segment: "ground",
           origin: "theoretical",
         });
@@ -786,24 +958,55 @@ export class Level3 extends Level {
       causes.push({
         text:
           data >= goal
-            ? `Ciencia: ${Math.round(data)} MB reunidos, sobre la meta de ${goal} MB.`
-            : `Ciencia: ${Math.round(data)} MB de ${goal} MB.`,
+            ? this.L(
+                `Ciencia: ${Math.round(data)} MB reunidos, sobre la meta de ${goal} MB.`,
+                `Science: ${Math.round(data)} MB collected, above the ${goal} MB goal.`,
+              )
+            : this.L(
+                `Ciencia: ${Math.round(data)} MB de ${goal} MB.`,
+                `Science: ${Math.round(data)} MB of ${goal} MB.`,
+              ),
         segment: "user",
         origin: "theoretical",
       });
     }
 
     const advice: string[] = [];
-    if (!reachedTarget) advice.push("Ejecuta las tres ventanas de Venus: cada sobrevuelo baja el perihelio.");
+    if (!reachedTarget)
+      advice.push(
+        this.L(
+          "Ejecuta las tres ventanas de Venus: cada sobrevuelo baja el perihelio.",
+          "Execute all three Venus windows: each flyby lowers the perihelion.",
+        ),
+      );
     if (this.secondsOverCellLimit > 0 || this.secondsDegrading > 0)
       advice.push(
-        "Retrae la matriz secundaria al acercarte: en perihelio solo ~34 cm² iluminados bastan (paper, p. 7-8).",
+        this.L(
+          "Retrae la matriz secundaria al acercarte: en perihelio solo ~34 cm² iluminados bastan (paper, p. 7-8).",
+          "Retract the secondary array as you get closer: at perihelion only ~34 cm² illuminated is enough (paper, p. 7-8).",
+        ),
       );
     if (this.minPower < value(paper, "min_power_w"))
-      advice.push("No retraigas de más: la potencia debe quedar sobre 482 W.");
+      advice.push(
+        this.L(
+          "No retraigas de más: la potencia debe quedar sobre 482 W.",
+          "Do not over-retract: power must stay above 482 W.",
+        ),
+      );
     if (this.mainArrayLost)
-      advice.push("Pliega la matriz principal antes de ~0.13 AU o inclínala hasta 74°.");
-    if (data < goal) advice.push("Baja datos lejos del Sol, cuando girar la antena cuesta poco calor.");
+      advice.push(
+        this.L(
+          "Pliega la matriz principal antes de ~0.13 AU o inclínala hasta 74°.",
+          "Fold the main array before ~0.13 AU or tilt it up to 74°.",
+        ),
+      );
+    if (data < goal)
+      advice.push(
+        this.L(
+          "Baja datos lejos del Sol, cuando girar la antena cuesta poco calor.",
+          "Downlink data far from the Sun, when turning the antenna costs little heat.",
+        ),
+      );
 
     const score = Math.round(
       (outcome === "failure" ? 0 : 3000) +
@@ -837,30 +1040,33 @@ export class Level3 extends Level {
       comparisons: [
         {
           mission: "Parker Solar Probe",
-          metric: "Distancia mínima",
+          metric: this.L("Distancia mínima", "Closest distance"),
           ours: Number.isFinite(this.minDistanceRsun) ? `${round(this.minDistanceRsun, 2)} R☉` : "—",
           theirs: `${value(missions, "parker_perihelion_rsun")} R☉`,
           source: sourceOf(missions, "parker_perihelion_rsun"),
         },
         {
           mission: "Parker Solar Probe",
-          metric: "Velocidad máxima",
+          metric: this.L("Velocidad máxima", "Top speed"),
           ours: `${round(this.maxSpeed, 1)} km/s`,
           theirs: `${value(missions, "parker_max_speed_km_s")} km/s`,
           source: sourceOf(missions, "parker_max_speed_km_s"),
         },
         {
           mission: "Parker Solar Probe",
-          metric: "Sobrevuelos de Venus",
-          ours: `${s.venus_flybys_done ?? 0} (abreviado)`,
+          metric: this.L("Sobrevuelos de Venus", "Venus flybys"),
+          ours: this.L(`${s.venus_flybys_done ?? 0} (abreviado)`, `${s.venus_flybys_done ?? 0} (shortened)`),
           theirs: `${value(missions, "parker_venus_flybys")}`,
           source: sourceOf(missions, "parker_venus_flybys"),
         },
         {
-          mission: "Solar Probe+ (diseño 2008)",
-          metric: "Potencia mínima en el encuentro",
+          mission: this.L("Solar Probe+ (diseño 2008)", "Solar Probe+ (2008 design)"),
+          metric: this.L("Potencia mínima en el encuentro", "Minimum power in the encounter"),
           ours: Number.isFinite(this.minPower) ? `${Math.round(this.minPower)} W` : "—",
-          theirs: `${value(paper, "min_power_w")} W requeridos`,
+          theirs: this.L(
+            `${value(paper, "min_power_w")} W requeridos`,
+            `${value(paper, "min_power_w")} W required`,
+          ),
           source: sourceOf(paper, "min_power_w"),
         },
       ],

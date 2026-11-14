@@ -1,6 +1,7 @@
 import { lazy, Suspense, type ReactNode } from "react";
 import type { NasaModelInfo } from "../../ships/models";
 import { formatNumber } from "../format";
+import { tr } from "../../i18n";
 
 const HangarStage = lazy(() => import("./HangarStage"));
 
@@ -56,7 +57,7 @@ export function HangarLayout({
   stats,
   extra,
   problems,
-  launchLabel = "Lanzar misión",
+  launchLabel = tr("Lanzar misión", "Launch mission"),
   onLaunch,
   assistant,
   onExit,
@@ -95,9 +96,9 @@ export function HangarLayout({
           <span className="brand-sub">{levelTitle} · Hangar</span>
         </div>
         <div className="scale">
-          <button onClick={onGlossary}>Glosario</button>
-          <button onClick={onCredits}>Créditos</button>
-          <button onClick={onExit}>Menú</button>
+          <button onClick={onGlossary}>{tr("Glosario", "Glossary")}</button>
+          <button onClick={onCredits}>{tr("Créditos", "Credits")}</button>
+          <button onClick={onExit}>{tr("Menú", "Menu")}</button>
         </div>
       </header>
 
@@ -105,7 +106,7 @@ export function HangarLayout({
         <h2 id="loadout-h">{heading}</h2>
         <p className="stage">{stage}</p>
         <details className="briefing">
-          <summary>Informe de la misión</summary>
+          <summary>{tr("Informe de la misión", "Mission briefing")}</summary>
           {briefing.map((b) => (
             <p key={b}>{b}</p>
           ))}
@@ -120,11 +121,15 @@ export function HangarLayout({
 
       <div className="hangar-caption" aria-live="polite">
         <span className="hangar-model">{model.name}</span>
-        <span className="hangar-focus">{focus ? `Revisando: ${focus}` : "Arrastra para girar la nave"}</span>
+        <span className="hangar-focus">
+          {focus
+            ? `${tr("Revisando", "Inspecting")}: ${focus}`
+            : tr("Arrastra para girar la nave", "Drag to rotate the spacecraft")}
+        </span>
       </div>
 
       <section className="hangar-stats" aria-labelledby="stats-h">
-        <h2 id="stats-h">Telemetría de diseño</h2>
+        <h2 id="stats-h">{tr("Telemetría de diseño", "Design telemetry")}</h2>
         {stats.map((s) => (
           <StatMeter key={s.label} s={s} />
         ))}

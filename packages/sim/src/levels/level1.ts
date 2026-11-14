@@ -8,6 +8,7 @@ import {
   propellantFor,
   rocketDeltaV,
 } from "../physics";
+import type { Lang } from "../data";
 import { Level, round } from "./base";
 
 interface Transfer {
@@ -20,8 +21,8 @@ interface Transfer {
 const MIN_ALTITUDE_KM = 150;
 
 const TASKS = [
-  { id: "panel", label: "panel solar", needs: ["panel", "toolkit"] },
-  { id: "antenna", label: "antena", needs: ["antenna", "toolkit"] },
+  { id: "panel", label: "panel solar", labelEn: "solar panel", needs: ["panel", "toolkit"] },
+  { id: "antenna", label: "antena", labelEn: "antenna", needs: ["antenna", "toolkit"] },
 ] as const;
 
 /** Nivel 1: subir con Hohmann, acoplarse y reparar con la estación terrena a la vista. */
@@ -35,8 +36,8 @@ export class Level1 extends Level {
   private failureReason: string | null = null;
   private launchedAt = 0;
 
-  constructor(seed: number) {
-    super("level1-repair", seed);
+  constructor(seed: number, lang: Lang = "es") {
+    super("level1-repair", seed, lang);
     // Los campos de la subclase se inicializan después de super(): se ajustan aquí.
     this.fuel_kg = this.param("fuel_mass_kg");
     this.refreshHangar();
@@ -108,25 +109,44 @@ export class Level1 extends Level {
     const cap = this.param("cargo_capacity_kg");
     if (cargo > cap) {
       this.info(
-        `Despegue bloqueado: la carga pesa ${round(cargo)} kg y el máximo es ${cap} kg.`,
+        this.L(
+          `Despegue bloqueado: la carga pesa ${round(cargo)} kg y el máximo es ${cap} kg.`,
+          `Launch blocked: the cargo weighs ${round(cargo)} kg and the maximum is ${cap} kg.`,
+        ),
         "warning",
         "level1:overweight",
       );
       return;
     }
     if ((this.state.budget_remaining_usd_m ?? 0) < 0) {
-      this.info("Despegue bloqueado: el equipo supera el presupuesto.", "warning");
+      this.info(
+        this.L(
+          "Despegue bloqueado: el equipo supera el presupuesto.",
+          "Launch blocked: the equipment is over budget.",
+        ),
+        "warning",
+      );
       return;
     }
     this.state.phase = "transfer";
     this.launchedAt = this.t;
     this.info(
-      `Separación del vehículo de servicio. Delta-V disponible: ${round(this.deltaVLeft())} m/s.`,
+      this.L(
+        `Separación del vehículo de servicio. Delta-V disponible: ${round(this.deltaVLeft())} m/s.`,
+        `Servicing vehicle separation. Available delta-V: ${round(this.deltaVLeft())} m/s.`,
+      ),
       "info",
       "level1:launch",
     );
     if (!this.chosen("toolkit")) {
-      this.info("Sin kit de herramientas no se puede reparar nada.", "warning", "level1:no-toolkit");
+      this.info(
+        this.L(
+          "Sin kit de herramientas no se puede reparar nada.",
+          "Without a toolkit nothing can be repaired.",
+        ),
+        "warning",
+        "level1:no-toolkit",
+      );
     }
   }
 
@@ -147,9 +167,20 @@ export class Level1 extends Level {
     const dv = Math.sign(dv_m_s) * Math.min(Math.abs(dv_m_s), this.deltaVLeft(), reachable);
     if (Math.abs(dv) < 1e-6) {
       if (this.deltaVLeft() < 1e-6)
-        this.info("Sin combustible para la maniobra.", "warning", "level1:no-fuel");
+        this.info(
+          this.L("Sin combustible para la maniobra.", "No fuel for the maneuver."),
+          "warning",
+          "level1:no-fuel",
+        );
       else
-        this.info("Maniobra fuera de rango: la órbita no puede bajar más.", "warning", "level1:out-of-range");
+        this.info(
+          this.L(
+            "Maniobra fuera de rango: la órbita no puede bajar más.",
+            "Maneuver out of range: the orbit cannot go any lower.",
+          ),
+          "warning",
+          "level1:out-of-range",
+        );
       return;
     }
     const isp = this.param("isp_s");
@@ -164,7 +195,10 @@ export class Level1 extends Level {
     this.burns++;
     this.refreshHangar();
     this.info(
-      `Encendido de ${round(dv, 2)} m/s. Transferencia hacia ${round(r2 - C.earthRadius)} km.`,
+      this.L(
+        `Encendido de ${round(dv, 2)} m/s. Transferencia hacia ${round(r2 - C.earthRadius)} km.`,
+        `Burn of ${round(dv, 2)} m/s. Transfer to ${round(r2 - C.earthRadius)} km.`,
+      ),
       "info",
       "level1:burn",
     );
@@ -177,7 +211,9 @@ export class Level1 extends Level {
     if (window !== s.comm_window_open) {
       s.comm_window_open = window;
       this.info(
-        window ? "Estación terrena a la vista: enlace abierto." : "Fin del pase: sin enlace con tierra.",
+        window
+          ? this.L("Estación terrena a la vista: enlace abierto.", "Ground station in view: link open.")
+          : this.L("Fin del pase: sin enlace con tierra.", "End of pass: no link with the ground."),
         "info",
         window ? "level1:aos" : "level1:los",
       );
@@ -208,10 +244,16 @@ export class Level1 extends Level {
     }
 
     if (s.phase === "transfer" && !this.transfer && this.deltaVLeft() < 0.05) {
-      this.fail("Combustible agotado sin alcanzar el satélite.", "level1:fuel-out");
+      this.fail(
+        this.L(
+          "Combustible agotado sin alcanzar el satélite.",
+          "Fuel exhausted before reaching the satellite.",
+        ),
+        "level1:fuel-out",
+      );
     }
     if (this.t - this.launchedAt >= this.param("time_limit_s") && !this.finished) {
-      this.fail("Se acabó el tiempo de misión.", "level1:timeout");
+      this.fail(this.L("Se acabó el tiempo de misión.", "Mission time ran out."), "level1:timeout");
     }
     this.updateHealth();
   }
@@ -222,16 +264,37 @@ export class Level1 extends Level {
     if (miss <= this.param("dock_tolerance_km")) {
       this.docked = true;
       s.phase = "repair";
-      this.info("Acople confirmado. Comienzan las reparaciones.", "info", "level1:docked");
+      this.info(
+        this.L("Acople confirmado. Comienzan las reparaciones.", "Docking confirmed. Repairs begin."),
+        "info",
+        "level1:docked",
+      );
       if (!TASKS.some((task) => task.needs.every((slot) => this.chosen(slot)))) {
-        this.info("Acoplado, pero sin el equipo para ninguna reparación.", "warning", "level1:complete");
+        this.info(
+          this.L(
+            "Acoplado, pero sin el equipo para ninguna reparación.",
+            "Docked, but without the equipment for any repair.",
+          ),
+          "warning",
+          "level1:complete",
+        );
         this.finish();
       } else if (!s.comm_window_open) {
-        this.info("Esperando la próxima ventana de comunicaciones.", "info", "level1:wait-window");
+        this.info(
+          this.L(
+            "Esperando la próxima ventana de comunicaciones.",
+            "Waiting for the next communication window.",
+          ),
+          "info",
+          "level1:wait-window",
+        );
       }
     } else {
       this.info(
-        `Fuera de alcance: faltan ${round(miss, 2)} km. Delta-V restante ${round(this.deltaVLeft())} m/s.`,
+        this.L(
+          `Fuera de alcance: faltan ${round(miss, 2)} km. Delta-V restante ${round(this.deltaVLeft())} m/s.`,
+          `Out of reach: ${round(miss, 2)} km short. Remaining delta-V ${round(this.deltaVLeft())} m/s.`,
+        ),
         "warning",
         "level1:miss",
       );
@@ -248,7 +311,11 @@ export class Level1 extends Level {
     const now = Math.min(100, before + (100 * dt) / perTask);
     this.taskProgress[pending.id] = now;
     if (before < 100 && now >= 100) {
-      this.info(`Reparación del ${pending.label} completa.`, "info", `level1:fixed-${pending.id}`);
+      this.info(
+        this.L(`Reparación del ${pending.label} completa.`, `${cap1(pending.labelEn)} repair complete.`),
+        "info",
+        `level1:fixed-${pending.id}`,
+      );
     }
     const total = TASKS.reduce((m, task) => m + (this.taskProgress[task.id] ?? 0), 0) / TASKS.length;
     this.state.repair_progress_pct = total;
@@ -256,8 +323,11 @@ export class Level1 extends Level {
     if (allPossibleDone) {
       this.info(
         tasks.length === TASKS.length
-          ? "Satélite reparado. Desacople y regreso."
-          : "No hay más reparaciones posibles con el equipo a bordo.",
+          ? this.L("Satélite reparado. Desacople y regreso.", "Satellite repaired. Undocking and return.")
+          : this.L(
+              "No hay más reparaciones posibles con el equipo a bordo.",
+              "No more repairs are possible with the equipment on board.",
+            ),
         tasks.length === TASKS.length ? "info" : "warning",
         "level1:complete",
       );
@@ -290,7 +360,10 @@ export class Level1 extends Level {
       causes.push({ text: this.failureReason, segment: "space", origin: "theoretical" });
     if (!this.docked) {
       causes.push({
-        text: "No se alcanzó la altitud del satélite. Una transferencia de Hohmann bien calculada usa el mínimo delta-V.",
+        text: this.L(
+          "No se alcanzó la altitud del satélite. Una transferencia de Hohmann bien calculada usa el mínimo delta-V.",
+          "The satellite's altitude was not reached. A well-planned Hohmann transfer uses the minimum delta-V.",
+        ),
         source: "Transferencia de Hohmann (vis-viva)",
         segment: "space",
         origin: "real",
@@ -298,14 +371,20 @@ export class Level1 extends Level {
     }
     for (const task of missingTools) {
       causes.push({
-        text: `Faltó equipo para reparar el ${task.label}.`,
+        text: this.L(
+          `Faltó equipo para reparar el ${task.label}.`,
+          `Missing equipment to repair the ${task.labelEn}.`,
+        ),
         segment: "launch",
         origin: "theoretical",
       });
     }
     if (done.length === TASKS.length) {
       causes.push({
-        text: "Las dos reparaciones se hicieron dentro de las ventanas de comunicación.",
+        text: this.L(
+          "Las dos reparaciones se hicieron dentro de las ventanas de comunicación.",
+          "Both repairs were done within the communication windows.",
+        ),
         segment: "ground",
         origin: "theoretical",
       });
@@ -329,9 +408,26 @@ export class Level1 extends Level {
     );
     const advice: string[] = [];
     if (efficiency < 0.9 && this.docked)
-      advice.push("Calcula el delta-V de Hohmann antes de encender: menos encendidos, menos combustible.");
-    if (missingTools.length) advice.push("Revisa qué herramienta pide cada tarea antes de llenar la bodega.");
-    if (!this.docked) advice.push("Sube en una sola transferencia y corrige con encendidos pequeños.");
+      advice.push(
+        this.L(
+          "Calcula el delta-V de Hohmann antes de encender: menos encendidos, menos combustible.",
+          "Work out the Hohmann delta-V before burning: fewer burns, less fuel.",
+        ),
+      );
+    if (missingTools.length)
+      advice.push(
+        this.L(
+          "Revisa qué herramienta pide cada tarea antes de llenar la bodega.",
+          "Check which tool each task needs before filling the cargo bay.",
+        ),
+      );
+    if (!this.docked)
+      advice.push(
+        this.L(
+          "Sube en una sola transferencia y corrige con encendidos pequeños.",
+          "Climb in a single transfer and correct with small burns.",
+        ),
+      );
     return {
       scenario: "level1-repair",
       outcome,
@@ -351,14 +447,17 @@ export class Level1 extends Level {
       comparisons: [
         {
           mission: "Hubble SM4 (STS-125, 2009)",
-          metric: "Caminatas espaciales",
-          ours: `${done.length} tareas`,
-          theirs: `${value(missions, "hubble_sm4_spacewalks")} caminatas`,
+          metric: this.L("Caminatas espaciales", "Spacewalks"),
+          ours: this.L(`${done.length} tareas`, `${done.length} tasks`),
+          theirs: this.L(
+            `${value(missions, "hubble_sm4_spacewalks")} caminatas`,
+            `${value(missions, "hubble_sm4_spacewalks")} spacewalks`,
+          ),
           source: sourceOf(missions, "hubble_sm4_spacewalks"),
         },
         {
           mission: "Hubble",
-          metric: "Altitud de servicio",
+          metric: this.L("Altitud de servicio", "Servicing altitude"),
           ours: `${round(this.state.altitude_km ?? 0)} km`,
           theirs: `${value(missions, "hubble_altitude_km")} km`,
           source: sourceOf(missions, "hubble_altitude_km"),
@@ -367,3 +466,5 @@ export class Level1 extends Level {
     };
   }
 }
+
+const cap1 = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);

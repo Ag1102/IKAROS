@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import { tr } from "../i18n";
 
-const STEPS = ["T−3", "T−2", "T−1", "DESPEGUE"];
+const STEPS = ["T−3", "T−2", "T−1", "LIFTOFF"];
 const STEP_MS = 650;
 
 /**
@@ -34,7 +35,7 @@ export function useLaunchSequence(phase: string, title: string) {
     <div className={`launch-seq${last ? " go" : ""}`} role="status" aria-live="assertive">
       <span className="launch-title">{title}</span>
       <span key={step} className="launch-count">
-        {STEPS[step]}
+        {last ? tr("DESPEGUE", "LIFTOFF") : STEPS[step]}
       </span>
       <span className="launch-ring" key={`r${step}`} aria-hidden="true" />
     </div>

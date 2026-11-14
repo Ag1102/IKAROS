@@ -2,7 +2,7 @@
 import type { SimState, Simulation } from "@ikaros/contracts";
 import { createSimulation } from "./index";
 import * as physics from "./physics";
-import { scenario } from "./data";
+import { scenario, type Lang } from "./data";
 import paperJson from "../../../data/paper-solar-probe-plus.json";
 import constants from "../../../data/constants.json";
 
@@ -46,6 +46,7 @@ export interface PilotOptions {
   cme?: string;
   downlink?: boolean;
   seed?: number;
+  lang?: Lang;
   onStep?: (s: SimState) => void;
 }
 
@@ -56,7 +57,7 @@ export const REAL_CONFIG = {
 };
 
 export function playLevel3(opts: PilotOptions = {}) {
-  const sim = createSimulation();
+  const sim = createSimulation({ lang: opts.lang });
   let s = sim.load("level3-ikaros", opts.seed ?? 7);
   pickAll(sim, opts.picks ?? REAL_CONFIG);
   s = sim.act({ type: "launch" });
@@ -99,9 +100,14 @@ export function playLevel3(opts: PilotOptions = {}) {
 }
 
 export function playLevel1(
-  opts: { picks?: Record<string, string>; aim_m_s?: number; onStep?: (s: SimState) => void } = {},
+  opts: {
+    picks?: Record<string, string>;
+    aim_m_s?: number;
+    lang?: Lang;
+    onStep?: (s: SimState) => void;
+  } = {},
 ) {
-  const sim = createSimulation();
+  const sim = createSimulation({ lang: opts.lang });
   let s = sim.load("level1-repair", 1);
   pickAll(sim, opts.picks ?? { panel: "panel-spare", antenna: "antenna-spare", toolkit: "toolkit-std" });
   s = sim.act({ type: "launch" });

@@ -8,7 +8,7 @@ import type {
   SimEvent,
   SimState,
 } from "@ikaros/contracts";
-import { scenario } from "../data";
+import { scenario, sourceText, type Lang } from "../data";
 import { createRng } from "../rng";
 
 /** Paso interno máximo, s de misión. Un step() largo se parte en pasos de este tamaño. */
@@ -24,8 +24,12 @@ export abstract class Level {
   private eventSeq = 0;
   private lastWarning = new Map<string, number>();
 
-  constructor(id: ScenarioId, seed: number) {
-    this.def = scenario(id);
+  readonly lang: Lang;
+
+  constructor(id: ScenarioId, seed: number, lang: Lang = "es") {
+    // El idioma va antes que initialState(): ese método ya emite el primer evento.
+    this.lang = lang;
+    this.def = scenario(id, lang);
     this.rng = createRng(seed);
     this.state = this.initialState();
   }
@@ -35,6 +39,11 @@ export abstract class Level {
   protected abstract tick(dt_s: number): void;
   protected abstract onAction(action: PlayerAction): void;
   abstract report(): MissionReport;
+
+  /** Texto en el idioma de la partida. */
+  protected L(es: string, en: string): string {
+    return this.lang === "en" ? en : es;
+  }
 
   param(key: string): number {
     const p = this.def.params[key];
@@ -107,7 +116,7 @@ export abstract class Level {
 
   protected select(slot: string, componentId: string): void {
     if (this.state.phase !== "hangar") {
-      this.info("El diseño se cierra al lanzar.", "warning");
+      this.info(this.L("El diseño se cierra al lanzar.", "The design is locked at launch."), "warning");
       return;
     }
     if (!this.def.slots.some((s) => s.id === slot)) return;
@@ -129,7 +138,7 @@ export abstract class Level {
   protected missingRequired(): string[] {
     return this.def.slots
       .filter((s) => s.required && !this.state.selected?.[s.id])
-      .map((s) => `Falta elegir: ${s.label}.`);
+      .map((s) => this.L(`Falta elegir: ${s.label}.`, `Still to choose: ${s.label}.`));
   }
 
   // ---- Eventos ----
@@ -149,7 +158,7 @@ export abstract class Level {
     }
     const ev: SimEvent = { id: `${this.def.id}-${++this.eventSeq}`, at_s: this.t, kind, text };
     if (extra.trigger) ev.trigger = extra.trigger;
-    if (extra.source) ev.source = extra.source;
+    if (extra.source) ev.source = sourceText(extra.source, this.lang);
     if (extra.choices) ev.choices = extra.choices;
     if (extra.deadline_s !== undefined) ev.deadline_s = extra.deadline_s;
     this.state.events.push(ev);

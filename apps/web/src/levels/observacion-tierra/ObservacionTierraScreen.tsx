@@ -14,9 +14,10 @@ import { useHotkey } from "../../hooks/useHotkey";
 import { MODELS } from "../../ships/models";
 import { HangarLayout, focusName } from "../../ui/hangar/HangarLayout";
 import { usePreview } from "../../ships/usePreview";
+import { tr } from "../../i18n";
 
-const SCALES: TimeScale[] = [
-  { value: 0, label: "Pausa" },
+const scales = (): TimeScale[] => [
+  { value: 0, label: tr("Pausa", "Pause") },
   { value: 60, label: "60×" },
   { value: 600, label: "10 min/s" },
   { value: 3600, label: "1 h/s" },
@@ -71,19 +72,21 @@ export function ObservacionTierraScreen({ onExit }: { onExit: () => void }) {
         onCredits={() => setOverlay("credits")}
         onExit={onExit}
         subtitle={def.title}
-        scales={SCALES}
+        scales={scales()}
       />
       <aside className="side">
         <ResourcesPanel state={state} />
         <EventLog events={state.events} />
       </aside>
       <footer className="orbit-note">
-        Tierra y órbita a escala real; satélite con tamaño mínimo para verlo · Línea azul: enlace con la estación
-        terrena · H: paneles
+        {tr(
+          "Tierra y órbita a escala real; satélite con tamaño mínimo para verlo · Línea azul: enlace con la estación terrena · H: paneles",
+          "Earth and orbit to real scale; satellite drawn at a minimum size so you can see it · Blue line: link with the ground station · H: panels",
+        )}
       </footer>
       <aside className="guide-wrap">
         <section className="panel guide" aria-labelledby="ops-h">
-          <h2 id="ops-h">Operación</h2>
+          <h2 id="ops-h">{tr("Operación", "Operations")}</h2>
           {report ? <Report report={report} onRestart={onRestart} /> : <Operations def={def} state={state} />}
           <Assistant events={state.events} />
         </section>
@@ -120,8 +123,11 @@ function HangarPage({
   return (
     <HangarLayout
       levelTitle={def.title}
-      heading="Diseño de la misión"
-      stage="Etapa de diseño: del objetivo científico a los requisitos y el diseño (CML 1 a 4)."
+      heading={tr("Diseño de la misión", "Mission design")}
+      stage={tr(
+        "Etapa de diseño: del objetivo científico a los requisitos y el diseño (CML 1 a 4).",
+        "Design stage: from the science objective to requirements and design (CML 1 to 4).",
+      )}
       briefing={def.briefing}
       objectives={def.objectives}
       model={MODELS.landsat}
@@ -129,36 +135,48 @@ function HangarPage({
       slots={<HangarSlots def={def} state={state} act={act} onPreview={onPreview} />}
       stats={[
         cap !== undefined
-          ? { label: "Masa / capacidad del lanzador", value: mass, max: cap, unit: "kg", warn: mass > cap }
-          : { label: "Masa", value: mass, unit: "kg" },
+          ? {
+              label: tr("Masa / capacidad del lanzador", "Mass / launcher capacity"),
+              value: mass,
+              max: cap,
+              unit: "kg",
+              warn: mass > cap,
+            }
+          : { label: tr("Masa", "Mass"), value: mass, unit: "kg" },
         {
-          label: "Presupuesto restante",
+          label: tr("Presupuesto restante", "Budget left"),
           value: budget,
           max: param(def, "budget_usd_m"),
           unit: "M USD",
           warn: budget < 0,
         },
-        { label: "Potencia al sol / consumo", value: gen, max: Math.max(load, 1), unit: "W", warn: gen < load },
-        { label: "Batería", value: state.battery_capacity_wh ?? 0, unit: "Wh" },
+        {
+          label: tr("Potencia al sol / consumo", "Power in sunlight / load"),
+          value: gen,
+          max: Math.max(load, 1),
+          unit: "W",
+          warn: gen < load,
+        },
+        { label: tr("Batería", "Battery"), value: state.battery_capacity_wh ?? 0, unit: "Wh" },
       ]}
       extra={
         <>
-          <h3 className="hstat-title">Órbita</h3>
-          <div className="orbit-preview" aria-label="Órbita elegida">
+          <h3 className="hstat-title">{tr("Órbita", "Orbit")}</h3>
+          <div className="orbit-preview" aria-label={tr("Órbita elegida", "Chosen orbit")}>
             <OrbitPreview2 altitude_km={state.altitude_km ?? null} inclination_deg={state.inclination_deg ?? 0} />
             <span className="preview-note">
               {state.altitude_km === undefined
-                ? "Elige una órbita."
-                : `${formatNumber(state.altitude_km)} km · inclinación ${formatNumber(state.inclination_deg ?? 0, 1)}°. Escala real.`}
+                ? tr("Elige una órbita.", "Choose an orbit.")
+                : `${formatNumber(state.altitude_km)} km · ${tr("inclinación", "inclination")} ${formatNumber(state.inclination_deg ?? 0, 1)}°. ${tr("Escala real.", "Real scale.")}`}
             </span>
           </div>
           <p className="note">
-            A la heliosíncrona el lanzador lleva el {formatNumber(param(def, "sso_capacity_factor") * 100)} % de su
-            carga.
+            {tr("A la heliosíncrona el lanzador lleva el", "To the sun-synchronous orbit the launcher carries")}{" "}
+            {formatNumber(param(def, "sso_capacity_factor") * 100)} % {tr("de su carga.", "of its payload.")}
           </p>
         </>
       }
-      problems={blocked.map((e) => e.text.replace(/^Lanzamiento bloqueado: /, ""))}
+      problems={blocked.map((e) => e.text.replace(/^(Lanzamiento bloqueado|Launch blocked): /, ""))}
       onLaunch={() => {
         setAttemptFrom(state.events.length);
         act({ type: "launch" });
@@ -184,39 +202,43 @@ function Operations({ def, state }: { def: ScenarioDefinition; state: SimState }
       <table className="mini">
         <tbody>
           <tr>
-            <th>Órbita</th>
+            <th>{tr("Órbita", "Orbit")}</th>
             <td className="num">
               {formatNumber(state.altitude_km ?? 0)} km · {formatNumber(state.inclination_deg ?? 0, 1)}°
             </td>
           </tr>
           <tr>
-            <th>Luz</th>
-            <td className="num">{inEclipse ? "Eclipse (sin sol)" : "Al sol"}</td>
+            <th>{tr("Luz", "Light")}</th>
+            <td className="num">
+              {inEclipse ? tr("Eclipse (sin sol)", "Eclipse (no sun)") : tr("Al sol", "In sunlight")}
+            </td>
           </tr>
           <tr>
-            <th>Estación terrena</th>
-            <td className="num">{state.comm_window_open ? "Pase abierto" : "Sin enlace"}</td>
+            <th>{tr("Estación terrena", "Ground station")}</th>
+            <td className="num">
+              {state.comm_window_open ? tr("Pase abierto", "Pass open") : tr("Sin enlace", "No link")}
+            </td>
           </tr>
           <tr className={bat <= 0 ? "neg" : ""}>
-            <th>Batería</th>
+            <th>{tr("Batería", "Battery")}</th>
             <td className="num">
               {formatNumber(bat)} / {formatNumber(batCap)} Wh
             </td>
           </tr>
           <tr className={state.resources.data_stored_mb >= storage ? "neg" : ""}>
-            <th>Memoria</th>
+            <th>{tr("Memoria", "Memory")}</th>
             <td className="num">
               {formatNumber(state.resources.data_stored_mb)} / {formatNumber(storage)} MB
             </td>
           </tr>
           <tr>
-            <th>Tiempo restante</th>
+            <th>{tr("Tiempo restante", "Time left")}</th>
             <td className="num">{formatElapsed(left)}</td>
           </tr>
         </tbody>
       </table>
       <p>
-        Datos en tierra:{" "}
+        {tr("Datos en tierra:", "Data on the ground:")}{" "}
         <span className="num">
           {formatNumber(sent)} / {formatNumber(goal)} MB
         </span>
@@ -225,7 +247,10 @@ function Operations({ def, state }: { def: ScenarioDefinition; state: SimState }
         <div style={{ width: `${Math.min(100, (sent / goal) * 100)}%` }} />
       </div>
       <p className="note">
-        En la operación no hay mandos: el resultado depende del diseño. Observa los eclipses, los pases y la memoria.
+        {tr(
+          "En la operación no hay mandos: el resultado depende del diseño. Observa los eclipses, los pases y la memoria.",
+          "There are no controls during operations: the result depends on the design. Watch the eclipses, the passes and the memory.",
+        )}
       </p>
     </>
   );

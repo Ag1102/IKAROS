@@ -1,0 +1,62 @@
+[
+  {
+    "term": "Delta-V (Δv)",
+    "definition": "Change in velocity a spacecraft can produce with its propellant. It is the currency of maneuvers.",
+    "source": "Tsiolkovsky rocket equation; NASA Glenn, Beginner's Guide to Rockets"
+  },
+  {
+    "term": "Hohmann transfer",
+    "definition": "Two-burn maneuver between two circular orbits that uses the minimum Δv.",
+    "source": "NASA JPL, Basics of Space Flight"
+  },
+  {
+    "term": "Perihelion",
+    "definition": "Point of the orbit closest to the Sun.",
+    "source": "NASA JPL, Basics of Space Flight"
+  },
+  {
+    "term": "R☉ (solar radius)",
+    "definition": "Unit of distance equal to the radius of the Sun, 696,000 km.",
+    "source": "Landis et al., AIAA 2008-5712, p. 2"
+  },
+  {
+    "term": "AU (astronomical unit)",
+    "definition": "Mean Earth–Sun distance, 149,597,870.7 km.",
+    "source": "IAU 2012, Resolution B2"
+  },
+  {
+    "term": "AM0",
+    "definition": "Intensity of sunlight outside the atmosphere at 1 AU: 1,367 W/m².",
+    "source": "Landis et al., AIAA 2008-5712, p. 1"
+  },
+  {
+    "term": "Venus flyby",
+    "definition": "Close pass by Venus that uses its gravity to change the orbit without spending propellant.",
+    "source": "NASA, Parker Solar Probe"
+  },
+  {
+    "term": "CME",
+    "definition": "Coronal mass ejection: a cloud of plasma and magnetic field launched into space by the Sun.",
+    "source": "NASA, Space Weather"
+  },
+  {
+    "term": "Radiator",
+    "definition": "Surface that emits heat into space. Its capacity grows with T⁴ (Stefan-Boltzmann law).",
+    "source": "Landis et al., AIAA 2008-5712, eq. 2"
+  },
+  {
+    "term": "Communication window",
+    "definition": "Time during which the spacecraft sees a ground station and can send data.",
+    "source": "NASA, CubeSat 101"
+  },
+  {
+    "term": "Sun-synchronous orbit",
+    "definition": "Near-polar orbit that passes over each latitude at the same local solar time.",
+    "source": "NASA Earth Observatory, Catalog of Earth Satellite Orbits"
+  },
+  {
+    "term": "⚗ Theoretical",
+    "definition": "Mark for technologies and figures invented for the game. They are not NASA data.",
+    "source": "Ikaros team"
+  }
+]

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import type { MissionReport, MissionSegment } from "@ikaros/contracts";
 import { formatNumber } from "./format";
+import { tr } from "../i18n";
 
 /** Cuenta animada hasta `target` en ~1,2 s (inmediata si se pide menos movimiento). */
 function useCountUp(target: number) {
@@ -25,14 +26,19 @@ function useCountUp(target: number) {
   return value;
 }
 
-const SEGMENTS: { id: MissionSegment; label: string }[] = [
-  { id: "launch", label: "Lanzamiento" },
-  { id: "space", label: "Espacio" },
-  { id: "ground", label: "Tierra" },
-  { id: "user", label: "Usuario" },
+const segments = (): { id: MissionSegment; label: string }[] => [
+  { id: "launch", label: tr("Lanzamiento", "Launch") },
+  { id: "space", label: tr("Espacio", "Space") },
+  { id: "ground", label: tr("Tierra", "Ground") },
+  { id: "user", label: tr("Usuario", "User") },
 ];
 
-const OUTCOME = { success: "MISIÓN CUMPLIDA", partial: "MISIÓN PARCIAL", failure: "MISIÓN FALLIDA" } as const;
+const outcome = (o: MissionReport["outcome"]) =>
+  ({
+    success: tr("MISIÓN CUMPLIDA", "MISSION ACCOMPLISHED"),
+    partial: tr("MISIÓN PARCIAL", "PARTIAL MISSION"),
+    failure: tr("MISIÓN FALLIDA", "MISSION FAILED"),
+  })[o];
 
 /**
  * Informe post-misión del motor, ordenado por los cuatro segmentos de una misión NASA. Se abre
@@ -53,10 +59,10 @@ export function Report({ report, onRestart }: { report: MissionReport; onRestart
     return (
       <div className="report-mini">
         <p className={report.outcome === "failure" ? "neg-text" : "ok-text"}>
-          {OUTCOME[report.outcome]} · <span className="num">{formatNumber(report.score)}</span>
+          {outcome(report.outcome)} · <span className="num">{formatNumber(report.score)}</span>
         </p>
         <button className="primary" onClick={() => setOpen(true)}>
-          Ver informe
+          {tr("Ver informe", "View report")}
         </button>
       </div>
     );
@@ -64,21 +70,21 @@ export function Report({ report, onRestart }: { report: MissionReport; onRestart
   return createPortal(
     <div className={`debrief debrief-${report.outcome}`} role="dialog" aria-modal="true" aria-labelledby="debrief-h">
       <div className="report">
-        <p className="debrief-kicker">Informe post-misión</p>
+        <p className="debrief-kicker">{tr("Informe post-misión", "Post-mission report")}</p>
         <h2 id="debrief-h" className="debrief-outcome">
-          {OUTCOME[report.outcome]}
+          {outcome(report.outcome)}
         </h2>
         <p className="debrief-score">
-          Puntuación <span className="num">{formatNumber(score)}</span>
+          {tr("Puntuación", "Score")} <span className="num">{formatNumber(score)}</span>
         </p>
-        <ul className="segments" aria-label="Informe por segmentos de misión">
-          {SEGMENTS.map((seg, i) => {
+        <ul className="segments" aria-label={tr("Informe por segmentos de misión", "Report by mission segment")}>
+          {segments().map((seg, i) => {
             const causes = report.causes.filter((c) => (c.segment ?? "space") === seg.id);
             return (
               <li key={seg.id} style={{ animationDelay: `${300 + i * 120}ms` }}>
                 <b>{seg.label}</b>
                 {causes.length === 0 ? (
-                  <span className="note">Sin observaciones.</span>
+                  <span className="note">{tr("Sin observaciones.", "No remarks.")}</span>
                 ) : (
                   causes.map((c, i) => (
                     <span key={i} className="cause">
@@ -94,7 +100,7 @@ export function Report({ report, onRestart }: { report: MissionReport; onRestart
         </ul>
         {report.advice && report.advice.length > 0 && (
           <>
-            <h3 className="sub">Qué cambiar la próxima vez</h3>
+            <h3 className="sub">{tr("Qué cambiar la próxima vez", "What to change next time")}</h3>
             <ul className="causes">
               {report.advice.map((a) => (
                 <li key={a}>{a}</li>
@@ -104,13 +110,13 @@ export function Report({ report, onRestart }: { report: MissionReport; onRestart
         )}
         {report.comparisons && report.comparisons.length > 0 && (
           <>
-            <h3 className="sub">Comparación con misiones reales</h3>
+            <h3 className="sub">{tr("Comparación con misiones reales", "Comparison with real missions")}</h3>
             <table className="mini compare">
               <thead>
                 <tr>
-                  <th>Misión</th>
-                  <th>Dato</th>
-                  <th>Tu misión</th>
+                  <th>{tr("Misión", "Mission")}</th>
+                  <th>{tr("Dato", "Metric")}</th>
+                  <th>{tr("Tu misión", "Your mission")}</th>
                   <th>Real</th>
                 </tr>
               </thead>
@@ -129,10 +135,10 @@ export function Report({ report, onRestart }: { report: MissionReport; onRestart
         )}
         <div className="debrief-actions">
           <button className="launch-cta" onClick={onRestart}>
-            Reiniciar nivel
+            {tr("Reiniciar nivel", "Restart level")}
           </button>
           <button className="scale-btn" onClick={() => setOpen(false)}>
-            Ver la escena
+            {tr("Ver la escena", "View the scene")}
           </button>
         </div>
       </div>

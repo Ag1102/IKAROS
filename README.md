@@ -56,6 +56,18 @@ Fórmulas: Hohmann y vis-viva, Tsiolkovsky, Kepler, ec. 1 y 2 de Landis et al. (
 Las pruebas (`tests/`) comprueban los casos del paper: 510 × AM0 ≈ 700 kW/m², ~34 cm² dan ≥ 482 W,
 ~10 h dentro de 10 R☉, matriz principal a 74° bajo 180 °C.
 
+## Idiomas (español e inglés)
+
+El menú tiene un selector ES/EN (también `?lang=en` en la URL); la elección se recuerda en el navegador.
+Los números son los mismos en ambos idiomas; solo cambian los textos.
+
+- Interfaz (`apps/web`): `tr("texto en español", "English text")` de `src/i18n.ts`.
+- Motor: `createSimulation({ lang: "en" })`; dentro de cada nivel, `this.L("español", "English")`.
+- Escenarios: los textos en inglés van en `data/en/scenarios/<id>.json`, por id de ranura y componente.
+- Asistente y glosario: `content/en/assistant.json` (por `id`) y `content/en/glossary.json`.
+- Fuentes citadas en español: su traducción va en `data/en/sources.json`.
+
+`tests/i18n.test.ts` falla si un texto nuevo queda sin versión en inglés.
 
 ## Git
 

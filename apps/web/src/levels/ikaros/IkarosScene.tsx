@@ -11,6 +11,7 @@ import { Bloom } from "../../scene/space/Bloom";
 import { displaySize } from "../../scene/screenSize";
 import { anomalyFromDistance, ellipsePoints, orbitFromApsides, type HelioOrbit } from "../../sim/kepler";
 import { C, PAPER } from "../../data/sources";
+import { tr } from "../../i18n";
 import { MISSION_EPOCH_DAY, PLANETS, planetAt, planetOrbit, type Planet } from "./planets";
 
 /**
@@ -151,7 +152,7 @@ function PlanetBody({ planet, getDay }: { planet: Planet; getDay: () => number }
         </Suspense>
       </mesh>
       <Label position={[0, 0, 0]} offsetY={-16}>
-        {planet.name}
+        {planetName(planet.name)}
       </Label>
     </group>
   );
@@ -193,8 +194,8 @@ function ProbeOrbit({
   return (
     <>
       <Ring points={pts} color={color} opacity={0.8} />
-      {labels && <Label position={[peri.x, peri.y, peri.z]}>Perihelio</Label>}
-      {labels && <Label position={[aph.x, aph.y, aph.z]}>Afelio</Label>}
+      {labels && <Label position={[peri.x, peri.y, peri.z]}>{tr("Perihelio", "Perihelion")}</Label>}
+      {labels && <Label position={[aph.x, aph.y, aph.z]}>{tr("Afelio", "Aphelion")}</Label>}
     </>
   );
 }
@@ -329,4 +330,10 @@ export function OrbitPreview({ start, final }: { start: HelioOrbit; final: Helio
       <ProbeOrbit orbit={final} />
     </Canvas>
   );
+}
+
+/** Nombre del planeta en el idioma actual (planets.ts guarda el nombre en español). */
+function planetName(name: string): string {
+  const en: Record<string, string> = { Mercurio: "Mercury", Venus: "Venus", Tierra: "Earth" };
+  return tr(name, en[name] ?? name);
 }
