@@ -1,20 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 import type { PlayerAction, ScenarioDefinition, SimState } from "@ikaros/contracts";
 import { physics } from "@ikaros/sim";
-import { Scene } from "../scene/Scene";
-import { useSimulation } from "../sim/useSimulation";
-import { C } from "../data/sources";
-import { EventLog, ResourcesPanel, TopBar } from "../ui/Panels";
-import { HangarSlots } from "../ui/HangarSlots";
-import { Assistant } from "../ui/Assistant";
-import { Report } from "../ui/Report";
-import { Overlay, type OverlayKind } from "../ui/Overlay";
-import { formatNumber } from "../ui/format";
-import { useHotkey } from "../hooks/useHotkey";
-import { ShipPreview } from "../ships/ShipPreview";
-import { usePreview } from "../ships/usePreview";
-import { phaseLabel } from "../ui/Panels";
-import { tr } from "../i18n";
+import { Scene } from "../../scene/Scene";
+import { useSimulation } from "../../sim/useSimulation";
+import { C } from "../../data/sources";
+import { EventLog, ResourcesPanel, TopBar } from "../../ui/Panels";
+import { HangarSlots } from "../../ui/HangarSlots";
+import { Assistant } from "../../ui/Assistant";
+import { Report } from "../../ui/Report";
+import { useLaunchSequence } from "../../ui/LaunchSequence";
+import { Overlay, type OverlayKind } from "../../ui/Overlay";
+import { formatNumber } from "../../ui/format";
+import { useHotkey } from "../../hooks/useHotkey";
+import { MODELS } from "../../ships/models";
+import { HangarLayout, focusName } from "../../ui/hangar/HangarLayout";
+import { usePreview } from "../../ships/usePreview";
+import { phaseLabel } from "../../ui/Panels";
+import { tr } from "../../i18n";
 
 const STEPS = ["hangar", "transfer", "repair", "complete"];
 
@@ -47,13 +49,14 @@ function Stepper({ phase }: { phase: string }) {
   );
 }
 
-export function Level1Screen({ onExit }: { onExit: () => void }) {
+export function ServicioOrbitaScreen({ onExit }: { onExit: () => void }) {
   const [timeScale, setTimeScale] = useState(60);
   const [dv, setDv] = useState(0);
   const [hideUi, setHideUi] = useState(false);
   const [overlay, setOverlay] = useState<OverlayKind>(null);
   const [follow, setFollow] = useState(false);
   const { state, latest, act, restart, report, def } = useSimulation("level1-repair", timeScale);
+  const launchSeq = useLaunchSequence(state.phase, def.title);
 
   useHotkey("h", () => setHideUi((v) => !v));
 
@@ -72,10 +75,19 @@ export function Level1Screen({ onExit }: { onExit: () => void }) {
     restart();
   };
 
+  if (state.phase === "hangar") {
+    return (
+      <>
+        <HangarPage def={def} state={state} act={act} onExit={onExit} onOverlay={setOverlay} />
+        <Overlay kind={overlay} onClose={() => setOverlay(null)} />
+      </>
+    );
+  }
+
   return (
     <div className={hideUi ? "shell hide-ui" : "shell"}>
       <div className="viewport">
-        <Scene latest={latest} docked={docked} previewAltitude={preview} follow={follow} selected={state.selected} />
+        <Scene latest={latest} docked={docked} previewAltitude={preview} follow={follow} />
       </div>
       <TopBar
         state={state}
@@ -103,7 +115,6 @@ export function Level1Screen({ onExit }: { onExit: () => void }) {
         <section className="panel guide" aria-labelledby="guide-h">
           <h2 id="guide-h">{tr("Guía de misión", "Mission guide")}</h2>
           <Stepper phase={state.phase} />
-          {state.phase === "hangar" && <HangarStep def={def} state={state} act={act} />}
           {state.phase === "transfer" && (
             <TransferStep
               state={state}
@@ -122,56 +133,80 @@ export function Level1Screen({ onExit }: { onExit: () => void }) {
           <Assistant events={state.events} />
         </section>
       </aside>
+      {launchSeq}
       <Overlay kind={overlay} onClose={() => setOverlay(null)} />
     </div>
   );
 }
 
-function HangarStep({ def, state, act }: { def: ScenarioDefinition; state: SimState; act: (a: PlayerAction) => void }) {
+function HangarPage({
+  def,
+  state,
+  act,
+  onExit,
+  onOverlay,
+}: {
+  def: ScenarioDefinition;
+  state: SimState;
+  act: (a: PlayerAction) => void;
+  onExit: () => void;
+  onOverlay: (k: OverlayKind) => void;
+}) {
+  const [attemptFrom, setAttemptFrom] = useState<number | null>(null);
+  const blocked =
+    attemptFrom === null
+      ? []
+      : state.events.slice(attemptFrom).filter((e) => e.kind === "warning" && /bloqueado|blocked/i.test(e.text));
   const cargo = def.components.filter((c) => state.selected?.[c.slot] === c.id).reduce((m, c) => m + c.mass_kg, 0);
   const cap = state.mass_capacity_kg ?? 0;
+  const budget = state.budget_remaining_usd_m ?? 0;
   const { preview, highlight, onPreview } = usePreview(state.selected);
+
   return (
-    <>
-      {def.briefing.map((b) => (
-        <p key={b}>{b}</p>
-      ))}
-      <ul className="causes">
-        {def.objectives.map((o) => (
-          <li key={o}>{o}</li>
-        ))}
-      </ul>
-      <p className="stage">
-        {tr("Etapa de diseño: estudio de compromisos (CML 3).", "Design stage: trade study (CML 3).")}
-      </p>
-      <div className="ship-preview" aria-label={tr("Tu vehículo de servicio", "Your servicing vehicle")}>
-        <ShipPreview kind="servicer" selected={preview} highlight={highlight} />
-        <span className="preview-note">
+    <HangarLayout
+      levelTitle={def.title}
+      heading={tr("Carga del transbordador", "Shuttle cargo")}
+      stage={tr("Etapa de diseño: estudio de compromisos (CML 3).", "Design stage: trade study (CML 3).")}
+      briefing={def.briefing}
+      objectives={def.objectives}
+      model={MODELS.shuttle}
+      focus={focusName(def, preview, highlight)}
+      slots={<HangarSlots def={def} state={state} act={act} onPreview={onPreview} />}
+      stats={[
+        { label: tr("Carga en bodega", "Cargo in bay"), value: cargo, max: cap, unit: "kg", warn: cargo > cap },
+        {
+          label: tr("Δv disponible", "Available Δv"),
+          value: state.delta_v_remaining_m_s ?? 0,
+          digits: 1,
+          unit: "m/s",
+        },
+        {
+          label: tr("Presupuesto restante", "Budget left"),
+          value: budget,
+          max: def.params.budget_usd_m?.value ?? budget,
+          unit: "M USD",
+          warn: budget < 0,
+        },
+      ]}
+      extra={
+        <p className="note">
           {tr(
-            "Tu vehículo de servicio · pasa el ratón por una pieza para verla montada",
-            "Your servicing vehicle · hover over a part to see it mounted",
+            "Cada kilo en la bodega reduce el Δv (ecuación de Tsiolkovsky). Lleva solo lo que piden las reparaciones.",
+            "Every kilogram in the bay reduces Δv (Tsiolkovsky equation). Carry only what the repairs need.",
           )}
-        </span>
-      </div>
-      <HangarSlots def={def} state={state} act={act} onPreview={onPreview} />
-      <table className="mini">
-        <tbody>
-          <tr className={cargo > cap ? "neg" : ""}>
-            <th>{tr("Carga", "Cargo")}</th>
-            <td className="num">
-              {formatNumber(cargo)} / {formatNumber(cap)} kg
-            </td>
-          </tr>
-          <tr>
-            <th>{tr("Δv disponible", "Available Δv")}</th>
-            <td className="num">{formatNumber(state.delta_v_remaining_m_s ?? 0, 1)} m/s</td>
-          </tr>
-        </tbody>
-      </table>
-      <button className="primary" onClick={() => act({ type: "launch" })}>
-        {tr("Lanzar", "Launch")}
-      </button>
-    </>
+        </p>
+      }
+      problems={blocked.map((e) => e.text)}
+      launchLabel={tr("Lanzar", "Launch")}
+      onLaunch={() => {
+        setAttemptFrom(state.events.length);
+        act({ type: "launch" });
+      }}
+      assistant={<Assistant events={state.events} max={1} />}
+      onExit={onExit}
+      onGlossary={() => onOverlay("glossary")}
+      onCredits={() => onOverlay("credits")}
+    />
   );
 }
 

@@ -1,14 +1,17 @@
 import { Suspense, useEffect, useMemo, useRef, useState, type MutableRefObject, type ReactNode } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Html, Stars, useGLTF } from "@react-three/drei";
+import { Html, Stars, useGLTF, useTexture } from "@react-three/drei";
 import * as THREE from "three";
 import type { SimState } from "@ikaros/contracts";
-import { FollowControls } from "../scene/FollowControls";
-import { Spacecraft, matchesParker } from "../ships/Spacecraft";
-import { displaySize } from "../scene/screenSize";
-import { anomalyFromDistance, ellipsePoints, orbitFromApsides, type HelioOrbit } from "../sim/kepler";
-import { C, PAPER } from "../data/sources";
-import { tr } from "../i18n";
+import { FollowControls } from "../../scene/FollowControls";
+import { MODELS } from "../../ships/models";
+import { Sun as AnimatedSun, SUN_RADIUS as SUN_MODEL_RADIUS } from "../../scene/space/Sun";
+import { Sky } from "../../scene/space/Sky";
+import { Bloom } from "../../scene/space/Bloom";
+import { displaySize } from "../../scene/screenSize";
+import { anomalyFromDistance, ellipsePoints, orbitFromApsides, type HelioOrbit } from "../../sim/kepler";
+import { C, PAPER } from "../../data/sources";
+import { tr } from "../../i18n";
 import { MISSION_EPOCH_DAY, PLANETS, planetAt, planetOrbit, type Planet } from "./planets";
 
 /**
@@ -18,9 +21,9 @@ import { MISSION_EPOCH_DAY, PLANETS, planetAt, planetOrbit, type Planet } from "
 const U = 1e6;
 const AU = C.au / U;
 const SUN_RADIUS = C.sunRadius / U;
-const PROBE_URL = "/models/parker-solar-probe.glb";
+const PROBE_URL = MODELS.parker.url;
 /** Envergadura de la sonda, km (unos 3 m). */
-const PROBE_SIZE_KM = 0.003;
+const PROBE_SIZE_KM = MODELS.parker.size_km;
 // Tamaños mínimos en pantalla (fracción de la distancia a la cámara). Se respeta el orden real
 // de tamaños: el Sol se ve mayor que los planetas, y los planetas mayores que la sonda.
 const SUN_MIN = 0.008;
@@ -94,22 +97,39 @@ function Ring({
   return <primitive object={line} />;
 }
 
+/** Sol animado (granulación, protuberancias, eyecciones) a escala real, o mínima si se ve lejos. */
 function Sun() {
-  const ref = useRef<THREE.Mesh>(null);
+  const ref = useRef<THREE.Group>(null);
   const camera = useThree((st) => st.camera);
   useFrame(() => {
     // Tamaño real cerca; desde lejos, un mínimo para que no desaparezca.
-    if (ref.current) ref.current.scale.setScalar(displaySize(camera, ORIGIN, SUN_RADIUS, SUN_MIN) / SUN_RADIUS);
+    if (ref.current) ref.current.scale.setScalar(displaySize(camera, ORIGIN, SUN_RADIUS, SUN_MIN) / SUN_MODEL_RADIUS);
   });
   return (
     <>
-      <mesh ref={ref}>
-        <icosahedronGeometry args={[SUN_RADIUS, 4]} />
-        <meshBasicMaterial color="#ffc15a" />
-      </mesh>
-      <pointLight position={[0, 0, 0]} intensity={4} decay={0} />
+      <group ref={ref}>
+        <AnimatedSun />
+      </group>
+      <pointLight position={[0, 0, 0]} intensity={3.2} decay={0} />
     </>
   );
+}
+
+const PLANET_TEXTURES: Record<string, string> = {
+  venus: "/textures/venus.jpg",
+  earth: "/textures/earth.jpg",
+};
+
+function PlanetMaterial({ planet }: { planet: Planet }) {
+  const url = PLANET_TEXTURES[planet.id];
+  if (!url) return <meshStandardMaterial color={planet.color} roughness={1} />;
+  return <TexturedMaterial url={url} />;
+}
+
+function TexturedMaterial({ url }: { url: string }) {
+  const map = useTexture(url);
+  map.colorSpace = THREE.SRGBColorSpace;
+  return <meshStandardMaterial map={map} roughness={1} />;
 }
 
 function PlanetBody({ planet, getDay }: { planet: Planet; getDay: () => number }) {
@@ -126,8 +146,10 @@ function PlanetBody({ planet, getDay }: { planet: Planet; getDay: () => number }
   return (
     <group ref={ref}>
       <mesh ref={body}>
-        <icosahedronGeometry args={[1, 2]} />
-        <meshStandardMaterial color={planet.color} flatShading />
+        <sphereGeometry args={[1, 48, 32]} />
+        <Suspense fallback={<meshStandardMaterial color={planet.color} />}>
+          <PlanetMaterial planet={planet} />
+        </Suspense>
       </mesh>
       <Label position={[0, 0, 0]} offsetY={-16}>
         {planetName(planet.name)}
@@ -194,8 +216,8 @@ function useProbePosition(latest: MutableRefObject<SimState>, aphelion_au: numbe
   };
 }
 
-// Si el diseño coincide con Parker Solar Probe se usa el modelo de NASA sin modificar
-// (public/CREDITS.md); si no, la nave armada en el hangar. A escala real no se vería: tamaño mínimo.
+// Modelo de Parker Solar Probe de NASA sin modificar (public/CREDITS.md). A escala real no se
+// vería: tamaño mínimo en pantalla.
 function Probe({
   getPos,
   getEarth,
@@ -207,7 +229,6 @@ function Probe({
   latest: MutableRefObject<SimState>;
   emphasis: boolean;
 }) {
-  const parker = matchesParker(latest.current.selected);
   const group = useRef<THREE.Group>(null);
   const camera = useThree((st) => st.camera);
   const { scene } = useGLTF(PROBE_URL);
@@ -227,22 +248,17 @@ function Probe({
   });
   return (
     <group ref={group}>
-      {parker ? (
-        // lookAt apunta +Z al objetivo; el escudo del modelo de NASA mira hacia −Z: media vuelta.
-        <group rotation={[0, Math.PI, 0]}>
-          <primitive object={model} scale={scale} />
-        </group>
-      ) : (
-        // El diseño propio ya tiene el escudo en +Z.
-        <Spacecraft kind="probe" selected={latest.current.selected} />
-      )}
+      {/* lookAt apunta +Z al objetivo; el escudo del modelo de NASA mira hacia −Z: media vuelta. */}
+      <group rotation={[0, Math.PI, 0]}>
+        <primitive object={model} scale={scale} />
+      </group>
     </group>
   );
 }
 
 useGLTF.preload(PROBE_URL);
 
-export function Level3Scene({
+export function IkarosScene({
   latest,
   follow,
   aphelion_au,
@@ -264,9 +280,12 @@ export function Level3Scene({
 
   return (
     <Canvas camera={{ position: [0, 430, 80], fov: 40, near: 0.01, far: 5000 }} dpr={[1, 2]}>
-      <color attach="background" args={["#05080b"]} />
-      <ambientLight intensity={0.35} />
-      <Stars radius={1500} depth={200} count={2500} factor={6} saturation={0} fade={false} />
+      <color attach="background" args={["#020407"]} />
+      <ambientLight intensity={0.12} />
+      <Suspense fallback={null}>
+        <Sky radius={2500} />
+      </Suspense>
+      <Stars radius={1500} depth={200} count={1500} factor={5} saturation={0} fade={false} />
       <SolarSystem getDay={getDay} />
       <ProbeOrbit orbit={orbit} />
       <Suspense fallback={null}>
@@ -291,6 +310,7 @@ export function Level3Scene({
             .add(new THREE.Vector3(0, 2.5, 0));
         }}
       />
+      <Bloom strength={0.8} threshold={0.9} />
     </Canvas>
   );
 }
@@ -300,8 +320,11 @@ export function OrbitPreview({ start, final }: { start: HelioOrbit; final: Helio
   const getDay = () => MISSION_EPOCH_DAY;
   return (
     <Canvas camera={{ position: [0, 420, 1], fov: 40, near: 1, far: 2000 }} dpr={[1, 2]}>
-      <color attach="background" args={["#070b0e"]} />
-      <ambientLight intensity={0.6} />
+      <color attach="background" args={["#020407"]} />
+      <ambientLight intensity={0.4} />
+      <Suspense fallback={null}>
+        <Sky radius={1500} />
+      </Suspense>
       <SolarSystem getDay={getDay} />
       <ProbeOrbit orbit={start} color="#7d8d96" labels={false} />
       <ProbeOrbit orbit={final} />

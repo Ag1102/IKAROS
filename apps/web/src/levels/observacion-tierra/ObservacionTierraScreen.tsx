@@ -1,18 +1,20 @@
 import { useEffect, useState } from "react";
 import type { PlayerAction, ScenarioDefinition, SimState } from "@ikaros/contracts";
-import { useSimulation } from "../sim/useSimulation";
-import { Level2Scene, OrbitPreview2 } from "../level2/Level2Scene";
-import { orbitGeometry } from "../level2/geometry";
-import { EventLog, ResourcesPanel, TopBar, type TimeScale } from "../ui/Panels";
-import { HangarSlots } from "../ui/HangarSlots";
-import { Report } from "../ui/Report";
-import { Assistant } from "../ui/Assistant";
-import { Overlay, type OverlayKind } from "../ui/Overlay";
-import { formatElapsed, formatNumber } from "../ui/format";
-import { useHotkey } from "../hooks/useHotkey";
-import { ShipPreview } from "../ships/ShipPreview";
-import { usePreview } from "../ships/usePreview";
-import { tr } from "../i18n";
+import { useSimulation } from "../../sim/useSimulation";
+import { ObservacionTierraScene, OrbitPreview2 } from "./ObservacionTierraScene";
+import { orbitGeometry } from "./geometry";
+import { EventLog, ResourcesPanel, TopBar, type TimeScale } from "../../ui/Panels";
+import { HangarSlots } from "../../ui/HangarSlots";
+import { Report } from "../../ui/Report";
+import { useLaunchSequence } from "../../ui/LaunchSequence";
+import { Assistant } from "../../ui/Assistant";
+import { Overlay, type OverlayKind } from "../../ui/Overlay";
+import { formatElapsed, formatNumber } from "../../ui/format";
+import { useHotkey } from "../../hooks/useHotkey";
+import { MODELS } from "../../ships/models";
+import { HangarLayout, focusName } from "../../ui/hangar/HangarLayout";
+import { usePreview } from "../../ships/usePreview";
+import { tr } from "../../i18n";
 
 const scales = (): TimeScale[] => [
   { value: 0, label: tr("Pausa", "Pause") },
@@ -24,12 +26,13 @@ const scales = (): TimeScale[] => [
 
 const param = (def: ScenarioDefinition, key: string) => def.params[key]?.value ?? 0;
 
-export function Level2Screen({ onExit }: { onExit: () => void }) {
+export function ObservacionTierraScreen({ onExit }: { onExit: () => void }) {
   const [timeScale, setTimeScale] = useState(3600);
   const [hideUi, setHideUi] = useState(false);
   const [overlay, setOverlay] = useState<OverlayKind>(null);
   const [follow, setFollow] = useState(false);
   const { state, latest, act, restart, report, def } = useSimulation("level2-leo", timeScale);
+  const launchSeq = useLaunchSequence(state.phase, def.title);
 
   useHotkey("h", () => setHideUi((v) => !v));
 
@@ -56,7 +59,7 @@ export function Level2Screen({ onExit }: { onExit: () => void }) {
   return (
     <div className={hideUi ? "shell hide-ui" : "shell"}>
       <div className="viewport">
-        <Level2Scene latest={latest} follow={follow} inclination_deg={state.inclination_deg ?? 0} />
+        <ObservacionTierraScene latest={latest} follow={follow} inclination_deg={state.inclination_deg ?? 0} />
       </div>
       <TopBar
         state={state}
@@ -88,6 +91,7 @@ export function Level2Screen({ onExit }: { onExit: () => void }) {
           <Assistant events={state.events} />
         </section>
       </aside>
+      {launchSeq}
       <Overlay kind={overlay} onClose={() => setOverlay(null)} />
     </div>
   );
@@ -113,55 +117,51 @@ function HangarPage({
   const cap = state.mass_capacity_kg;
   const budget = state.budget_remaining_usd_m ?? 0;
   const gen = state.resources.power_generated_w;
-  const { preview, highlight, onPreview } = usePreview(state.selected);
   const load = state.resources.power_consumed_w;
+  const { preview, highlight, onPreview } = usePreview(state.selected);
 
   return (
-    <div className="hangar">
-      <header className="topbar">
-        <div className="brand">
-          <span className="brand-name">IKAROS</span>
-          <span className="brand-sub">{def.title} · Hangar</span>
-        </div>
-        <div />
-        <div />
-        <div />
-        <div className="scale">
-          <button onClick={() => onOverlay("glossary")}>{tr("Glosario", "Glossary")}</button>
-          <button onClick={() => onOverlay("credits")}>{tr("Créditos", "Credits")}</button>
-          <button onClick={onExit}>{tr("Menú", "Menu")}</button>
-        </div>
-      </header>
-
-      <main className="hangar-body">
-        <section className="panel">
-          <h2>{tr("Diseño de la misión", "Mission design")}</h2>
-          <p className="stage">
-            {tr(
-              "Etapa de diseño: del objetivo científico a los requisitos y el diseño (CML 1 a 4).",
-              "Design stage: from the science objective to requirements and design (CML 1 to 4).",
-            )}
-          </p>
-          {def.briefing.map((b) => (
-            <p key={b}>{b}</p>
-          ))}
-          <ul className="causes">
-            {def.objectives.map((o) => (
-              <li key={o}>{o}</li>
-            ))}
-          </ul>
-          <HangarSlots def={def} state={state} act={act} onPreview={onPreview} />
-        </section>
-
-        <section className="panel summary">
-          <h2>{tr("Tu satélite", "Your satellite")}</h2>
-          <div className="ship-preview large" aria-label={tr("Tu satélite", "Your satellite")}>
-            <ShipPreview kind="smallsat" selected={preview} highlight={highlight} />
-            <span className="preview-note">
-              {tr("Pasa el ratón por una pieza para verla montada", "Hover over a part to see it mounted")}
-            </span>
-          </div>
-          <h2>{tr("Órbita", "Orbit")}</h2>
+    <HangarLayout
+      levelTitle={def.title}
+      heading={tr("Diseño de la misión", "Mission design")}
+      stage={tr(
+        "Etapa de diseño: del objetivo científico a los requisitos y el diseño (CML 1 a 4).",
+        "Design stage: from the science objective to requirements and design (CML 1 to 4).",
+      )}
+      briefing={def.briefing}
+      objectives={def.objectives}
+      model={MODELS.landsat}
+      focus={focusName(def, preview, highlight)}
+      slots={<HangarSlots def={def} state={state} act={act} onPreview={onPreview} />}
+      stats={[
+        cap !== undefined
+          ? {
+              label: tr("Masa / capacidad del lanzador", "Mass / launcher capacity"),
+              value: mass,
+              max: cap,
+              unit: "kg",
+              warn: mass > cap,
+            }
+          : { label: tr("Masa", "Mass"), value: mass, unit: "kg" },
+        {
+          label: tr("Presupuesto restante", "Budget left"),
+          value: budget,
+          max: param(def, "budget_usd_m"),
+          unit: "M USD",
+          warn: budget < 0,
+        },
+        {
+          label: tr("Potencia al sol / consumo", "Power in sunlight / load"),
+          value: gen,
+          max: Math.max(load, 1),
+          unit: "W",
+          warn: gen < load,
+        },
+        { label: tr("Batería", "Battery"), value: state.battery_capacity_wh ?? 0, unit: "Wh" },
+      ]}
+      extra={
+        <>
+          <h3 className="hstat-title">{tr("Órbita", "Orbit")}</h3>
           <div className="orbit-preview" aria-label={tr("Órbita elegida", "Chosen orbit")}>
             <OrbitPreview2 altitude_km={state.altitude_km ?? null} inclination_deg={state.inclination_deg ?? 0} />
             <span className="preview-note">
@@ -170,60 +170,22 @@ function HangarPage({
                 : `${formatNumber(state.altitude_km)} km · ${tr("inclinación", "inclination")} ${formatNumber(state.inclination_deg ?? 0, 1)}°. ${tr("Escala real.", "Real scale.")}`}
             </span>
           </div>
-
-          <h2>{tr("Lanzamiento", "Launch")}</h2>
-          <div className="meter">
-            <span>{tr("Masa", "Mass")}</span>
-            <span className="num">
-              {formatNumber(mass)} {cap !== undefined ? `/ ${formatNumber(cap)}` : ""} kg
-            </span>
-            {cap !== undefined && (
-              <div className="bar">
-                <div className={mass > cap ? "over" : ""} style={{ width: `${Math.min(100, (mass / cap) * 100)}%` }} />
-              </div>
-            )}
-          </div>
           <p className="note">
-            {tr(
-              "La capacidad depende del lanzador y de la órbita: a la heliosíncrona se lleva el",
-              "Capacity depends on the launcher and the orbit: to the sun-synchronous orbit it carries",
-            )}{" "}
-            {formatNumber(param(def, "sso_capacity_factor") * 100)} % {tr("de la carga.", "of the payload.")}
+            {tr("A la heliosíncrona el lanzador lleva el", "To the sun-synchronous orbit the launcher carries")}{" "}
+            {formatNumber(param(def, "sso_capacity_factor") * 100)} % {tr("de su carga.", "of its payload.")}
           </p>
-          <div className="meter">
-            <span>{tr("Presupuesto restante", "Budget left")}</span>
-            <span className={budget < 0 ? "num neg-text" : "num"}>{formatNumber(budget)} M USD</span>
-          </div>
-          <div className="meter">
-            <span>{tr("Potencia (sol) / consumo", "Power (sunlight) / load")}</span>
-            <span className={gen < load ? "num neg-text" : "num"}>
-              {formatNumber(gen)} / {formatNumber(load)} W
-            </span>
-          </div>
-          <div className="meter">
-            <span>{tr("Batería", "Battery")}</span>
-            <span className="num">{formatNumber(state.battery_capacity_wh ?? 0)} Wh</span>
-          </div>
-          {blocked.length > 0 && (
-            <ul className="problems">
-              {blocked.map((e) => (
-                <li key={e.id}>{e.text.replace(/^(Lanzamiento bloqueado|Launch blocked): /, "")}</li>
-              ))}
-            </ul>
-          )}
-          <button
-            className="primary"
-            onClick={() => {
-              setAttemptFrom(state.events.length);
-              act({ type: "launch" });
-            }}
-          >
-            {tr("Lanzar misión", "Launch mission")}
-          </button>
-          <Assistant events={state.events} max={1} />
-        </section>
-      </main>
-    </div>
+        </>
+      }
+      problems={blocked.map((e) => e.text.replace(/^(Lanzamiento bloqueado|Launch blocked): /, ""))}
+      onLaunch={() => {
+        setAttemptFrom(state.events.length);
+        act({ type: "launch" });
+      }}
+      assistant={<Assistant events={state.events} max={1} />}
+      onExit={onExit}
+      onGlossary={() => onOverlay("glossary")}
+      onCredits={() => onOverlay("credits")}
+    />
   );
 }
 

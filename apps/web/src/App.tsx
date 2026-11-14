@@ -4,11 +4,16 @@ import { Overlay, type OverlayKind } from "./ui/Overlay";
 import { hasWebGL } from "./ui/webgl";
 import { tr, useLang } from "./i18n";
 
-const Level1Screen = lazy(() => import("./screens/Level1Screen").then((m) => ({ default: m.Level1Screen })));
-const Level2Screen = lazy(() => import("./screens/Level2Screen").then((m) => ({ default: m.Level2Screen })));
-const Level3Screen = lazy(() => import("./screens/Level3Screen").then((m) => ({ default: m.Level3Screen })));
+const ServicioOrbitaScreen = lazy(() =>
+  import("./levels/servicio-orbita/ServicioOrbitaScreen").then((m) => ({ default: m.ServicioOrbitaScreen })),
+);
+const ObservacionTierraScreen = lazy(() =>
+  import("./levels/observacion-tierra/ObservacionTierraScreen").then((m) => ({ default: m.ObservacionTierraScreen })),
+);
+const IkarosScreen = lazy(() => import("./levels/ikaros/IkarosScreen").then((m) => ({ default: m.IkarosScreen })));
 
-type Screen = "menu" | "level1" | "level2" | "level3";
+type Screen = "menu" | "servicio-orbita" | "observacion-tierra" | "ikaros";
+const SCREEN_BY_LEVEL: Record<number, Screen> = { 1: "servicio-orbita", 2: "observacion-tierra", 3: "ikaros" };
 
 export function App() {
   const [screen, setScreen] = useState<Screen>("menu");
@@ -20,9 +25,9 @@ export function App() {
   if (screen !== "menu") {
     return (
       <Suspense fallback={<p className="loading">{tr("Cargando nivel…", "Loading level…")}</p>}>
-        {screen === "level1" && <Level1Screen onExit={exit} />}
-        {screen === "level2" && <Level2Screen onExit={exit} />}
-        {screen === "level3" && <Level3Screen onExit={exit} />}
+        {screen === "servicio-orbita" && <ServicioOrbitaScreen onExit={exit} />}
+        {screen === "observacion-tierra" && <ObservacionTierraScreen onExit={exit} />}
+        {screen === "ikaros" && <IkarosScreen onExit={exit} />}
       </Suspense>
     );
   }
@@ -30,7 +35,7 @@ export function App() {
     <>
       <Menu
         webgl={hasWebGL()}
-        onPlay={(n) => setScreen(n === 1 ? "level1" : n === 2 ? "level2" : "level3")}
+        onPlay={(n) => setScreen(SCREEN_BY_LEVEL[n] ?? "menu")}
         onCredits={() => setOverlay("credits")}
         onGlossary={() => setOverlay("glossary")}
       />
