@@ -31,7 +31,7 @@ export function Sky({ radius = 1000, intensity = 1 }: { radius?: number; intensi
             float clouds = fbm(vDir * 4.0) * 0.5 + 0.5;
             float dust = smoothstep(0.45, 0.75, fbm(vDir * 9.0 + 3.0) * 0.5 + 0.5);
             float glow = band * pow(clouds, 1.8) * (1.0 - dust * 0.8);
-            vec3 col = mix(vec3(0.03, 0.04, 0.07), vec3(0.11, 0.1, 0.13), clouds) * glow;
+            vec3 col = mix(vec3(0.02, 0.025, 0.045), vec3(0.06, 0.055, 0.075), clouds) * glow;
             col += vec3(0.004, 0.006, 0.012);
             gl_FragColor = vec4(col * uIntensity, 1.0);
           }`,

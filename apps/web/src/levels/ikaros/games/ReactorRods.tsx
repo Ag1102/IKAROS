@@ -3,7 +3,7 @@ import { tr } from "../../../i18n";
 import type { Rating } from "../../../game/score";
 import { lesson } from "../../../game/learn";
 import { KeyHint, KeyHints } from "../../../game/KeyHint";
-import { GameCard, useCountdown, useFinish, useFrameLoop, useHeldKeys } from "../../../game/minigame";
+import { GameCard, useCountdown, useFinish, useFrameLoop, useHeldKeys, useArmed } from "../../../game/minigame";
 
 const SECONDS = 10;
 const BAND = [0.4, 0.65] as const;
@@ -22,6 +22,7 @@ export function ReactorRods({ onDone, seed }: { onDone: (r: Rating) => void; see
   const phase = useRef(seed % 7);
   const held = useHeldKeys(["ArrowUp", "ArrowDown"]);
   const { result, finish } = useFinish(onDone);
+  const { armed, pre } = useArmed();
   useFrameLoop((dt) => {
     const dir = (held.current.has("ArrowDown") ? 1 : 0) - (held.current.has("ArrowUp") ? 1 : 0);
     r.current = Math.max(0, Math.min(1, r.current + dir * 0.8 * dt));
@@ -40,7 +41,7 @@ export function ReactorRods({ onDone, seed }: { onDone: (r: Rating) => void; see
         "fail",
       );
     }
-  }, !result);
+  }, !result && armed);
   const left = useCountdown(
     SECONDS,
     () =>
@@ -49,11 +50,12 @@ export function ReactorRods({ onDone, seed }: { onDone: (r: Rating) => void; see
         tr("Núcleo estable: energía asegurada.", "Core stable: power secured."),
         everOut.current < 0.6 ? "perfect" : "good",
       ),
-    !result,
+    !result && armed,
   );
   const hot = temp > BAND[1];
   return (
     <GameCard
+      pre={pre}
       kicker={tr("Mini reactor de fisión", "Mini fission reactor")}
       title={tr("Estabiliza el núcleo", "Stabilize the core")}
       hint={tr(

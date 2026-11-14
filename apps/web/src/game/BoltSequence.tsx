@@ -3,7 +3,7 @@ import { tr } from "../i18n";
 import type { Rating } from "./score";
 import { lesson } from "./learn";
 import { KeyHint, KeyHints } from "./KeyHint";
-import { GameCard, useCountdown, useFinish, useKeys } from "./minigame";
+import { GameCard, useCountdown, useFinish, useKeys, useArmed } from "./minigame";
 
 const SECONDS = 12;
 const BOLTS = 3;
@@ -28,9 +28,10 @@ export function BoltSequence({ title, seed, onDone }: { title: string; seed: num
   const [shake, setShake] = useState(false);
   const live = useRef({ bolt: 0, pos: 0, mistakes: 0 });
   const { result, finish } = useFinish(onDone);
+  const { armed, pre } = useArmed();
 
   useKeys((k, e) => {
-    if (result || !(ARROWS as readonly string[]).includes(k)) return;
+    if (result || !armed || !(ARROWS as readonly string[]).includes(k)) return;
     e.preventDefault();
     const st = live.current;
     const want = seqs[st.bolt]?.[st.pos];
@@ -60,11 +61,12 @@ export function BoltSequence({ title, seed, onDone }: { title: string; seed: num
     SECONDS,
     () =>
       finish(false, tr("Se acabó el pase: los pernos quedan flojos.", "The pass ended: the bolts stay loose."), "fail"),
-    !result,
+    !result && armed,
   );
   const seq = seqs[Math.min(bolt, BOLTS - 1)] ?? [];
   return (
     <GameCard
+      pre={pre}
       kicker={tr("Caminata espacial", "Spacewalk")}
       title={title}
       hint={tr("Repite la secuencia de cada perno con las flechas.", "Repeat each bolt's sequence with the arrows.")}

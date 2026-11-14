@@ -3,7 +3,7 @@ import { tr } from "../../../i18n";
 import type { Rating } from "../../../game/score";
 import { lesson } from "../../../game/learn";
 import { KeyHint, KeyHints } from "../../../game/KeyHint";
-import { GameCard, useCountdown, useFinish, useKeys } from "../../../game/minigame";
+import { GameCard, useCountdown, useFinish, useKeys, useArmed } from "../../../game/minigame";
 
 const SECONDS = 8;
 const LETTERS = ["A", "S", "D", "F", "J", "K", "L"];
@@ -26,10 +26,11 @@ export function NanoRepair({ onDone, seed }: { onDone: (r: Rating) => void; seed
   const live = useRef(new Set<number>());
   const misses = useRef(0);
   const { result, finish } = useFinish(onDone);
+  const { armed, pre } = useArmed();
   const need = LETTERS.length - 1;
 
   const seal = (id: number) => {
-    if (result || live.current.has(id)) return;
+    if (result || !armed || live.current.has(id)) return;
     const next = new Set(live.current).add(id);
     live.current = next;
     setFixed(next);
@@ -53,10 +54,11 @@ export function NanoRepair({ onDone, seed }: { onDone: (r: Rating) => void; seed
       if (n >= need) finish(true, tr("Casco casi sellado: aguanta.", "Hull nearly sealed: it holds."), "good");
       else finish(false, tr("El plasma entró por las grietas.", "Plasma got in through the cracks."), "fail");
     },
-    !result,
+    !result && armed,
   );
   return (
     <GameCard
+      pre={pre}
       kicker={tr("Eyección de masa coronal", "Coronal mass ejection")}
       title={tr("Repara con nanobots", "Repair with nanobots")}
       hint={tr("Pulsa la letra de cada grieta para sellarla.", "Press each crack's letter to seal it.")}

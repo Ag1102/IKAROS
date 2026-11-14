@@ -38,8 +38,8 @@ const OVERVIEW = new THREE.Vector3(0, 430, 80);
 const toScene = (x_au: number, y_au: number) => new THREE.Vector3(x_au * AU, 0, -y_au * AU);
 
 /** Órbita de la sonda a partir del perihelio actual (motor) y el afelio del escenario. */
-export function probeOrbit(perihelion_rsun: number, aphelion_au: number): HelioOrbit {
-  return orbitFromApsides((perihelion_rsun * C.sunRadius) / C.au, aphelion_au);
+export function probeOrbit(perihelion_rsun: number, aphelion_au: number, varpi = 0): HelioOrbit {
+  return orbitFromApsides((perihelion_rsun * C.sunRadius) / C.au, aphelion_au, varpi);
 }
 
 /**
@@ -176,6 +176,24 @@ function SolarSystem({ getDay }: { getDay: () => number }) {
   );
 }
 
+/** Ruta del viaje (línea abierta, ámbar). */
+function Route({ points }: { points: [number, number][] }) {
+  const line = useMemo(() => {
+    const geo = new THREE.BufferGeometry().setFromPoints(points.map(([x, y]) => toScene(x, y)));
+    const mat = new THREE.LineDashedMaterial({
+      color: "#e0a030",
+      transparent: true,
+      opacity: 0.85,
+      dashSize: 3,
+      gapSize: 2,
+    });
+    const l = new THREE.Line(geo, mat);
+    l.computeLineDistances();
+    return l;
+  }, [points]);
+  return <primitive object={line} />;
+}
+
 /** Elipse de la sonda con marcas de perihelio y afelio. */
 function ProbeOrbit({
   orbit,
@@ -201,7 +219,7 @@ function ProbeOrbit({
 }
 
 /** Posición de la sonda: distancia del motor y anomalía deducida de si se acerca o se aleja del Sol. */
-function useProbePosition(latest: MutableRefObject<SimState>, aphelion_au: number) {
+function useProbePosition(latest: MutableRefObject<SimState>, aphelion_au: number, varpi: number) {
   const lastR = useRef<number | null>(null);
   const receding = useRef(false);
   return () => {
@@ -209,9 +227,9 @@ function useProbePosition(latest: MutableRefObject<SimState>, aphelion_au: numbe
     const r = s.distance_to_sun_au ?? 1;
     if (lastR.current !== null && Math.abs(r - lastR.current) > 1e-7) receding.current = r > lastR.current;
     lastR.current = r;
-    const orbit = probeOrbit(s.perihelion_rsun ?? 9.5, aphelion_au);
+    const orbit = probeOrbit(s.perihelion_rsun ?? 9.5, aphelion_au, varpi);
     // Antes del lanzamiento la sonda está en la Tierra (1 AU), fuera de su órbita futura.
-    const nu = r >= orbit.a * (1 + orbit.e) ? Math.PI : anomalyFromDistance(orbit, r, receding.current);
+    const nu = (r >= orbit.a * (1 + orbit.e) ? Math.PI : anomalyFromDistance(orbit, r, receding.current)) + varpi;
     return { x: r * Math.cos(nu), y: r * Math.sin(nu) };
   };
 }
@@ -263,20 +281,34 @@ export function IkarosScene({
   follow,
   aphelion_au,
   perihelion_rsun,
+  varpi = 0,
+  override,
+  route,
+  getDayOverride,
 }: {
   latest: MutableRefObject<SimState>;
   follow: boolean;
   aphelion_au: number;
   perihelion_rsun: number;
+  /** Giro de la órbita de la sonda (rad): su afelio queda en Venus. */
+  varpi?: number;
+  /** Posición de la sonda impuesta por el viaje (crucero, caída al Sol, regreso), en AU. */
+  override?: MutableRefObject<{ x: number; y: number } | null>;
+  /** Ruta prevista del viaje, en AU. */
+  route?: [number, number][];
+  /** Día que se muestra (para mover la Tierra durante el regreso). */
+  getDayOverride?: MutableRefObject<number | null>;
 }) {
-  const getDay = () => MISSION_EPOCH_DAY + latest.current.resources.mission_elapsed_s / 86400;
-  const getPos = useProbePosition(latest, aphelion_au);
+  const getDay = () =>
+    getDayOverride?.current ?? MISSION_EPOCH_DAY + latest.current.resources.mission_elapsed_s / 86400;
+  const fromEngine = useProbePosition(latest, aphelion_au, varpi);
+  const getPos = () => override?.current ?? fromEngine();
   const earth = PLANETS.find((p) => p.id === "earth")!;
   const getEarth = () => {
     const e = planetAt(earth, getDay());
     return toScene(e.x, e.y);
   };
-  const orbit = useMemo(() => probeOrbit(perihelion_rsun, aphelion_au), [perihelion_rsun, aphelion_au]);
+  const orbit = useMemo(() => probeOrbit(perihelion_rsun, aphelion_au, varpi), [perihelion_rsun, aphelion_au, varpi]);
 
   return (
     <Canvas camera={{ position: [0, 430, 80], fov: 40, near: 0.01, far: 5000 }} dpr={[1, 2]}>
@@ -287,7 +319,7 @@ export function IkarosScene({
       </Suspense>
       <Stars radius={1500} depth={200} count={1500} factor={5} saturation={0} fade={false} />
       <SolarSystem getDay={getDay} />
-      <ProbeOrbit orbit={orbit} />
+      {route ? <Route points={route} /> : <ProbeOrbit orbit={orbit} />}
       <Suspense fallback={null}>
         <Probe getPos={getPos} getEarth={getEarth} latest={latest} emphasis={follow} />
       </Suspense>

@@ -3,7 +3,7 @@ import { tr } from "../../../i18n";
 import type { Rating } from "../../../game/score";
 import { lesson } from "../../../game/learn";
 import { KeyHint, KeyHints } from "../../../game/KeyHint";
-import { GameCard, useCountdown, useFinish, useFrameLoop, useHoldSpace } from "../../../game/minigame";
+import { GameCard, useCountdown, useFinish, useFrameLoop, useHoldSpace, useArmed } from "../../../game/minigame";
 
 const SECONDS = 7;
 const ZONE = [0.7, 0.86] as const;
@@ -19,6 +19,7 @@ export function ShieldCharge({ onDone }: { onDone: (r: Rating) => void }) {
   const holding = useRef(false);
   const leftRef = useRef(SECONDS);
   const { result, finish } = useFinish(onDone);
+  const { armed, pre } = useArmed();
   useHoldSpace((down) => (holding.current = down));
   useFrameLoop((dt) => {
     c.current = Math.max(0, Math.min(1, c.current + (holding.current ? 0.45 : -0.35) * dt));
@@ -31,15 +32,16 @@ export function ShieldCharge({ onDone }: { onDone: (r: Rating) => void }) {
         leftRef.current > 3 ? "perfect" : "good",
       );
     }
-  }, !result);
+  }, !result && armed);
   const left = useCountdown(
     SECONDS,
     () => finish(false, tr("El campo no aguantó la carga.", "The field could not hold the charge."), "fail"),
-    !result,
+    !result && armed,
   );
   leftRef.current = left;
   return (
     <GameCard
+      pre={pre}
       kicker={tr("Eyección de masa coronal", "Coronal mass ejection")}
       title={tr("Carga el campo HTS", "Charge the HTS field")}
       hint={tr(

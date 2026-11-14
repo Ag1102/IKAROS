@@ -3,7 +3,7 @@ import { tr } from "../../../i18n";
 import type { Rating } from "../../../game/score";
 import { lesson } from "../../../game/learn";
 import { KeyHint, KeyHints } from "../../../game/KeyHint";
-import { GameCard, useCountdown, useFinish, useFrameLoop, useKeys } from "../../../game/minigame";
+import { GameCard, useCountdown, useFinish, useFrameLoop, useKeys, useArmed } from "../../../game/minigame";
 
 const SECONDS = 6;
 const PER_TAP = 0.065;
@@ -19,16 +19,17 @@ export function TapBoost({ windowN, total, onDone }: { windowN: number; total: n
   const [power, setPower] = useState(0.1);
   const p = useRef(0.1);
   const { result, finish } = useFinish(onDone);
+  const { armed, pre } = useArmed();
   const running = !result;
   const tap = () => {
-    if (!running) return;
+    if (!running || !armed) return;
     p.current = Math.min(1, p.current + PER_TAP);
     setPower(p.current);
   };
   useFrameLoop((dt) => {
     p.current = Math.max(0, p.current - DECAY * dt * (0.4 + p.current));
     setPower(p.current);
-  }, running);
+  }, running && armed);
   useKeys((k, e) => {
     if (k === " " || k === "Enter") {
       e.preventDefault();
@@ -51,11 +52,12 @@ export function TapBoost({ windowN, total, onDone }: { windowN: number; total: n
         rating,
       );
     },
-    running,
+    running && armed,
   );
   const inZone = power >= ZONE[0] && power <= ZONE[1];
   return (
     <GameCard
+      pre={pre}
       kicker={tr(`Ventana de Venus ${windowN} de ${total}`, `Venus window ${windowN} of ${total}`)}
       title={tr("Potencia hacia Venus", "Power toward Venus")}
       hint={tr(

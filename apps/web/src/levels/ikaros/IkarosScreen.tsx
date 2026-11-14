@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { PlayerAction, ScenarioDefinition, SimEvent, SimState } from "@ikaros/contracts";
 import { useSimulation } from "../../sim/useSimulation";
 import { recordResult, recordStars } from "../../progress";
@@ -16,85 +16,70 @@ import { ScoreHud, ScoreProvider, pilotRatio, starsFor, useScore, type Rating } 
 import { Stars } from "../../game/Stars";
 import { KeyHint, KeyHints } from "../../game/KeyHint";
 import { lesson } from "../../game/learn";
+import { TimingBar } from "../../game/TimingBar";
 import { formatNumber } from "../../ui/format";
 import { tr } from "../../i18n";
-import { apertureBand, encounterTimeScale } from "./stability";
+import { encounterTimeScale } from "./stability";
+import { journey, RETURN_DAYS } from "./journey";
+import { MISSION_EPOCH_DAY } from "./planets";
 import { DragParts, DropZone } from "./games/DragParts";
 import { Cinematic } from "./games/Cinematic";
 import { TapBoost } from "./games/TapBoost";
 import { LeverAlign } from "./games/LeverAlign";
 import { FoldArray } from "./games/FoldArray";
-import { StabilityHud } from "./games/StabilityHud";
+import { PillarConsole, type PillarUptime } from "./games/PillarConsole";
 import { NanoRepair } from "./games/NanoRepair";
 import { ShieldCharge } from "./games/ShieldCharge";
 import { ReactorRods } from "./games/ReactorRods";
 import { CoolantLoops } from "./games/CoolantLoops";
-import { TimingBar } from "../../game/TimingBar";
 import { Reentry } from "./games/Reentry";
 import { RecordBanner } from "./games/RecordBanner";
 
 const param = (def: ScenarioDefinition, key: string) => def.params[key]?.value ?? 0;
-const flybysOf = (def: ScenarioDefinition) =>
-  Object.keys(def.params).filter((k) => /^perihelion_after_flyby_\d+_rsun$/.test(k)).length;
 const openDecision = (events: SimEvent[], trigger: string) =>
   events.find((e) => e.trigger === trigger && e.choices && !e.resolved);
 
-/** Velocidad del crucero entre ventanas de Venus: 4 semanas por segundo. */
-const CRUISE_SCALE = 2_419_200;
+/** Crucero Tierra → Venus: los 52 días pasan en ~8 s. */
+const CRUISE_SCALE = 560_000;
 /** Velocidad base del encuentro; el límite real lo pone encounterTimeScale. */
 const ENCOUNTER_SCALE = 43_200;
-/** Sin zambullida, el reactor (si lo hay) se arranca al bajar de esta distancia. */
-const REACTOR_TRIGGER_AU = 0.12;
-/** ⚗ El kit Ikaros: lo que hace posible la zambullida a 850.000 km. */
-const IKAROS_KIT: Record<string, string> = {
+/** Fracción del crucero a la que llega el reto de potencia hacia Venus. */
+const BOOST_AT = 0.35;
+/** Duración real de las animaciones de tramo (caída al Sol y regreso a la Tierra), s. */
+const LEG_SECONDS = { descent: 4, return: 6 };
+
+/** ⚗ Los pilares de Ikaros: sin ellos no se llega. La cápsula trae las muestras de vuelta. */
+const PILLARS: Record<string, string> = {
   energy: "fission-reactor",
-  shield: "shield-cc",
   defense: "hts-field",
   repair: "nanobots",
   science: "sensors-capsule",
 };
 
-/**
- * Etapas del nivel. Las de juego pausan el tiempo; su resultado se traduce en acciones del
- * motor (ventanas de Venus, zambullida, matriz, actitud, CME, eyección), que manda en la física.
- */
+/** Etapas del viaje único. Las de juego pausan el tiempo; su resultado va al motor. */
 type Stage =
   | { k: "departure" }
-  | { k: "cruise" }
-  | { k: "venus-boost"; id: string; n: number }
-  | { k: "venus-levers"; id: string; n: number; boost: Rating }
-  | { k: "dive-reactor"; id: string }
-  | { k: "dive-cooling"; id: string }
-  | { k: "dive-hts"; id: string }
+  | { k: "to-venus" }
+  | { k: "boost" }
+  | { k: "assist"; id: string; boost: Rating }
+  | { k: "pillar-reactor"; id: string }
+  | { k: "pillar-cooling"; id: string }
+  | { k: "pillar-hts"; id: string }
+  | { k: "descent" }
   | { k: "fold" }
   | { k: "sun" }
   | { k: "cme"; id: string }
-  | { k: "reactor" }
-  | { k: "nano" }
+  | { k: "nano"; n: number }
   | { k: "record" }
   | { k: "samples" }
   | { k: "eject"; id: string }
+  | { k: "return" }
   | { k: "reentry" }
   | { k: "arrival" }
   | { k: "debrief" };
 
-const GAME_STAGES = new Set<Stage["k"]>([
-  "departure",
-  "venus-boost",
-  "venus-levers",
-  "dive-reactor",
-  "dive-cooling",
-  "dive-hts",
-  "fold",
-  "cme",
-  "reactor",
-  "nano",
-  "record",
-  "samples",
-  "eject",
-  "reentry",
-  "arrival",
-]);
+/** Etapas en las que el motor sigue corriendo; en las demás, el tiempo de misión se detiene. */
+const RUNNING = new Set<Stage["k"]>(["to-venus", "sun"]);
 
 interface LogRow {
   label: string;
@@ -111,17 +96,16 @@ export function IkarosScreen(props: { onExit: () => void }) {
 }
 
 function IkarosGame({ onExit }: { onExit: () => void }) {
-  const [stage, setStage] = useState<Stage>({ k: "cruise" });
+  const [stage, setStage] = useState<Stage>({ k: "to-venus" });
   const [paused, setPaused] = useState(false);
   const [overlay, setOverlay] = useState<OverlayKind>(null);
   const [hideUi, setHideUi] = useState(false);
   const [log, setLog] = useState<LogRow[]>([]);
-  const [stable, setStable] = useState({ in_s: 0, total_s: 0 });
   const [capsuleHome, setCapsuleHome] = useState(false);
   const score = useScore();
   const defRef = useRef<ScenarioDefinition | null>(null);
 
-  const playing = !paused && !GAME_STAGES.has(stage.k);
+  const playing = !paused && RUNNING.has(stage.k);
   const baseScale = stage.k === "sun" ? ENCOUNTER_SCALE : CRUISE_SCALE;
   const { state, latest, act, restart, report, def } = useSimulation("level3-ikaros", playing ? baseScale : 0, (s) => {
     // Con una decisión abierta el tiempo se detiene hasta que el minijuego la responda.
@@ -132,16 +116,58 @@ function IkarosGame({ onExit }: { onExit: () => void }) {
   useHotkey("h", () => setHideUi((v) => !v));
   useHotkey("p", () => setPaused((v) => !v));
 
-  const capsule = state.selected?.science === "sensors-capsule";
-  const reactor = state.selected?.energy === "fission-reactor";
   const parker = param(def, "parker_record_rsun");
   const dived = state.events.some((e) => e.trigger === "level3:dive");
+  const trip = useMemo(() => journey(def, state.perihelion_rsun ?? 9.5), [def, state.perihelion_rsun]);
+  const flybyTime = param(def, "flyby_interval_s");
 
   /** Registra un reto: puntos, combo y fila en la bitácora. */
   const rate = (rating: Rating, label: string, theoretical = false) => {
     score.add(rating, label);
     setLog((l) => [...l, { label, rating, theoretical }]);
   };
+
+  // ---- Posición de la sonda en los tramos que el motor no dibuja (crucero, caída, regreso) ----
+  const override = useRef<{ x: number; y: number } | null>(null);
+  const dayOverride = useRef<number | null>(null);
+  const legStart = useRef(0);
+  const exitDay = useRef(MISSION_EPOCH_DAY);
+  useEffect(() => {
+    legStart.current = performance.now();
+  }, [stage.k]);
+  useEffect(() => {
+    let raf = 0;
+    const tick = () => {
+      const s = latest.current;
+      const legF = (secs: number) => Math.min(1, (performance.now() - legStart.current) / 1000 / secs);
+      if (s.phase === "cruise") {
+        override.current = trip.toVenus(s.resources.mission_elapsed_s / flybyTime);
+        dayOverride.current = null;
+      } else if (stage.k === "descent") {
+        override.current = trip.toSun(legF(LEG_SECONDS.descent));
+      } else if (stage.k === "return" || stage.k === "reentry") {
+        const f = stage.k === "return" ? legF(LEG_SECONDS.return) : 1;
+        override.current = trip.toEarth(f, exitDay.current);
+        dayOverride.current = exitDay.current + RETURN_DAYS * f;
+      } else {
+        override.current = null;
+        dayOverride.current = null;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [stage.k, trip, flybyTime, latest]);
+
+  // Tramos animados: al terminar, sigue la etapa siguiente.
+  useEffect(() => {
+    if (stage.k !== "descent" && stage.k !== "return") return;
+    const id = window.setTimeout(
+      () => setStage(stage.k === "descent" ? { k: "fold" } : { k: "reentry" }),
+      LEG_SECONDS[stage.k] * 1000,
+    );
+    return () => window.clearTimeout(id);
+  }, [stage.k]);
 
   // ---- Transiciones que dicta el motor ----
   const prevPhase = useRef(state.phase);
@@ -151,76 +177,72 @@ function IkarosGame({ onExit }: { onExit: () => void }) {
     if (from === "hangar" && state.phase !== "hangar") setStage({ k: "departure" });
   }, [state.phase]);
 
-  const flags = useRef({ reactor: false, samples: false, record: false, nano: false, stability: false });
-  const venusCount = useRef(0);
+  const flags = useRef({ boost: false, record: false, samples: false, nano: 0, minR: Infinity });
   useEffect(() => {
     const s = state;
-    if (stage.k === "cruise" && s.phase === "cruise") {
+    if (stage.k === "to-venus" && s.phase === "cruise") {
+      if (!flags.current.boost && s.resources.mission_elapsed_s >= flybyTime * BOOST_AT) {
+        flags.current.boost = true;
+        return setStage({ k: "boost" });
+      }
       const ev = openDecision(s.events, "level3:venus-window");
-      if (ev) return setStage({ k: "venus-boost", id: ev.id, n: venusCount.current + 1 });
+      if (ev) return setStage({ k: "assist", id: ev.id, boost: boostRating.current });
       const dive = openDecision(s.events, "level3:ikaros-dive");
-      if (dive) return setStage({ k: "dive-reactor", id: dive.id });
+      if (dive) return setStage({ k: "pillar-reactor", id: dive.id });
       return;
     }
-    if (stage.k === "cruise" && s.phase === "encounter") return setStage({ k: "fold" });
+    if (stage.k === "to-venus" && s.phase === "encounter") return setStage({ k: "descent" });
     if (stage.k === "sun") {
       const cme = openDecision(s.events, "level3:cme");
       if (cme) return setStage({ k: "cme", id: cme.id });
-      const r = s.distance_to_sun_au ?? 1;
-      if (reactor && !dived && !flags.current.reactor && r < REACTOR_TRIGGER_AU) {
-        flags.current.reactor = true;
-        return setStage({ k: "reactor" });
+      const hull = s.hull_durability_pct ?? 100;
+      if ((flags.current.nano === 0 && hull < 92) || (flags.current.nano === 1 && hull < 70)) {
+        flags.current.nano++;
+        return setStage({ k: "nano", n: flags.current.nano });
       }
-      if (dived && !flags.current.nano && (s.hull_durability_pct ?? 100) < 92) {
-        flags.current.nano = true;
-        return setStage({ k: "nano" });
-      }
-      const atPeri = (s.distance_to_sun_rsun ?? Infinity) <= (s.perihelion_rsun ?? 0) * 1.04;
-      if (atPeri && !flags.current.record && (s.perihelion_rsun ?? Infinity) < parker) {
+      // Récord y muestras justo después del perihelio: cuando la distancia empieza a crecer.
+      const r = s.distance_to_sun_rsun ?? Infinity;
+      if (r < flags.current.minR) flags.current.minR = r;
+      const passed = r > flags.current.minR * 1.01 && flags.current.minR < 60;
+      if (passed && !flags.current.record && flags.current.minR < parker) {
         flags.current.record = true;
         return setStage({ k: "record" });
       }
-      if (atPeri && !flags.current.samples) {
+      if (passed && !flags.current.samples) {
         flags.current.samples = true;
         return setStage({ k: "samples" });
       }
       const ej = openDecision(s.events, "level3:ejection");
-      if (ej) return setStage({ k: "eject", id: ej.id });
+      if (ej) {
+        if (!flags.current.samples) {
+          flags.current.samples = true;
+          return setStage({ k: "samples" });
+        }
+        return setStage({ k: "eject", id: ej.id });
+      }
     }
-    if (s.phase === "complete" && (stage.k === "sun" || stage.k === "cruise")) {
-      const failed = report?.outcome === "failure";
-      setStage(failed ? { k: "debrief" } : { k: "arrival" });
+    if (s.phase === "complete" && (stage.k === "sun" || stage.k === "to-venus")) {
+      setStage(report?.outcome === "failure" ? { k: "debrief" } : { k: "arrival" });
     }
-  }, [state, stage.k, reactor, report, dived, parker]);
+  }, [state, stage.k, report, parker, flybyTime]);
 
-  // Estabilidad: tiempo de encuentro dentro de la zona segura; se califica al salir.
-  const lastT = useRef<number | null>(null);
+  const boostRating = useRef<Rating>("fail");
+  const uptime = useRef<PillarUptime>({ reactor_s: 0, hts_s: 0, total_s: 0 });
+  // Al salir del Sol se califica cuánto tiempo estuvieron en marcha los pilares.
+  const graded = useRef(false);
   useEffect(() => {
-    if (stage.k !== "sun" || state.phase !== "encounter") {
-      lastT.current = null;
-      return;
-    }
-    const t = state.resources.mission_elapsed_s;
-    if (lastT.current !== null && t > lastT.current) {
-      const dt = t - lastT.current;
-      const { min, max } = apertureBand(state, def);
-      const area = state.array_illuminated_cm2 ?? 0;
-      const ok = reactor || (area >= min && area <= max);
-      setStable((v) => ({ in_s: v.in_s + (ok ? dt : 0), total_s: v.total_s + dt }));
-    }
-    lastT.current = t;
-  }, [state, stage.k, def, reactor]);
-  useEffect(() => {
-    if (flags.current.stability || stable.total_s === 0 || state.phase === "encounter") return;
-    flags.current.stability = true;
-    const ratio = stable.in_s / stable.total_s;
+    if (graded.current || state.phase === "encounter" || uptime.current.total_s === 0) return;
+    graded.current = true;
+    const u = uptime.current;
+    const ratio = (u.reactor_s + u.hts_s) / (2 * u.total_s);
     rate(
-      ratio >= 0.85 ? "perfect" : ratio >= 0.6 ? "good" : "fail",
-      tr("Estabilidad cerca del Sol", "Stability near the Sun"),
+      ratio >= 0.95 ? "perfect" : ratio >= 0.75 ? "good" : "fail",
+      tr("Pilares en marcha cerca del Sol", "Pillars running near the Sun"),
+      true,
     );
-    // rate cambia en cada render; basta con la fase y el tiempo acumulado.
+    // rate cambia en cada render; basta con la fase.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.phase, stable.total_s]);
+  }, [state.phase]);
 
   const stars = report ? starsFor(report.outcome, pilotRatio(score.ratings)) : 0;
   useEffect(() => {
@@ -231,13 +253,14 @@ function IkarosGame({ onExit }: { onExit: () => void }) {
   }, [report, stage.k, stars]);
 
   const onRestart = () => {
-    flags.current = { reactor: false, samples: false, record: false, nano: false, stability: false };
-    venusCount.current = 0;
+    flags.current = { boost: false, record: false, samples: false, nano: 0, minR: Infinity };
+    boostRating.current = "fail";
+    uptime.current = { reactor_s: 0, hts_s: 0, total_s: 0 };
+    graded.current = false;
     setLog([]);
-    setStable({ in_s: 0, total_s: 0 });
     setCapsuleHome(false);
     score.reset();
-    setStage({ k: "cruise" });
+    setStage({ k: "to-venus" });
     setPaused(false);
     restart();
   };
@@ -255,28 +278,28 @@ function IkarosGame({ onExit }: { onExit: () => void }) {
     return (
       <Cinematic
         kind={stage.k}
-        capsule={capsule && capsuleHome}
-        onDone={() => setStage(stage.k === "departure" ? { k: "cruise" } : { k: "debrief" })}
+        capsule={capsuleHome}
+        onDone={() => setStage(stage.k === "departure" ? { k: "to-venus" } : { k: "debrief" })}
       />
     );
   }
 
-  const flybys = flybysOf(def);
   const scales: TimeScale[] = [
     { value: 0, label: tr("Pausa", "Pause") },
     { value: baseScale, label: tr("Jugar", "Play") },
   ];
-  const sunGame = stage.k === "sun";
 
-  /** Cierra la secuencia de la zambullida: si algún sistema falló, Ikaros se queda en 9,5 R☉. */
-  const endDive = (id: string, rating: Rating, label: string, theoretical = true) => {
-    rate(rating, label, theoretical);
-    if (rating === "fail") {
-      act({ type: "resolve-event", eventId: id, choice: "stay" });
-      setStage({ k: "cruise" });
-      return false;
-    }
-    return true;
+  /** Un pilar de la zambullida: si falla, Ikaros se queda en 9,5 R☉ (sin segunda oportunidad). */
+  const pillar = (id: string, r: Rating, label: string) => {
+    rate(r, label, true);
+    if (r !== "fail") return true;
+    act({ type: "resolve-event", eventId: id, choice: "stay" });
+    setStage({ k: "to-venus" });
+    return false;
+  };
+
+  const exitNow = () => {
+    exitDay.current = MISSION_EPOCH_DAY + latest.current.resources.mission_elapsed_s / 86400;
   };
 
   return (
@@ -284,11 +307,13 @@ function IkarosGame({ onExit }: { onExit: () => void }) {
       <div className="viewport">
         <IkarosScene
           latest={latest}
-          follow={
-            !["cruise", "venus-boost", "venus-levers", "dive-reactor", "dive-cooling", "dive-hts"].includes(stage.k)
-          }
+          follow={["sun", "cme", "nano", "record", "samples", "eject", "fold"].includes(stage.k)}
           aphelion_au={param(def, "aphelion_au")}
           perihelion_rsun={state.perihelion_rsun ?? param(def, "perihelion_start_rsun")}
+          varpi={trip.varpi}
+          override={override}
+          getDayOverride={dayOverride}
+          route={trip.route(exitDay.current)}
         />
       </div>
       <TopBar
@@ -303,83 +328,96 @@ function IkarosGame({ onExit }: { onExit: () => void }) {
         scales={scales}
       />
       <ScoreHud />
-      <StageTrack stage={stage} flybys={flybys} done={venusCount.current} dive={dived} />
+      <JourneyTrack stage={stage} dive={dived} />
 
-      {stage.k === "cruise" && state.phase === "cruise" && (
+      {(stage.k === "to-venus" || stage.k === "descent" || stage.k === "return") && (
         <div className="cruise-banner">
-          <span className="game-kicker">{tr("Crucero", "Cruise")}</span>
+          <span className="game-kicker">
+            {stage.k === "to-venus"
+              ? tr("Tierra → Venus", "Earth → Venus")
+              : stage.k === "descent"
+                ? tr("Venus → Sol", "Venus → Sun")
+                : tr("Regreso a la Tierra", "Back to Earth")}
+          </span>
           <p>
-            {tr(
-              `Rumbo a la órbita de Venus · perihelio ${(state.perihelion_rsun ?? 0).toFixed(1)} R☉ · récord a batir: Parker ${parker} R☉`,
-              `Heading for Venus's orbit · perihelion ${(state.perihelion_rsun ?? 0).toFixed(1)} R☉ · record to beat: Parker ${parker} R☉`,
-            )}
+            {stage.k === "to-venus"
+              ? tr(
+                  `Día ${Math.floor(state.resources.mission_elapsed_s / 86400)} de ${Math.round(flybyTime / 86400)} hasta Venus`,
+                  `Day ${Math.floor(state.resources.mission_elapsed_s / 86400)} of ${Math.round(flybyTime / 86400)} to Venus`,
+                )
+              : stage.k === "descent"
+                ? tr(
+                    `Cayendo hacia el Sol · perihelio ${formatNumber(state.perihelion_rsun ?? 0, 2)} R☉ · récord de Parker ${parker} R☉`,
+                    `Falling toward the Sun · perihelion ${formatNumber(state.perihelion_rsun ?? 0, 2)} R☉ · Parker's record ${parker} R☉`,
+                  )
+                : tr(
+                    "⚗ La cápsula vuelve con las muestras de la corona",
+                    "⚗ The capsule returns with the corona samples",
+                  )}
           </p>
-          <KeyHints>
-            <KeyHint keys={["P"]}>{tr("pausa", "pause")}</KeyHint>
-            <KeyHint keys={["H"]}>{tr("paneles", "panels")}</KeyHint>
-          </KeyHints>
         </div>
       )}
 
-      {sunGame && <StabilityHud state={state} def={def} act={act} />}
+      {stage.k === "sun" && (
+        <PillarConsole state={state} act={act} parker_rsun={parker} running={playing} uptime={uptime} />
+      )}
 
       <div className="game-layer">
-        {stage.k === "venus-boost" && (
+        {stage.k === "boost" && (
           <TapBoost
-            key={stage.id}
-            windowN={stage.n}
-            total={flybys}
+            windowN={1}
+            total={1}
             onDone={(r) => {
-              rate(r, tr(`Potencia hacia Venus ${stage.n}`, `Power toward Venus ${stage.n}`));
-              setStage({ k: "venus-levers", id: stage.id, n: stage.n, boost: r });
+              boostRating.current = r;
+              rate(r, tr("Impulso hacia Venus", "Push toward Venus"));
+              setStage({ k: "to-venus" });
             }}
           />
         )}
-        {stage.k === "venus-levers" && (
+        {stage.k === "assist" && (
           <LeverAlign
-            key={stage.id}
-            seed={stage.n * 17}
+            seed={17}
             onDone={(r) => {
-              rate(r, tr(`Inserción en Venus ${stage.n}`, `Venus insertion ${stage.n}`));
-              venusCount.current++;
-              const ok = r !== "fail" && stage.boost !== "fail";
+              rate(r, tr("Asistencia gravitatoria de Venus", "Venus gravity assist"));
+              // La asistencia depende de entrar bien al corredor; el impulso solo cuenta para la nota.
+              const ok = r !== "fail";
               act({ type: "resolve-event", eventId: stage.id, choice: ok ? "execute" : "skip" });
-              setStage({ k: "cruise" });
+              setStage({ k: "to-venus" });
             }}
           />
         )}
-        {stage.k === "dive-reactor" && (
-          <DiveIntro>
+        {stage.k === "pillar-reactor" && (
+          <PillarIntro step={1}>
             <ReactorRods
               seed={7}
               onDone={(r) => {
-                if (endDive(stage.id, r, tr("Arranque del mini reactor", "Mini reactor start-up")))
-                  setStage({ k: "dive-cooling", id: stage.id });
+                if (pillar(stage.id, r, tr("Pilar 1 · Arranque del mini reactor", "Pillar 1 · Mini reactor start-up")))
+                  setStage({ k: "pillar-cooling", id: stage.id });
               }}
             />
-          </DiveIntro>
+          </PillarIntro>
         )}
-        {stage.k === "dive-cooling" && (
-          <DiveIntro>
+        {stage.k === "pillar-cooling" && (
+          <PillarIntro step={2}>
             <CoolantLoops
               onDone={(r) => {
-                if (endDive(stage.id, r, tr("Enfriamiento del reactor", "Reactor cooling")))
-                  setStage({ k: "dive-hts", id: stage.id });
+                if (pillar(stage.id, r, tr("Pilar 2 · Enfriamiento del reactor", "Pillar 2 · Reactor cooling")))
+                  setStage({ k: "pillar-hts", id: stage.id });
               }}
             />
-          </DiveIntro>
+          </PillarIntro>
         )}
-        {stage.k === "dive-hts" && (
-          <DiveIntro>
+        {stage.k === "pillar-hts" && (
+          <PillarIntro step={3}>
             <ShieldCharge
               onDone={(r) => {
-                if (endDive(stage.id, r, tr("Campo magnético HTS", "HTS magnetic field"))) {
+                if (pillar(stage.id, r, tr("Pilar 3 · Campo magnético HTS", "Pillar 3 · HTS magnetic field"))) {
                   act({ type: "resolve-event", eventId: stage.id, choice: "dive" });
-                  setStage({ k: "cruise" });
+                  setStage({ k: "to-venus" });
                 }
               }}
             />
-          </DiveIntro>
+          </PillarIntro>
         )}
         {stage.k === "fold" && (
           <FoldArray
@@ -391,72 +429,62 @@ function IkarosGame({ onExit }: { onExit: () => void }) {
           />
         )}
         {stage.k === "cme" && (
-          <CmeGame
-            state={state}
-            onChoice={(choice, r) => {
-              if (r) rate(r, tr("Defensa ante la CME", "CME defence"), true);
-              act({ type: "resolve-event", eventId: stage.id, choice });
-              setStage({ k: "sun" });
-            }}
-          />
-        )}
-        {stage.k === "reactor" && (
-          <ReactorRods
-            seed={Math.round(state.resources.mission_elapsed_s) % 97}
+          <ShieldCharge
             onDone={(r) => {
-              rate(r, tr("Núcleo del reactor", "Reactor core"), true);
+              rate(r, tr("Pilar 3 · El campo HTS frena la CME", "Pillar 3 · HTS field stops the CME"), true);
+              act({ type: "resolve-event", eventId: stage.id, choice: r === "fail" ? "timeout" : "hts" });
               setStage({ k: "sun" });
             }}
           />
         )}
         {stage.k === "nano" && (
           <NanoRepair
-            seed={Math.round(state.resources.mission_elapsed_s) % 61}
+            seed={stage.n * 23}
             onDone={(r) => {
-              rate(r, tr("Reparación con nanobots", "Nanobot repair"), true);
+              rate(
+                r,
+                tr(
+                  `Pilar 4 · Nanobots reparan el casco (${stage.n})`,
+                  `Pillar 4 · Nanobots repair the hull (${stage.n})`,
+                ),
+                true,
+              );
               setStage({ k: "sun" });
             }}
           />
         )}
         {stage.k === "record" && (
           <RecordBanner
-            distance_rsun={state.distance_to_sun_rsun ?? 0}
+            distance_rsun={flags.current.minR}
             speed_km_s={state.speed_km_s ?? 0}
             parker_rsun={parker}
             dive={dived}
-            onDone={() => {
-              unlock("sun-survivor");
-              setStage({ k: "sun" });
-            }}
+            onDone={() => setStage({ k: "samples" })}
           />
         )}
         {stage.k === "samples" && (
           <TimingBar
             kicker={tr(
-              `Distancia récord · ${(state.distance_to_sun_rsun ?? 0).toFixed(2)} R☉`,
-              `Record distance · ${(state.distance_to_sun_rsun ?? 0).toFixed(2)} R☉`,
+              `Perihelio · ${formatNumber(flags.current.minR, 2)} R☉`,
+              `Perihelion · ${formatNumber(flags.current.minR, 2)} R☉`,
             )}
-            title={tr("Lanza la recogida de muestras", "Launch the sample collectors")}
+            title={tr("Recoge las muestras de la corona", "Collect the corona samples")}
             hint={tr(
               "Pulsa cuando el marcador cruce la ventana de plasma: 3 copas colectoras.",
               "Press when the marker crosses the plasma window: 3 collector cups.",
             )}
             button={tr("Lanzar copa", "Launch cup")}
             attempts={3}
-            window={0.14}
-            speed={1.1}
+            window={0.18}
+            speed={0.9}
             theoretical
             lesson={lesson("samples")}
             resultText={(n) => ({
-              ok: n >= 2,
+              ok: n >= 1,
               text: tr(`${n} de 3 copas llenas de corona.`, `${n} of 3 cups filled with corona.`),
             })}
             onDone={(n) => {
-              rate(
-                n === 3 ? "perfect" : n === 2 ? "good" : "fail",
-                tr("Muestras de la corona", "Corona samples"),
-                true,
-              );
+              rate(n === 3 ? "perfect" : n >= 1 ? "good" : "fail", tr("Muestras de la corona", "Corona samples"), true);
               setStage({ k: "sun" });
             }}
           />
@@ -464,15 +492,16 @@ function IkarosGame({ onExit }: { onExit: () => void }) {
         {stage.k === "eject" && (
           <TimingBar
             kicker={tr("Salida del encuentro", "Leaving the encounter")}
-            title={tr("Eyecta el módulo en la ventana", "Eject the module in the window")}
+            title={tr("Eyecta la cápsula hacia la Tierra", "Eject the capsule toward Earth")}
             hint={tr(
-              "Pulsa cuando el marcador pase por la ventana de retorno a la Tierra.",
-              "Press when the marker crosses the Earth-return window.",
+              "Pulsa cuando el marcador pase por la ventana de retorno. Tienes 3 intentos dentro de esta misma ventana.",
+              "Press when the marker crosses the return window. You get 3 tries within this same window.",
             )}
             button={tr("Eyectar", "Eject")}
-            attempts={1}
-            window={0.16}
-            speed={0.8}
+            attempts={3}
+            stopOnHit
+            window={0.2}
+            speed={0.7}
             theoretical
             lesson={lesson("eject")}
             resultText={(n) => ({
@@ -489,7 +518,8 @@ function IkarosGame({ onExit }: { onExit: () => void }) {
               const ok = n > 0;
               rate(ok ? "perfect" : "fail", tr("Eyección de la cápsula", "Capsule ejection"), true);
               act({ type: "resolve-event", eventId: stage.id, choice: ok ? "eject" : "hold" });
-              setStage(ok ? { k: "reentry" } : { k: "arrival" });
+              exitNow();
+              setStage(ok ? { k: "return" } : { k: "arrival" });
             }}
           />
         )}
@@ -508,7 +538,7 @@ function IkarosGame({ onExit }: { onExit: () => void }) {
         <Report
           report={report}
           onRestart={onRestart}
-          extra={<Debrief stars={stars} points={score.points} log={log} stable={stable} />}
+          extra={<Debrief stars={stars} points={score.points} log={log} />}
         />
       )}
       <Overlay kind={overlay} onClose={() => setOverlay(null)} />
@@ -516,99 +546,82 @@ function IkarosGame({ onExit }: { onExit: () => void }) {
   );
 }
 
-/** Cabecera de la secuencia de la zambullida: el kit Ikaros entra en acción. */
-function DiveIntro({ children }: { children: React.ReactNode }) {
+/** Cabecera de los pilares en la zambullida: qué tecnología entra en acción. */
+function PillarIntro({ step, children }: { step: 1 | 2 | 3; children: ReactNode }) {
+  const names = [
+    tr("Mini reactor", "Mini reactor"),
+    tr("Enfriamiento", "Cooling"),
+    tr("Campo magnético", "Magnetic field"),
+  ];
   return (
     <div className="dive-seq">
       <p className="dive-title">
-        {tr("⚗ Zambullida Ikaros · 850.000 km", "⚗ Ikaros dive · 850,000 km")}
+        {tr("⚗ Zambullida a 850.000 km", "⚗ Dive to 850,000 km")}
         <small>
           {tr(
-            "Prepara el kit: reactor, enfriamiento y campo magnético",
-            "Ready the kit: reactor, cooling and magnetic field",
+            "Ningún panel solar sobrevive tan cerca. Ikaros llega gracias a sus pilares:",
+            "No solar panel survives that close. Ikaros gets there thanks to its pillars:",
           )}
         </small>
       </p>
+      <ol className="pillar-steps">
+        {names.map((n, i) => (
+          <li key={n} className={i + 1 < step ? "done" : i + 1 === step ? "now" : ""}>
+            {i + 1} · {n}
+          </li>
+        ))}
+        <li>4 · {tr("Nanobots", "Nanobots")}</li>
+      </ol>
       {children}
     </div>
   );
 }
 
-/** La CME se juega según el equipo: campo HTS, nanobots o, sin ninguno, una decisión rápida. */
-function CmeGame({ state, onChoice }: { state: SimState; onChoice: (c: string, r?: Rating) => void }) {
-  if (state.selected?.defense) {
-    return <ShieldCharge onDone={(r) => onChoice(r === "fail" ? "timeout" : "hts", r)} />;
-  }
-  if (state.selected?.repair) {
-    return (
-      <NanoRepair
-        seed={Math.round(state.resources.mission_elapsed_s) % 61}
-        onDone={(r) => onChoice(r === "fail" ? "timeout" : "nanobots", r)}
-      />
-    );
-  }
-  return <CmeChoice onChoice={(c) => onChoice(c)} />;
-}
-
-function CmeChoice({ onChoice }: { onChoice: (c: string) => void }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "1") onChoice("safe-mode");
-      else if (e.key === "2") onChoice("assistant");
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onChoice]);
-  return (
-    <section className="game-card">
-      <header>
-        <span className="game-kicker">{tr("Eyección de masa coronal", "Coronal mass ejection")}</span>
-        <h2>{tr("¿Cómo la enfrentas?", "How do you face it?")}</h2>
-        <p className="game-hint">
-          {tr(
-            "Sin campo magnético ni nanobots a bordo: elige rápido.",
-            "No magnetic field or nanobots aboard: choose quickly.",
-          )}
-        </p>
-      </header>
-      <div className="game-body cme-choices">
-        <button className="tap-btn" onClick={() => onChoice("safe-mode")}>
-          <kbd>1</kbd> {tr("Modo seguro: escudo al Sol", "Safe mode: shield to the Sun")}
-        </button>
-        <button className="tap-btn" onClick={() => onChoice("assistant")}>
-          <kbd>2</kbd> {tr("⚗ Delegar al asistente (80 %)", "⚗ Delegate to the assistant (80%)")}
-        </button>
-      </div>
-    </section>
-  );
-}
-
-const STEPS = (flybys: number, dive: boolean) => [
-  { id: "launch", label: tr("Despegue", "Liftoff") },
-  ...Array.from({ length: flybys }, (_, i) => ({ id: `venus-${i}`, label: `Venus ${i + 1}` })),
-  ...(dive ? [{ id: "dive", label: tr("⚗ Zambullida", "⚗ Dive") }] : []),
+const STEPS = (dive: boolean) => [
+  { id: "earth", label: tr("Tierra", "Earth") },
+  { id: "venus", label: "Venus" },
+  { id: "assist", label: tr("Asistencia", "Assist") },
+  ...(dive ? [{ id: "dive", label: tr("⚗ Pilares", "⚗ Pillars") }] : []),
   { id: "sun", label: tr("Sol", "Sun") },
-  { id: "record", label: tr("Récord", "Record") },
-  { id: "home", label: tr("Regreso", "Return") },
+  { id: "samples", label: tr("Muestras", "Samples") },
+  { id: "home", label: tr("Tierra", "Earth") },
 ];
 
-function stepIndex(stage: Stage, done: number, flybys: number, dive: boolean): number {
+function stepIndex(stage: Stage, dive: boolean): number {
   const d = dive ? 1 : 0;
-  if (stage.k === "departure") return 0;
-  if (stage.k === "dive-reactor" || stage.k === "dive-cooling" || stage.k === "dive-hts") return flybys + 1;
-  if (stage.k === "cruise" || stage.k === "venus-boost" || stage.k === "venus-levers")
-    return 1 + Math.min(done, flybys - 1 + d);
-  if (["fold", "sun", "cme", "reactor", "nano"].includes(stage.k)) return flybys + 1 + d;
-  if (stage.k === "record" || stage.k === "samples") return flybys + 2 + d;
-  return flybys + 3 + d;
+  switch (stage.k) {
+    case "departure":
+      return 0;
+    case "to-venus":
+    case "boost":
+      return 1;
+    case "assist":
+      return 2;
+    case "pillar-reactor":
+    case "pillar-cooling":
+    case "pillar-hts":
+      return 3;
+    case "descent":
+    case "fold":
+    case "sun":
+    case "cme":
+    case "nano":
+      return 3 + d;
+    case "record":
+    case "samples":
+      return 4 + d;
+    default:
+      return 5 + d;
+  }
 }
 
-/** Barra de progreso de la misión con las etapas del nivel. */
-function StageTrack({ stage, flybys, done, dive }: { stage: Stage; flybys: number; done: number; dive: boolean }) {
-  const idx = stepIndex(stage, done, flybys, dive);
+/** Barra del viaje: Tierra → Venus → asistencia → (pilares) → Sol → muestras → Tierra. */
+function JourneyTrack({ stage, dive }: { stage: Stage; dive: boolean }) {
+  const pillarsNow = stage.k.startsWith("pillar");
+  const idx = stepIndex(stage, dive || pillarsNow);
   return (
-    <ol className="stage-track" aria-label={tr("Etapas de la misión", "Mission stages")}>
-      {STEPS(flybys, dive).map((s, i) => (
+    <ol className="stage-track" aria-label={tr("Etapas del viaje", "Trip stages")}>
+      {STEPS(dive || pillarsNow).map((s, i) => (
         <li key={s.id} className={i < idx ? "done" : i === idx ? "now" : ""}>
           {s.label}
         </li>
@@ -621,17 +634,7 @@ const RATING_TEXT = (r: Rating) =>
   ({ perfect: tr("perfecto", "perfect"), good: tr("bien", "good"), fail: tr("fallo", "miss") })[r];
 
 /** Cabecera del informe: estrellas, puntos de piloto y bitácora de los retos. */
-function Debrief({
-  stars,
-  points,
-  log,
-  stable,
-}: {
-  stars: number;
-  points: number;
-  log: LogRow[];
-  stable: { in_s: number; total_s: number };
-}) {
+function Debrief({ stars, points, log }: { stars: number; points: number; log: LogRow[] }) {
   return (
     <div className="debrief-extra">
       <div className="debrief-stars">
@@ -641,7 +644,7 @@ function Debrief({
         </span>
       </div>
       <table className="mini game-log">
-        <caption>{tr("Bitácora de vuelo", "Flight log")}</caption>
+        <caption>{tr("Bitácora del viaje", "Trip log")}</caption>
         <tbody>
           {log.map((row, i) => (
             <tr key={i} className={`rating-${row.rating}`}>
@@ -652,12 +655,6 @@ function Debrief({
               <td className="num">{RATING_TEXT(row.rating)}</td>
             </tr>
           ))}
-          {stable.total_s > 0 && (
-            <tr>
-              <th>{tr("Tiempo en la zona segura", "Time in the safe zone")}</th>
-              <td className="num">{Math.round((stable.in_s / stable.total_s) * 100)} %</td>
-            </tr>
-          )}
         </tbody>
       </table>
     </div>
@@ -678,45 +675,65 @@ function HangarPage({
   onOverlay: (k: OverlayKind) => void;
 }) {
   const [attemptFrom, setAttemptFrom] = useState<number | null>(null);
+  const [tried, setTried] = useState(false);
   const blocked =
     attemptFrom === null ? [] : state.events.slice(attemptFrom).filter((e) => e.trigger === "level3:launch-blocked");
   const aphelion = param(def, "aphelion_au");
   const start = useMemo(() => probeOrbit(param(def, "perihelion_start_rsun"), aphelion), [def, aphelion]);
-  const final = useMemo(
-    () => probeOrbit(param(def, `perihelion_after_flyby_${flybysOf(def)}_rsun`), aphelion),
-    [def, aphelion],
-  );
+  const final = useMemo(() => probeOrbit(param(def, "perihelion_after_flyby_1_rsun"), aphelion), [def, aphelion]);
   const mass = state.resources.mass_kg;
   const cap = state.mass_capacity_kg ?? 0;
   const budget = state.budget_remaining_usd_m ?? 0;
-  const installed = def.slots.filter((s) => state.selected?.[s.id]).length;
   const { preview, highlight, onPreview } = usePreview(state.selected);
-  const kit = Object.entries(IKAROS_KIT);
-  const hasKit = ["energy", "defense", "repair"].every((slot) => state.selected?.[slot] === IKAROS_KIT[slot]);
-  const equipKit = () => {
-    for (const [slot, id] of kit) act({ type: "select-component", slot, componentId: id });
+  // En el viaje de Ikaros solo hay pilares: una pieza por ranura, y en el escudo se elige material.
+  const pillarDef = useMemo<ScenarioDefinition>(
+    () => ({
+      ...def,
+      slots: def.slots.map((s) => ({ ...s, required: true })),
+      components: def.components.filter((c) => c.slot === "shield" || PILLARS[c.slot] === c.id),
+    }),
+    [def],
+  );
+  const missing = Object.entries(PILLARS).filter(([slot, id]) => state.selected?.[slot] !== id);
+  const installed = pillarDef.slots.filter((s) => state.selected?.[s.id]).length;
+  const equipAll = () => {
+    for (const [slot, id] of Object.entries(PILLARS)) act({ type: "select-component", slot, componentId: id });
+    if (!state.selected?.shield) act({ type: "select-component", slot: "shield", componentId: "shield-cc" });
   };
-  useHotkey("k", equipKit);
+  useHotkey("k", equipAll);
   const launch = () => {
+    setTried(true);
+    if (missing.length > 0 || !state.selected?.shield) return;
     setAttemptFrom(state.events.length);
     act({ type: "launch" });
   };
   useHotkey("l", launch);
+  const pillarProblems = tried
+    ? [
+        ...missing.map(([slot]) =>
+          tr(
+            `Falta el pilar: ${def.slots.find((s) => s.id === slot)?.label}.`,
+            `Missing pillar: ${def.slots.find((s) => s.id === slot)?.label}.`,
+          ),
+        ),
+        ...(state.selected?.shield ? [] : [tr("Falta el escudo térmico.", "Missing the heat shield.")]),
+      ]
+    : [];
 
   return (
     <HangarLayout
       levelTitle={def.title}
-      heading={tr("Arma la sonda", "Build the probe")}
+      heading={tr("Arma la sonda con sus pilares", "Build the probe with its pillars")}
       stage={tr(
-        "Arrastra cada pieza hasta la sonda (o Tab y Enter). Al lanzar, el diseño queda fijo.",
-        "Drag each part onto the probe (or Tab and Enter). At launch the design is frozen.",
+        "Arrastra cada pilar hasta la sonda (o Tab y Enter). K los instala todos; L despega.",
+        "Drag each pillar onto the probe (or Tab and Enter). K installs them all; L lifts off.",
       )}
       briefing={def.briefing}
       objectives={def.objectives}
       model={MODELS.parker}
       focus={focusName(def, preview, highlight)}
-      slots={<DragParts def={def} state={state} act={act} onPreview={onPreview} />}
-      overlay={<DropZone installed={installed} total={def.slots.length} />}
+      slots={<DragParts def={pillarDef} state={state} act={act} onPreview={onPreview} />}
+      overlay={<DropZone installed={installed} total={pillarDef.slots.length} />}
       stats={[
         { label: tr("Masa al lanzamiento", "Launch mass"), value: mass, max: cap, unit: "kg", warn: mass > cap },
         {
@@ -730,23 +747,18 @@ function HangarPage({
       ]}
       extra={
         <>
-          <section className={`kit-card${hasKit ? " on" : ""}`} aria-label={tr("Kit Ikaros", "Ikaros kit")}>
-            <h3 className="hstat-title">{tr("⚗ Kit Ikaros: para hacer historia", "⚗ Ikaros kit: to make history")}</h3>
+          <section className={`kit-card${missing.length === 0 ? " on" : ""}`} aria-label={tr("Pilares", "Pillars")}>
+            <h3 className="hstat-title">{tr("⚗ Los pilares de Ikaros", "⚗ The pillars of Ikaros")}</h3>
             <p className="note">
-              {hasKit
-                ? tr(
-                    "Listo: tras los 3 sobrevuelos de Venus podrás zambullirte a 850.000 km del Sol.",
-                    "Ready: after the 3 Venus flybys you can dive to 850,000 km from the Sun.",
-                  )
-                : tr(
-                    "Sin el kit, Ikaros llega a 9,5 R☉ (ya más cerca que Parker). Con reactor, campo HTS y nanobots se abre la zambullida a 850.000 km.",
-                    "Without the kit, Ikaros reaches 9.5 R☉ (already closer than Parker). With reactor, HTS field and nanobots the 850,000 km dive opens up.",
-                  )}
+              {tr(
+                "Para acercarse al Sol más que nadie: energía sin paneles, frío para el reactor, un campo magnético contra el plasma y nanobots que reparan. La cápsula trae las muestras.",
+                "To get closer to the Sun than anyone: power without panels, cold for the reactor, a magnetic field against the plasma and repairing nanobots. The capsule brings the samples home.",
+              )}
             </p>
             <ul className="kit-list">
-              {(["energy", "defense", "repair"] as const).map((slot) => {
-                const c = def.components.find((x) => x.id === IKAROS_KIT[slot]);
-                const on = state.selected?.[slot] === IKAROS_KIT[slot];
+              {Object.entries(PILLARS).map(([slot, id]) => {
+                const c = def.components.find((x) => x.id === id);
+                const on = state.selected?.[slot] === id;
                 return (
                   <li key={slot} className={on ? "on" : ""}>
                     {on ? "✓" : "○"} {c?.name}
@@ -754,22 +766,29 @@ function HangarPage({
                 );
               })}
             </ul>
-            {!hasKit && (
-              <button className="scale-btn" onClick={equipKit}>
-                <kbd>K</kbd> {tr("Equipar el kit Ikaros", "Equip the Ikaros kit")}
+            {missing.length > 0 && (
+              <button className="scale-btn" onClick={equipAll}>
+                <kbd>K</kbd> {tr("Instalar los pilares", "Install the pillars")}
               </button>
             )}
           </section>
-          <h3 className="hstat-title">{tr("Trayectoria", "Trajectory")}</h3>
+          <h3 className="hstat-title">{tr("El viaje", "The trip")}</h3>
           <div className="orbit-preview" aria-label={tr("Órbita inicial y final", "Initial and final orbit")}>
             <OrbitPreview start={start} final={final} />
             <span className="preview-note">
-              {tr("Gris: primera órbita · Blanca: tras Venus", "Grey: first orbit · White: after Venus")}
+              {tr(
+                "Tierra → Venus → asistencia gravitatoria → Sol → Tierra",
+                "Earth → Venus → gravity assist → Sun → Earth",
+              )}
             </span>
           </div>
+          <KeyHints>
+            <KeyHint keys={["K"]}>{tr("pilares", "pillars")}</KeyHint>
+            <KeyHint keys={["L"]}>{tr("despegar", "lift off")}</KeyHint>
+          </KeyHints>
         </>
       }
-      problems={blocked.map((e) => e.text.replace(/^Lanzamiento bloqueado: /, ""))}
+      problems={[...pillarProblems, ...blocked.map((e) => e.text.replace(/^Lanzamiento bloqueado: /, ""))]}
       launchLabel={tr("Despegar · L", "Lift off · L")}
       onLaunch={launch}
       assistant={<Assistant events={state.events} max={1} />}

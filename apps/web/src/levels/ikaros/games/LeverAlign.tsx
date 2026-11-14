@@ -3,10 +3,18 @@ import { tr } from "../../../i18n";
 import type { Rating } from "../../../game/score";
 import { lesson } from "../../../game/learn";
 import { KeyHint, KeyHints } from "../../../game/KeyHint";
-import { GameCard, useCountdown, useFinish, useFrameLoop, useHeldKeys, useKeys } from "../../../game/minigame";
+import {
+  GameCard,
+  useCountdown,
+  useFinish,
+  useFrameLoop,
+  useHeldKeys,
+  useKeys,
+  useArmed,
+} from "../../../game/minigame";
 
-const SECONDS = 12;
-const TOL = 0.05;
+const SECONDS = 15;
+const TOL = 0.07;
 const SPEED = 0.55;
 const NAMES = () => [tr("Cabeceo", "Pitch"), tr("Guiñada", "Yaw"), tr("Alabeo", "Roll")];
 
@@ -25,13 +33,14 @@ export function LeverAlign({ onDone, seed }: { onDone: (r: Rating) => void; seed
   const [sel, setSel] = useState(0);
   const selRef = useRef(0);
   const { result, finish } = useFinish(onDone);
+  const { armed, pre } = useArmed();
   const running = !result;
   const aligned = vals.map((v, i) => Math.abs(v - (targets[i] ?? 0)) <= TOL);
   const held = useHeldKeys(["ArrowUp", "ArrowDown"]);
   const leftRef = useRef(SECONDS);
 
   const set = (i: number, v: number) => {
-    if (!running) return;
+    if (!running || !armed) return;
     const next = live.current.map((x, j) => (j === i ? Math.max(0, Math.min(1, v)) : x));
     live.current = next;
     setVals(next);
@@ -55,7 +64,7 @@ export function LeverAlign({ onDone, seed }: { onDone: (r: Rating) => void; seed
   useFrameLoop((dt) => {
     const dir = (held.current.has("ArrowUp") ? 1 : 0) - (held.current.has("ArrowDown") ? 1 : 0);
     if (dir !== 0) set(selRef.current, (live.current[selRef.current] ?? 0) + dir * SPEED * dt);
-  }, running);
+  }, running && armed);
   const left = useCountdown(
     SECONDS,
     () =>
@@ -64,7 +73,7 @@ export function LeverAlign({ onDone, seed }: { onDone: (r: Rating) => void; seed
         tr("Fuera del corredor: se pierde la ventana.", "Out of the corridor: the window is lost."),
         "fail",
       ),
-    running,
+    running && armed,
   );
   leftRef.current = left;
 
@@ -74,6 +83,7 @@ export function LeverAlign({ onDone, seed }: { onDone: (r: Rating) => void; seed
   };
   return (
     <GameCard
+      pre={pre}
       kicker={tr("Inserción en Venus", "Venus insertion")}
       title={tr("Baja las palancas", "Pull the levers")}
       hint={tr("Lleva cada palanca hasta su marca ámbar.", "Bring each lever to its amber mark.")}

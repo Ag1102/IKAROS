@@ -116,6 +116,26 @@ export function useHoldSpace(onChange: (down: boolean) => void) {
   }, []);
 }
 
+/** Segundos de «Prepárate» antes de que corra el reloj de un reto. */
+export const PREROLL_S = 2.4;
+
+/** Cuenta previa: el reto no empieza hasta que pasan PREROLL_S (para leer la consigna). */
+export function useArmed(): { armed: boolean; pre: number } {
+  const [pre, setPre] = useState(PREROLL_S);
+  useEffect(() => {
+    const start = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const left = Math.max(0, PREROLL_S - (now - start) / 1000);
+      setPre(left);
+      if (left > 0) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  return { armed: pre <= 0, pre };
+}
+
 /** Marco común de los minijuegos: título, consigna, tiempo y resultado. */
 export function GameCard({
   kicker,
@@ -127,6 +147,7 @@ export function GameCard({
   result,
   keys,
   lesson,
+  pre,
   children,
 }: {
   kicker: string;
@@ -141,6 +162,8 @@ export function GameCard({
   keys?: ReactNode;
   /** Dato que se aprende, visible al terminar. */
   lesson?: Lesson;
+  /** Segundos de cuenta previa que quedan (0 = en juego). */
+  pre?: number;
   children: ReactNode;
 }) {
   return (
@@ -159,7 +182,15 @@ export function GameCard({
           <span className="num">{left.toFixed(1)} s</span>
         </div>
       )}
-      <div className="game-body">{children}</div>
+      <div className="game-body">
+        {children}
+        {pre !== undefined && pre > 0 && (
+          <div className="game-preroll" aria-live="assertive">
+            <span>{tr("Prepárate", "Get ready")}</span>
+            <b className="num">{Math.ceil(pre)}</b>
+          </div>
+        )}
+      </div>
       {!result && keys}
       {result && <p className="game-result">{result.text}</p>}
       {result && (

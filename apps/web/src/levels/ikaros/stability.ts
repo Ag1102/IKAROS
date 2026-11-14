@@ -43,7 +43,10 @@ export function encounterTimeScale(s: SimState, def: ScenarioDefinition): number
   const area = s.array_illuminated_cm2 ?? 0;
   const reactor = s.selected?.energy === "fission-reactor";
   const off = !reactor && (area < min || area > max);
-  if (off || (s.cell_temperature_c ?? 0) > PAPER.cellDesignLimit_c) return 900;
+  const systemsDown = s.systems?.reactor === false || s.systems?.hts === false;
+  if (off || systemsDown || (s.cell_temperature_c ?? 0) > PAPER.cellDesignLimit_c) return 900;
+  // En la zambullida el perihelio se pasa en minutos: hay que frenar mucho para vivirlo.
+  if (r < 0.02) return 600;
   if (r > 0.15) return 43_200;
   if (r > 0.08) return 14_400;
   return 3_600;

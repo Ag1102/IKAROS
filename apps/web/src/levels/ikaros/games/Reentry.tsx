@@ -3,7 +3,7 @@ import { tr } from "../../../i18n";
 import type { Rating } from "../../../game/score";
 import { lesson } from "../../../game/learn";
 import { KeyHint, KeyHints } from "../../../game/KeyHint";
-import { GameCard, useCountdown, useFinish, useFrameLoop, useKeys } from "../../../game/minigame";
+import { GameCard, useCountdown, useFinish, useFrameLoop, useKeys, useArmed } from "../../../game/minigame";
 
 const SECONDS = 9;
 const CORRIDOR = 0.16;
@@ -21,6 +21,7 @@ export function Reentry({ onDone }: { onDone: (r: Rating) => void }) {
   const time = useRef(0);
   const everOut = useRef(0);
   const { result, finish } = useFinish(onDone);
+  const { armed, pre } = useArmed();
   useFrameLoop((dt) => {
     time.current += dt;
     drift.current = 0.35 * Math.sin(time.current * 0.9) + 0.25 * Math.sin(time.current * 2.3 + 1);
@@ -37,7 +38,7 @@ export function Reentry({ onDone }: { onDone: (r: Rating) => void }) {
         "fail",
       );
     }
-  }, !result);
+  }, !result && armed);
   useKeys(
     (k, e) => {
       if (k === "ArrowLeft") push.current = -0.9;
@@ -57,7 +58,7 @@ export function Reentry({ onDone }: { onDone: (r: Rating) => void }) {
         tr("¡Paracaídas abiertos! La cápsula llega a la Tierra.", "Parachutes out! The capsule reaches Earth."),
         everOut.current < 0.5 ? "perfect" : "good",
       ),
-    !result,
+    !result && armed,
   );
   const hold = (v: number) => ({
     onPointerDown: () => (push.current = v),
@@ -66,6 +67,7 @@ export function Reentry({ onDone }: { onDone: (r: Rating) => void }) {
   });
   return (
     <GameCard
+      pre={pre}
       kicker={tr("Regreso a la Tierra", "Return to Earth")}
       title={tr("Mantén el corredor de reentrada", "Hold the reentry corridor")}
       hint={tr("Corrige para que la cápsula no salga de la franja.", "Correct so the capsule stays in the band.")}

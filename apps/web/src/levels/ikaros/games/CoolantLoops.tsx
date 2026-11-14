@@ -3,7 +3,7 @@ import { tr } from "../../../i18n";
 import type { Rating } from "../../../game/score";
 import { lesson } from "../../../game/learn";
 import { KeyHint, KeyHints } from "../../../game/KeyHint";
-import { GameCard, useCountdown, useFinish, useFrameLoop, useKeys } from "../../../game/minigame";
+import { GameCard, useCountdown, useFinish, useFrameLoop, useKeys, useArmed } from "../../../game/minigame";
 
 const SECONDS = 12;
 const RED = 0.9;
@@ -24,9 +24,10 @@ export function CoolantLoops({ onDone }: { onDone: (r: Rating) => void }) {
   const rates = useRef([0.11, 0.075, 0.055]);
   const time = useRef(0);
   const { result, finish } = useFinish(onDone);
+  const { armed, pre } = useArmed();
 
   const vent = (i: number) => {
-    if (result || (ready.current[i] ?? 0) > 0) return;
+    if (result || !armed || (ready.current[i] ?? 0) > 0) return;
     t.current = t.current.map((x, j) => (j === i ? Math.max(0, x - 0.45) : x));
     ready.current = ready.current.map((x, j) => (j === i ? COOLDOWN : x));
     setTemps(t.current);
@@ -47,7 +48,7 @@ export function CoolantLoops({ onDone }: { onDone: (r: Rating) => void }) {
     if (t.current.some((x) => x >= 1)) {
       finish(false, tr("¡Sobrecalentamiento! El reactor hace SCRAM.", "Overheat! The reactor SCRAMs."), "fail");
     }
-  }, !result);
+  }, !result && armed);
   const left = useCountdown(
     SECONDS,
     () =>
@@ -56,10 +57,11 @@ export function CoolantLoops({ onDone }: { onDone: (r: Rating) => void }) {
         tr("Lazos estables: el reactor aguanta la zambullida.", "Loops stable: the reactor holds through the dive."),
         peak.current < RED ? "perfect" : "good",
       ),
-    !result,
+    !result && armed,
   );
   return (
     <GameCard
+      pre={pre}
       kicker={tr("Kit Ikaros · reactor", "Ikaros kit · reactor")}
       title={tr("Enfría el mini reactor", "Cool the mini reactor")}
       hint={tr(

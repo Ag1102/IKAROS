@@ -2701,7 +2701,7 @@ button.primary.big {
 .cruise-banner {
   position: absolute;
   left: 50%;
-  top: 70px;
+  top: 100px;
   transform: translateX(-50%);
   padding: 8px 18px;
   text-align: center;
@@ -3306,4 +3306,212 @@ body.dragging-part .drop-zone {
   75% {
     transform: translateX(6px);
   }
+}
+
+/* ---------- Pilares de Ikaros ---------- */
+
+.pillars {
+  position: absolute;
+  right: 16px;
+  top: 96px;
+  width: min(520px, calc(100% - 32px));
+  padding: 14px 16px;
+  background: rgba(6, 10, 13, 0.86);
+  border: 1px solid rgba(224, 160, 48, 0.35);
+  border-top: 2px solid var(--amber);
+  backdrop-filter: blur(6px);
+  z-index: 10;
+}
+.pillars-head {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.record-meter {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--dim);
+}
+.record-meter b {
+  color: #eef3f5;
+  font-size: 13px;
+}
+.record-track {
+  position: relative;
+  height: 6px;
+  background: rgba(201, 211, 216, 0.1);
+}
+.record-track div {
+  height: 100%;
+  background: linear-gradient(90deg, #3f8d9c, var(--amber));
+  transition: width 300ms;
+}
+.record-track i {
+  position: absolute;
+  top: -4px;
+  width: 2px;
+  height: 14px;
+  background: #eef3f5;
+}
+.record-meter.beaten span {
+  color: var(--amber);
+  font-weight: 600;
+}
+.pillar-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.pillar {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 10px 8px;
+  background: rgba(10, 16, 21, 0.8);
+  border: 1px solid rgba(201, 211, 216, 0.14);
+  text-align: center;
+}
+.pillar h3 {
+  margin: 0;
+  font: 600 13px var(--font-head);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #eef3f5;
+}
+.pillar.warn {
+  border-color: var(--amber);
+}
+.pillar.down {
+  border-color: var(--red);
+  animation: warn-pulse 0.7s ease-in-out infinite;
+}
+.pillar-meter {
+  position: relative;
+  width: 34px;
+  height: 120px;
+  background: #0b1116;
+  border: 1px solid rgba(201, 211, 216, 0.25);
+  overflow: hidden;
+}
+.pillar-meter div {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  transition: height 120ms;
+}
+.pillar-meter i {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--red);
+}
+.pillar-meter.hot div {
+  background: linear-gradient(0deg, #2b8cff, #ffb070, var(--red));
+}
+.pillar-meter.field div {
+  background: linear-gradient(0deg, #3f5fd0, #9fe3ef);
+  box-shadow: 0 0 16px #6fa8ff;
+}
+.pillar-meter.hull div {
+  background: linear-gradient(0deg, #3f8d9c, var(--cyan));
+}
+.pillar-state {
+  margin: 0;
+  font: 500 12px var(--font-mono);
+  color: var(--text);
+}
+.pillar .key-hint {
+  justify-content: center;
+  text-align: center;
+}
+.pillars-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--dim);
+}
+.pillars-foot b {
+  color: #eef3f5;
+}
+.pillars-foot .key-hints {
+  margin: 0;
+}
+.pillar-steps {
+  display: flex;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+}
+.pillar-steps li {
+  padding: 4px 10px;
+  font: 500 11px var(--font-head);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+  background: rgba(6, 10, 13, 0.8);
+  border: 1px solid rgba(201, 211, 216, 0.14);
+}
+.pillar-steps .done {
+  color: var(--cyan);
+  border-color: var(--cyan);
+}
+.pillar-steps .now {
+  color: #12100a;
+  background: var(--amber);
+  border-color: var(--amber);
+}
+@media (max-width: 720px) {
+  .pillars {
+    position: static;
+    margin: 70px 16px 0;
+    width: auto;
+  }
+  .pillar-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pillar.down {
+    animation: none;
+  }
+}
+.game-body {
+  position: relative;
+}
+.game-preroll {
+  position: absolute;
+  inset: -6px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 4px;
+  background: rgba(6, 10, 13, 0.82);
+  z-index: 2;
+}
+.game-preroll span {
+  font: 500 12px var(--font-head);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+.game-preroll b {
+  font: 600 56px var(--font-head);
+  color: var(--amber);
+  text-shadow: 0 0 24px rgba(224, 160, 48, 0.5);
+}
+.pillar .key-hint {
+  flex-wrap: wrap;
+}
+.pillar .key-hint kbd {
+  white-space: nowrap;
 }

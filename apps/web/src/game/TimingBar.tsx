@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import type { Lesson } from "./learn";
 import { KeyHint, KeyHints } from "./KeyHint";
 import { tr } from "../i18n";
-import { GameCard, useFinish, useFrameLoop, useKeys } from "./minigame";
+import { GameCard, useFinish, useFrameLoop, useKeys, useArmed } from "./minigame";
 
 /**
  * Juego de tiempo: un marcador recorre la barra; se pulsa cuando pasa por la ventana.
@@ -19,6 +19,7 @@ export function TimingBar({
   theoretical,
   resultText,
   lesson,
+  stopOnHit = false,
   onDone,
 }: {
   kicker: string;
@@ -31,6 +32,8 @@ export function TimingBar({
   theoretical?: boolean;
   resultText: (hits: number) => { ok: boolean; text: string };
   lesson?: Lesson;
+  /** Termina con el primer acierto (los intentos son reservas, no rondas). */
+  stopOnHit?: boolean;
   onDone: (hits: number) => void;
 }) {
   const [pos, setPos] = useState(0);
@@ -41,6 +44,7 @@ export function TimingBar({
   const center = useRef(0.3 + Math.random() * 0.4);
   const [winCenter, setWinCenter] = useState(center.current);
   const { result, finish } = useFinish(onDone);
+  const { armed, pre } = useArmed();
   useFrameLoop((dt) => {
     x.current += dir.current * speed * dt;
     if (x.current > 1) {
@@ -51,9 +55,9 @@ export function TimingBar({
       dir.current = 1;
     }
     setPos(x.current);
-  }, !result);
+  }, !result && armed);
   const press = () => {
-    if (result) return;
+    if (result || !armed) return;
     const hit = Math.abs(x.current - center.current) <= win / 2;
     if (live.current.length >= attempts) return;
     const next = [...live.current, hit];
@@ -61,7 +65,7 @@ export function TimingBar({
     setHits(next);
     center.current = 0.2 + Math.random() * 0.6;
     setWinCenter(center.current);
-    if (next.length >= attempts) {
+    if (next.length >= attempts || (stopOnHit && hit)) {
       const n = next.filter(Boolean).length;
       const r = resultText(n);
       finish(r.ok, r.text, n);
@@ -75,6 +79,7 @@ export function TimingBar({
   });
   return (
     <GameCard
+      pre={pre}
       kicker={kicker}
       title={title}
       hint={hint}
