@@ -1,0 +1,207 @@
+{
+  "id": "level1-repair",
+  "title": "Nivel 1 — Servicio en órbita",
+  "subtitle": "Reparar un satélite que perdió un panel solar y su antena",
+  "briefing": [
+    "El satélite de referencia orbita a 480 km, como Hubble hoy. Perdió un panel solar y la antena de alta ganancia.",
+    "Tu vehículo de servicio parte de 400 km. Sube con maniobras de transferencia (delta-V) y acóplate.",
+    "La carga es limitada: cada kilo de herramientas reduce el delta-V disponible (ecuación de Tsiolkovsky).",
+    "Las reparaciones solo avanzan con la estación terrena a la vista (ventana de comunicaciones)."
+  ],
+  "objectives": [
+    "Llegar a ±2 km de la altitud del satélite sin agotar el combustible.",
+    "Cambiar el panel solar y la antena dentro del tiempo de misión."
+  ],
+  "slots": [
+    {
+      "id": "panel",
+      "label": "Panel solar de repuesto",
+      "required": false
+    },
+    {
+      "id": "antenna",
+      "label": "Antena de repuesto",
+      "required": false
+    },
+    {
+      "id": "toolkit",
+      "label": "Kit de herramientas",
+      "required": false
+    },
+    {
+      "id": "camera",
+      "label": "Cámara de inspección",
+      "required": false
+    }
+  ],
+  "components": [
+    {
+      "id": "panel-spare",
+      "slot": "panel",
+      "name": "Panel solar de repuesto",
+      "description": "Necesario para la tarea del panel.",
+      "cost_usd_m": 4,
+      "mass_kg": 45,
+      "power_w": 0,
+      "origin": "theoretical",
+      "figures_origin": "theoretical",
+      "source": "Supuesto del juego"
+    },
+    {
+      "id": "antenna-spare",
+      "slot": "antenna",
+      "name": "Antena de alta ganancia de repuesto",
+      "description": "Necesaria para la tarea de la antena.",
+      "cost_usd_m": 3,
+      "mass_kg": 30,
+      "power_w": 0,
+      "origin": "theoretical",
+      "figures_origin": "theoretical",
+      "source": "Supuesto del juego"
+    },
+    {
+      "id": "toolkit-std",
+      "slot": "toolkit",
+      "name": "Kit de herramientas de EVA",
+      "description": "Necesario para cualquier reparación.",
+      "cost_usd_m": 1,
+      "mass_kg": 25,
+      "power_w": 0,
+      "origin": "theoretical",
+      "figures_origin": "theoretical",
+      "source": "Supuesto del juego"
+    },
+    {
+      "id": "camera-insp",
+      "slot": "camera",
+      "name": "Cámara de inspección",
+      "description": "Suma datos de inspección al informe. Opcional.",
+      "cost_usd_m": 2,
+      "mass_kg": 20,
+      "power_w": -15,
+      "origin": "theoretical",
+      "figures_origin": "theoretical",
+      "source": "Supuesto del juego"
+    }
+  ],
+  "params": {
+    "start_altitude_km": {
+      "value": 400,
+      "unit": "km",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "Órbita de partida del vehículo de servicio."
+    },
+    "target_altitude_km": {
+      "value": 480,
+      "unit": "km",
+      "source": "STScI, HST Overview and Status: altitud actual de Hubble",
+      "retrieved": "2026-11-14",
+      "origin": "real"
+    },
+    "dock_tolerance_km": {
+      "value": 2,
+      "unit": "km",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "cargo_capacity_kg": {
+      "value": 110,
+      "unit": "kg",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "servicer_dry_mass_kg": {
+      "value": 600,
+      "unit": "kg",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "fuel_mass_kg": {
+      "value": 30,
+      "unit": "kg",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "isp_s": {
+      "value": 300,
+      "unit": "s",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "Orden típico de un motor bipropelente hipergólico."
+    },
+    "comm_period_s": {
+      "value": 5400,
+      "unit": "s",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "Aproxima un periodo orbital en LEO (~90 min)."
+    },
+    "comm_window_s": {
+      "value": 900,
+      "unit": "s",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "Pase sobre una estación terrena de ~15 min."
+    },
+    "repair_work_s": {
+      "value": 2400,
+      "unit": "s",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "Trabajo total con la estación a la vista."
+    },
+    "time_limit_s": {
+      "value": 43200,
+      "unit": "s",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "12 h de misión."
+    },
+    "power_generated_w": {
+      "value": 1500,
+      "unit": "W",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "power_consumed_w": {
+      "value": 900,
+      "unit": "W",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "budget_usd_m": {
+      "value": 50,
+      "unit": "M USD",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "camera_data_mb_s": {
+      "value": 0.5,
+      "unit": "MB/s",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "downlink_kbps": {
+      "value": 2000,
+      "unit": "kbps",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    }
+  }
+}

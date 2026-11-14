@@ -23,7 +23,39 @@ npm install
 npm run dev -w @ikaros/web
 ```
 
-Pruebas, lint y build del cliente: ver `apps/web/README.md`.
+Pruebas, lint y build del cliente: ver `apps/web/README.md`. Motor, datos y contenido:
+
+```bash
+npm run typecheck
+npm test
+npm run telemetry -- level3-ikaros 7
+```
+
+## Motor de simulación (`@ikaros/sim`)
+
+```ts
+import { createSimulation } from "@ikaros/sim"; // o "@ikaros/sim-mock"
+
+const sim = createSimulation();
+let state = sim.load("level3-ikaros", 42);       // misma semilla, misma misión
+state = sim.act({ type: "select-component", slot: "energy", componentId: "pv-cooled" });
+state = sim.act({ type: "launch" });
+state = sim.step(3600);                          // segundos de misión
+const report = sim.report();
+```
+
+- `step(dt_s)` acepta pasos largos: el motor los parte en subpasos de 60 s.
+- La escala de tiempo es del cliente: decide cuántos segundos de misión pasan por fotograma.
+- Decisiones (ventanas de Venus, CME, eyección): eventos con `choices` y `deadline_s`;
+  se responden con `resolve-event`. Si vence el plazo se resuelven como `timeout`.
+- Catálogo del hangar y parámetros de cada nivel: `data/scenarios/*.json` (`ScenarioDefinition`).
+- Textos del asistente: `content/assistant.json`, enlazados por `SimEvent.trigger`.
+- `packages/sim/src/autopilot.ts` juega los niveles solo; sirve para pruebas y para una demo.
+
+Fórmulas: Hohmann y vis-viva, Tsiolkovsky, Kepler, ec. 1 y 2 de Landis et al. (AIAA 2008-5712).
+Las pruebas (`tests/`) comprueban los casos del paper: 510 × AM0 ≈ 700 kW/m², ~34 cm² dan ≥ 482 W,
+~10 h dentro de 10 R☉, matriz principal a 74° bajo 180 °C.
+
 
 ## Git
 

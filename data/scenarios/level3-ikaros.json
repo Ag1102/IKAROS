@@ -1,0 +1,492 @@
+{
+  "id": "level3-ikaros",
+  "title": "Nivel 3 — Ikaros",
+  "subtitle": "Encuentro solar basado en el diseño de energía de Solar Probe+",
+  "briefing": [
+    "Ikaros sigue el diseño de Solar Probe+ (Landis et al., AIAA 2008-5712): perihelio de 9.5 radios solares, 510 veces la luz solar en la Tierra.",
+    "Arma la nave con 500 M USD y sin pasar la capacidad del lanzador. Lo marcado con ⚗ es teórico.",
+    "Usa las ventanas de Venus para bajar el perihelio. El paper usa 7 sobrevuelos; el juego los abrevia a 3.",
+    "En el encuentro: pliega la matriz principal, retrae la secundaria tras el escudo, mantén las celdas bajo 120 °C y la potencia sobre 482 W."
+  ],
+  "objectives": [
+    "Llegar al perihelio de 9.5 R☉ y salir con el casco y la energía intactos.",
+    "Reunir al menos 3,500 MB de datos de la corona (la memoria guarda 3,000 MB: hay que bajar datos a tiempo)."
+  ],
+  "slots": [
+    {
+      "id": "energy",
+      "label": "Sistema de energía",
+      "required": true
+    },
+    {
+      "id": "shield",
+      "label": "Escudo térmico",
+      "required": true
+    },
+    {
+      "id": "defense",
+      "label": "Defensa activa",
+      "required": false
+    },
+    {
+      "id": "repair",
+      "label": "Autorreparación",
+      "required": false
+    },
+    {
+      "id": "science",
+      "label": "Ciencia y retorno",
+      "required": true
+    }
+  ],
+  "components": [
+    {
+      "id": "pv-cooled",
+      "slot": "energy",
+      "name": "Fotovoltaica activamente refrigerada",
+      "description": "La solución del paper: celdas concentradoras con lazo de refrigerante y matriz retráctil. Menor masa y riesgo.",
+      "cost_usd_m": 60,
+      "mass_kg": 250,
+      "power_w": 0,
+      "origin": "real",
+      "figures_origin": "theoretical",
+      "source": "Landis et al., AIAA 2008-5712, p. 6"
+    },
+    {
+      "id": "stirling",
+      "slot": "energy",
+      "name": "Convertidor Stirling",
+      "description": "Alternativa del paper: ~26 % de eficiencia del sistema, sin herencia de vuelo. Puede fallar.",
+      "cost_usd_m": 90,
+      "mass_kg": 420,
+      "power_w": 0,
+      "origin": "real",
+      "figures_origin": "theoretical",
+      "source": "Landis et al., AIAA 2008-5712, p. 5-6"
+    },
+    {
+      "id": "fission-reactor",
+      "slot": "energy",
+      "name": "⚗ Mini reactor de fisión",
+      "description": "Potencia constante sin depender del Sol. El paper descarta la opción nuclear por costo.",
+      "cost_usd_m": 180,
+      "mass_kg": 800,
+      "power_w": 2000,
+      "origin": "theoretical",
+      "figures_origin": "theoretical",
+      "source": "Supuesto del juego"
+    },
+    {
+      "id": "shield-cc",
+      "slot": "shield",
+      "name": "Escudo carbono-carbono",
+      "description": "Material del escudo real de Parker Solar Probe.",
+      "cost_usd_m": 100,
+      "mass_kg": 650,
+      "power_w": 0,
+      "origin": "real",
+      "figures_origin": "theoretical",
+      "source": "NASA/JHU-APL, Thermal Protection System de Parker Solar Probe"
+    },
+    {
+      "id": "shield-liquid-metal",
+      "slot": "shield",
+      "name": "⚗ Escudo de metal líquido",
+      "description": "Reparte el calor: recibe menos daño, pero pesa el doble.",
+      "cost_usd_m": 200,
+      "mass_kg": 1400,
+      "power_w": 0,
+      "origin": "theoretical",
+      "figures_origin": "theoretical",
+      "source": "Supuesto del juego"
+    },
+    {
+      "id": "hts-field",
+      "slot": "defense",
+      "name": "⚗ Campo magnético HTS",
+      "description": "Desvía plasma de una CME. Consume potencia.",
+      "cost_usd_m": 90,
+      "mass_kg": 450,
+      "power_w": -120,
+      "origin": "theoretical",
+      "figures_origin": "theoretical",
+      "source": "Supuesto del juego"
+    },
+    {
+      "id": "nanobots",
+      "slot": "repair",
+      "name": "⚗ Enjambre de nanobots",
+      "description": "Repara el casco mientras dure la reserva.",
+      "cost_usd_m": 60,
+      "mass_kg": 350,
+      "power_w": -80,
+      "origin": "theoretical",
+      "figures_origin": "theoretical",
+      "source": "Supuesto del juego"
+    },
+    {
+      "id": "corona-sensors",
+      "slot": "science",
+      "name": "Sensores de corona",
+      "description": "Instrumentos de partículas y campos, como los de Parker.",
+      "cost_usd_m": 30,
+      "mass_kg": 200,
+      "power_w": -50,
+      "origin": "real",
+      "figures_origin": "theoretical",
+      "source": "NASA, Parker Solar Probe: instrumentos científicos"
+    },
+    {
+      "id": "sensors-capsule",
+      "slot": "science",
+      "name": "⚗ Sensores + cápsula de retorno",
+      "description": "Suma una cápsula de 450 kg que vuelve con muestras tras el encuentro.",
+      "cost_usd_m": 30,
+      "mass_kg": 450,
+      "power_w": -50,
+      "origin": "theoretical",
+      "figures_origin": "theoretical",
+      "source": "Supuesto del juego"
+    }
+  ],
+  "params": {
+    "budget_usd_m": {
+      "value": 500,
+      "unit": "M USD",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "Del documento Proyecto Ikaros."
+    },
+    "launcher_capacity_kg": {
+      "value": 4300,
+      "unit": "kg",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "Lanzador pesado de C3 alto; la misión real está limitada por masa (Landis et al., p. 6)."
+    },
+    "bus_mass_kg": {
+      "value": 1350,
+      "unit": "kg",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "Chasis, lazo de refrigerante y combustible (documento Proyecto Ikaros)."
+    },
+    "bus_power_w": {
+      "value": -432,
+      "unit": "W",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "Aviónica, bombas y control; con 50 W de ciencia suma los 482 W del paper."
+    },
+    "bus_cost_usd_m": {
+      "value": 0,
+      "unit": "M USD",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "secondary_array_area_cm2": {
+      "value": 1350,
+      "unit": "cm^2",
+      "source": "Landis et al., AIAA 2008-5712, p. 6",
+      "retrieved": "2026-11-14",
+      "origin": "real",
+      "note": "2 matrices × 25 cadenas × 27 celdas de ~1 cm^2."
+    },
+    "radiator_area_m2": {
+      "value": 2.0,
+      "unit": "m^2",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "Dimensionado con la ec. 2 del paper para ~34 cm^2 iluminados en perihelio."
+    },
+    "radiator_emissivity": {
+      "value": 0.85,
+      "unit": "fracción",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "thermal_time_constant_s": {
+      "value": 600,
+      "unit": "s",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "main_array_area_m2": {
+      "value": 3.0,
+      "unit": "m^2",
+      "source": "Landis et al., AIAA 2008-5712, p. 4",
+      "retrieved": "2026-11-14",
+      "origin": "real",
+      "note": "2 alas × 1.5 m^2."
+    },
+    "main_array_absorptance": {
+      "value": 0.75,
+      "unit": "fracción",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "Calibrado para que 74° a 0.25 AU dé <180 °C (paper, p. 4)."
+    },
+    "main_array_emittance_total": {
+      "value": 1.95,
+      "unit": "fracción",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "εf + εr de la ec. 1, calibrado igual que la absortancia."
+    },
+    "main_array_efficiency": {
+      "value": 0.2,
+      "unit": "fracción",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "radiator_sun_exposure": {
+      "value": 0.01,
+      "unit": "fracción",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "Fracción del radiador que ve el Sol al girar la antena a la Tierra."
+    },
+    "aphelion_au": {
+      "value": 0.723,
+      "unit": "AU",
+      "source": "NASA GSFC, Venus Fact Sheet",
+      "retrieved": "2026-11-14",
+      "origin": "real",
+      "note": "Afelio en la órbita de Venus, como en las órbitas finales de Parker."
+    },
+    "perihelion_start_rsun": {
+      "value": 38.7,
+      "unit": "R_sun",
+      "source": "Landis et al., AIAA 2008-5712, p. 2",
+      "retrieved": "2026-11-14",
+      "origin": "real",
+      "note": "Primer perihelio a 0.18 AU."
+    },
+    "perihelion_after_flyby_1_rsun": {
+      "value": 25,
+      "unit": "R_sun",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "perihelion_after_flyby_2_rsun": {
+      "value": 15.5,
+      "unit": "R_sun",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "perihelion_after_flyby_3_rsun": {
+      "value": 9.5,
+      "unit": "R_sun",
+      "source": "Landis et al., AIAA 2008-5712, p. 1-2",
+      "retrieved": "2026-11-14",
+      "origin": "real"
+    },
+    "flyby_interval_s": {
+      "value": 15552000,
+      "unit": "s",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "~6 meses entre sobrevuelos abreviados."
+    },
+    "flyby_window_s": {
+      "value": 259200,
+      "unit": "s",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "3 días para decidir la maniobra."
+    },
+    "flyby_tcm_delta_v_m_s": {
+      "value": 15,
+      "unit": "m/s",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "Maniobra de corrección de trayectoria por sobrevuelo."
+    },
+    "delta_v_budget_m_s": {
+      "value": 60,
+      "unit": "m/s",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "battery_capacity_wh": {
+      "value": 1500,
+      "unit": "Wh",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "power_loss_limit_s": {
+      "value": 3600,
+      "unit": "s",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "Tiempo sin batería ni generación antes de perder la nave."
+    },
+    "data_rate_max_mb_s": {
+      "value": 0.05,
+      "unit": "MB/s",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "A 9.5 R☉; escala con (9.5 R☉ / r)², como la densidad de partículas."
+    },
+    "data_storage_mb": {
+      "value": 3000,
+      "unit": "MB",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "downlink_kbps": {
+      "value": 8000,
+      "unit": "kbps",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "data_goal_mb": {
+      "value": 3500,
+      "unit": "MB",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "hull_damage_exposed_pct_s": {
+      "value": 0.02,
+      "unit": "%/s",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "Daño por segundo con la antena a la Tierra en perihelio; escala con la intensidad."
+    },
+    "shield_factor_shield-cc": {
+      "value": 1.0,
+      "unit": "factor",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "shield_factor_shield-liquid-metal": {
+      "value": 0.6,
+      "unit": "factor",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "nanobot_repair_pct_s": {
+      "value": 0.004,
+      "unit": "%/s",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "nanobot_reserve_pct_s": {
+      "value": 0.002,
+      "unit": "%/s",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "Consumo de la reserva al reparar."
+    },
+    "stirling_failure_probability": {
+      "value": 0.15,
+      "unit": "fracción",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "Riesgo por falta de herencia de vuelo (paper, p. 5-6)."
+    },
+    "cme_probability": {
+      "value": 0.85,
+      "unit": "fracción",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "cme_deadline_s": {
+      "value": 7200,
+      "unit": "s",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "Aviso desde la detección hasta el impacto."
+    },
+    "cme_hull_damage_pct": {
+      "value": 35,
+      "unit": "%",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "cme_assistant_success": {
+      "value": 0.8,
+      "unit": "fracción",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "Documento Proyecto Ikaros: delegar al asistente, 80 %."
+    },
+    "cme_hts_data_loss": {
+      "value": 0.3,
+      "unit": "fracción",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "cme_nanobot_reserve_cost_pct": {
+      "value": 50,
+      "unit": "%",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "cme_safe_mode_damage_pct": {
+      "value": 10,
+      "unit": "%",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "cme_safe_mode_duration_s": {
+      "value": 21600,
+      "unit": "s",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "reactor_waste_heat_w": {
+      "value": 1000,
+      "unit": "W",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "ejection_window_s": {
+      "value": 172800,
+      "unit": "s",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "Ventana para eyectar el módulo tras el encuentro."
+    }
+  }
+}

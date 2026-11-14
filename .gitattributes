@@ -1,0 +1,6 @@
+# El repositorio guarda LF; cada sistema convierte al sacar los archivos si hace falta.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.glb binary
+*.pdf binary

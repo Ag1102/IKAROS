@@ -1,0 +1,25 @@
+{
+  "electron_leo_kg": {
+    "value": 300,
+    "unit": "kg",
+    "source": "Rocket Lab, Electron: capacidad publicada a órbita baja",
+    "retrieved": "2026-11-14",
+    "origin": "real",
+    "note": "Capacidad nominal; depende de altitud e inclinación."
+  },
+  "pegasus_leo_kg": {
+    "value": 443,
+    "unit": "kg",
+    "source": "Northrop Grumman, Pegasus XL: capacidad publicada a órbita baja",
+    "retrieved": "2026-11-14",
+    "origin": "real",
+    "note": "Capacidad nominal; depende de altitud e inclinación."
+  },
+  "falcon9_leo_kg": {
+    "value": 22800,
+    "unit": "kg",
+    "source": "SpaceX, Falcon 9: capacidad publicada a LEO (versión desechable)",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  }
+}
