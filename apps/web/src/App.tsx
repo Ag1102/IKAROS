@@ -4,9 +4,10 @@ import { Overlay, type OverlayKind } from "./ui/Overlay";
 import { hasWebGL } from "./ui/webgl";
 
 const Level1Screen = lazy(() => import("./screens/Level1Screen").then((m) => ({ default: m.Level1Screen })));
+const Level2Screen = lazy(() => import("./screens/Level2Screen").then((m) => ({ default: m.Level2Screen })));
 const Level3Screen = lazy(() => import("./screens/Level3Screen").then((m) => ({ default: m.Level3Screen })));
 
-type Screen = "menu" | "level1" | "level3";
+type Screen = "menu" | "level1" | "level2" | "level3";
 
 export function App() {
   const [screen, setScreen] = useState<Screen>("menu");
@@ -16,7 +17,9 @@ export function App() {
   if (screen !== "menu") {
     return (
       <Suspense fallback={<p className="loading">Cargando nivel…</p>}>
-        {screen === "level1" ? <Level1Screen onExit={exit} /> : <Level3Screen onExit={exit} />}
+        {screen === "level1" && <Level1Screen onExit={exit} />}
+        {screen === "level2" && <Level2Screen onExit={exit} />}
+        {screen === "level3" && <Level3Screen onExit={exit} />}
       </Suspense>
     );
   }
@@ -24,7 +27,7 @@ export function App() {
     <>
       <Menu
         webgl={hasWebGL()}
-        onPlay={(n) => setScreen(n === 1 ? "level1" : "level3")}
+        onPlay={(n) => setScreen(n === 1 ? "level1" : n === 2 ? "level2" : "level3")}
         onCredits={() => setOverlay("credits")}
         onGlossary={() => setOverlay("glossary")}
       />

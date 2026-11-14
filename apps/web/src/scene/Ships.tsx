@@ -86,3 +86,30 @@ export function Servicer(props: Omit<ShipProps, "realSize_km">) {
     </group>
   );
 }
+
+/** Satélite pequeño de observación: modelo low poly propio, de unos 1,5 m. */
+export function SmallSat(props: Omit<ShipProps, "realSize_km">) {
+  const group = useShip({ ...props, realSize_km: 0.0015 });
+  return (
+    <group ref={group}>
+      <group scale={0.32}>
+        <mesh>
+          <boxGeometry args={[0.8, 0.8, 0.8]} />
+          <meshStandardMaterial color="#c9b37a" flatShading roughness={0.6} metalness={0.3} />
+        </mesh>
+        <mesh position={[1.05, 0, 0]}>
+          <boxGeometry args={[1.2, 0.04, 0.6]} />
+          <meshStandardMaterial color="#27415f" flatShading />
+        </mesh>
+        <mesh position={[-1.05, 0, 0]}>
+          <boxGeometry args={[1.2, 0.04, 0.6]} />
+          <meshStandardMaterial color="#27415f" flatShading />
+        </mesh>
+        <mesh position={[0, 0, 0.5]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.18, 0.22, 0.2, 6]} />
+          <meshStandardMaterial color="#1a1f24" flatShading />
+        </mesh>
+      </group>
+    </group>
+  );
+}

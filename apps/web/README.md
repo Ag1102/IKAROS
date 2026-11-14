@@ -19,6 +19,7 @@ npm run build -w @ikaros/web        # typecheck + build de producción
 | `src/screens` | Pantallas de cada nivel, conectadas al motor `@ikaros/sim` |
 | `src/sim` | `useSimulation` (puente con el motor), Kepler y geometría para las escenas |
 | `src/scene` | Escena 3D del nivel 1, tamaños en pantalla y controles de cámara |
+| `src/level2` | Escena del nivel 2: Tierra, órbita elegida, eclipses y enlace con la estación terrena |
 | `src/level3` | Escena del nivel 3: Sol, planetas (elementos de JPL) y órbita de la sonda |
 | `src/ui` | Paneles, hangar, decisiones, informe, asistente, glosario y diálogos |
 | `src/data` | Lectura de `data/` y `content/` |
@@ -30,4 +31,3 @@ npm run build -w @ikaros/web        # typecheck + build de producción
   interfaz no define números propios.
 - Las escenas usan distancias y tamaños reales; lo que no se vería a escala real se dibuja con un
   tamaño mínimo en pantalla.
-- El nivel 2 tiene motor pero aún no tiene interfaz.

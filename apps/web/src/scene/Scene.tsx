@@ -1,11 +1,12 @@
-import { Suspense, useMemo, useRef, type MutableRefObject } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Suspense, useRef, type MutableRefObject } from "react";
+import { Canvas } from "@react-three/fiber";
 import { Stars } from "@react-three/drei";
 import * as THREE from "three";
 import type { SimState } from "@ikaros/contracts";
 import { Earth } from "./Earth";
 import { Servicer, TargetSatellite } from "./Ships";
 import { FollowControls } from "./FollowControls";
+import { OrbitRing } from "./OrbitRing";
 import { C } from "../data/sources";
 import { SCENE_UNIT_KM, planeToScene } from "../sim/orbit";
 
@@ -39,42 +40,6 @@ const point = (alt_km: number, angle: number) => {
   return { x: r * Math.cos(angle), y: r * Math.sin(angle) };
 };
 
-/** Anillo de órbita circular cuyo radio sigue a una altitud que cambia. */
-function OrbitRing({
-  altitude,
-  color,
-  opacity,
-  dashed = false,
-}: {
-  altitude: () => number | null;
-  color: string;
-  opacity: number;
-  dashed?: boolean;
-}) {
-  const line = useMemo(() => {
-    const pts: THREE.Vector3[] = [];
-    for (let i = 0; i < 180; i++) {
-      const a = (i / 180) * Math.PI * 2;
-      pts.push(
-        new THREE.Vector3(...planeToScene(Math.cos(a) * SCENE_UNIT_KM, Math.sin(a) * SCENE_UNIT_KM, INCLINATION_DEG)),
-      );
-    }
-    const geo = new THREE.BufferGeometry().setFromPoints(pts);
-    const mat = dashed
-      ? new THREE.LineDashedMaterial({ color, transparent: true, opacity, dashSize: 0.03, gapSize: 0.02 })
-      : new THREE.LineBasicMaterial({ color, transparent: true, opacity });
-    const l = new THREE.LineLoop(geo, mat);
-    if (dashed) l.computeLineDistances();
-    return l;
-  }, [color, opacity, dashed]);
-  useFrame(() => {
-    const alt = altitude();
-    line.visible = alt !== null;
-    if (alt !== null) line.scale.setScalar((C.earthRadius + alt) / SCENE_UNIT_KM);
-  });
-  return <primitive object={line} />;
-}
-
 interface Props {
   latest: MutableRefObject<SimState>;
   docked: boolean;
@@ -105,13 +70,25 @@ export function Scene({ latest, docked, previewAltitude, follow }: Props) {
       <Suspense fallback={null}>
         <Earth radius={C.earthRadius / SCENE_UNIT_KM} />
       </Suspense>
-      <OrbitRing altitude={() => latest.current.target_altitude_km ?? null} color="#5fb4c4" opacity={0.5} />
       <OrbitRing
+        inclination_deg={INCLINATION_DEG}
+        altitude={() => latest.current.target_altitude_km ?? null}
+        color="#5fb4c4"
+        opacity={0.5}
+      />
+      <OrbitRing
+        inclination_deg={INCLINATION_DEG}
         altitude={() => (docked ? null : (latest.current.altitude_km ?? null))}
         color="#e0a030"
         opacity={0.8}
       />
-      <OrbitRing altitude={() => previewRef.current} color="#e6e8e9" opacity={0.7} dashed />
+      <OrbitRing
+        inclination_deg={INCLINATION_DEG}
+        altitude={() => previewRef.current}
+        color="#e6e8e9"
+        opacity={0.7}
+        dashed
+      />
       <Suspense fallback={null}>
         <TargetSatellite pos={targetPos} inclination_deg={INCLINATION_DEG} />
       </Suspense>

@@ -2,14 +2,14 @@ const LEVELS = [
   {
     n: 1,
     name: "Servicio en órbita",
-    text: "Reparar un satélite: transferencia de dos quemas y ventana de comunicación.",
+    text: "Reparar un satélite: transferencia de Hohmann y ventanas de comunicación.",
     ready: true,
   },
   {
     n: 2,
     name: "Observación de la Tierra",
-    text: "Diseño de una misión LEO completa. Pendiente de datos y reglas.",
-    ready: false,
+    text: "Diseña, lanza y opera un satélite en órbita baja durante 3 días.",
+    ready: true,
   },
   { n: 3, name: "Ikaros", text: "Encuentro solar basado en Solar Probe+. Hangar, encuentro e informe.", ready: true },
 ];
