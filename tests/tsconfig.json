@@ -1,0 +1,15 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "..",
+    "resolveJsonModule": true,
+    "types": ["node"]
+  },
+  "include": ["*.ts", "../data/**/*.json", "../content/**/*.json"],
+  "references": [
+    { "path": "../packages/contracts" },
+    { "path": "../packages/sim" },
+    { "path": "../packages/sim-mock" }
+  ]
+}
