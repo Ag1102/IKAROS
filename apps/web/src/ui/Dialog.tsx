@@ -2,7 +2,17 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { tr } from "../i18n";
 
 /** Ventana modal: se cierra con Escape y mantiene el foco dentro mientras está abierta. */
-export function Dialog({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+export function Dialog({
+  title,
+  onClose,
+  children,
+  wide = false,
+}: {
+  title: string;
+  onClose: () => void;
+  children: ReactNode;
+  wide?: boolean;
+}) {
   const box = useRef<HTMLDivElement>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
@@ -43,7 +53,7 @@ export function Dialog({ title, onClose, children }: { title: string; onClose: (
       aria-label={title}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="dialog" ref={box}>
+      <div className={wide ? "dialog wide" : "dialog"} ref={box}>
         <button className="close scale-btn" onClick={onClose} autoFocus>
           {tr("Cerrar", "Close")}
         </button>

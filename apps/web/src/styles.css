@@ -1660,3 +1660,486 @@ kbd {
 .debrief-unlock b {
   color: #eef3f5;
 }
+
+/* ---------- Modo juego ---------- */
+.dialog.wide {
+  width: min(1080px, 100%);
+}
+.stars {
+  display: inline-flex;
+  gap: 4px;
+  font-size: 30px;
+  line-height: 1;
+}
+.stars.small {
+  font-size: 14px;
+  color: var(--amber);
+}
+.star {
+  color: var(--line);
+  transition:
+    color 0.3s,
+    transform 0.3s;
+}
+.star.on {
+  color: var(--amber);
+  transform: scale(1.08);
+}
+.callout {
+  margin: 8px 0;
+  padding: 8px 10px;
+  font: 600 16px var(--font-head);
+  letter-spacing: 0.04em;
+  border-left: 3px solid;
+}
+.callout-good {
+  color: var(--cyan);
+  border-color: var(--cyan);
+  background: rgba(95, 180, 196, 0.08);
+}
+.callout-almost {
+  color: var(--amber);
+  border-color: var(--amber);
+  background: rgba(224, 160, 48, 0.08);
+}
+.callout-bad {
+  color: var(--red);
+  border-color: var(--red);
+  background: rgba(212, 88, 74, 0.08);
+}
+.why {
+  margin: 4px 0 8px;
+}
+.why-body {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  font-size: 13px;
+}
+.why-body p {
+  margin: 0 0 6px;
+}
+.why-formula {
+  font: 500 13px var(--font-mono);
+  color: var(--amber);
+}
+.achievement {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  z-index: 50;
+  padding: 10px 16px;
+  background: var(--panel);
+  border: 1px solid var(--amber);
+  font: 600 16px var(--font-head);
+  letter-spacing: 0.06em;
+  animation: pop 0.35s ease-out;
+}
+.achievement-tag {
+  color: var(--amber);
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  margin-right: 6px;
+}
+@keyframes pop {
+  from {
+    transform: translate(-50%, 16px);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .achievement {
+    animation: none;
+  }
+  .star {
+    transition: none;
+  }
+}
+.prep-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  border: 1px solid var(--amber);
+}
+.prep-card.done {
+  border-color: var(--cyan);
+}
+.prep-title {
+  flex: 1;
+  font: 600 15px var(--font-head);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.prep-card .primary,
+.prep-card .scale-btn {
+  width: auto;
+  padding: 6px 16px;
+}
+.game-step {
+  display: grid;
+  gap: 10px;
+}
+.choice-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.big-choice {
+  flex: 1;
+  min-width: 160px;
+  padding: 14px;
+  font: 600 15px var(--font-head);
+  letter-spacing: 0.06em;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  cursor: pointer;
+}
+.big-choice:hover {
+  border-color: var(--amber);
+}
+.big-choice.on {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+.big-choice:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+.groundtrack {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  display: block;
+}
+.gt-line {
+  fill: none;
+  stroke: #e0a030;
+  stroke-width: 0.8;
+  opacity: 0.9;
+}
+.gt-zone {
+  fill: rgba(212, 88, 74, 0.28);
+  stroke: rgba(212, 88, 74, 0.8);
+  stroke-width: 0.5;
+}
+.gt-zone.covered {
+  fill: rgba(95, 180, 196, 0.3);
+  stroke: rgba(95, 180, 196, 0.9);
+}
+.game-launch {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.launch-view {
+  height: 380px;
+  border: 1px solid var(--line);
+}
+.launch-controls {
+  display: grid;
+  gap: 10px;
+}
+.power {
+  display: grid;
+  gap: 6px;
+}
+.power span {
+  font: 600 13px var(--font-head);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.power input[type="range"] {
+  width: 100%;
+  height: 28px;
+  accent-color: var(--amber);
+}
+button.primary.big {
+  padding: 14px;
+  font-size: 18px;
+}
+.row-actions {
+  display: flex;
+  gap: 8px;
+}
+.row-actions > * {
+  flex: 1;
+}
+.hold {
+  display: grid;
+  gap: 6px;
+}
+.hold-bar {
+  position: relative;
+  height: 14px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+.hold-bar span {
+  position: absolute;
+  top: -5px;
+  bottom: -5px;
+  width: 3px;
+  margin-left: -1px;
+}
+.hold-now {
+  background: var(--dim);
+}
+.hold-target {
+  background: var(--cyan);
+  width: 6px !important;
+  margin-left: -3px !important;
+}
+.hold-arrow {
+  background: var(--amber);
+}
+.hold-legend {
+  display: flex;
+  justify-content: space-between;
+  font: 500 11px var(--font-head);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.hold-btn {
+  padding: 18px;
+  font: 600 17px var(--font-head);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bg);
+  background: var(--amber);
+  border: 0;
+  cursor: pointer;
+  user-select: none;
+  touch-action: none;
+}
+.hold-btn:active {
+  background: #f0b850;
+}
+.hold-btn:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+.needle {
+  margin: 0 0 6px;
+  text-align: center;
+}
+.needle svg {
+  width: 100%;
+  max-width: 240px;
+}
+.needle .arc {
+  fill: none;
+  stroke-width: 9;
+}
+.needle .arc.cold {
+  stroke: #3a444b;
+}
+.needle .arc.ok {
+  stroke: #3f8a97;
+}
+.needle .arc.hot {
+  stroke: #9a3b30;
+}
+.needle .hand {
+  stroke: var(--text);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  transition: transform 0.3s;
+}
+.needle .hub {
+  fill: var(--text);
+}
+.needle figcaption {
+  font: 600 15px var(--font-head);
+  letter-spacing: 0.05em;
+}
+.needle-hot figcaption {
+  color: var(--red);
+}
+.needle-ok figcaption {
+  color: var(--cyan);
+}
+.needle-cold figcaption {
+  color: var(--dim);
+}
+@media (max-width: 900px) {
+  .game-launch {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Nivel 3: supervivencia ---------- */
+.cruise {
+  display: grid;
+  gap: 8px;
+  text-align: center;
+}
+.cruise-title {
+  margin: 0;
+  font: 600 22px var(--font-head);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.flybys {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  font-size: 30px;
+}
+.fly {
+  color: var(--line);
+}
+.fly.on {
+  color: var(--amber);
+}
+.survival {
+  display: grid;
+  gap: 10px;
+}
+.survival-dist {
+  margin: 0;
+  text-align: center;
+  color: var(--dim);
+}
+.survival-dist .num {
+  font-size: 34px;
+  color: var(--text);
+}
+.survival-state {
+  margin: 0;
+  padding: 10px;
+  text-align: center;
+  font: 600 18px var(--font-head);
+  letter-spacing: 0.05em;
+  border: 1px solid;
+}
+.survival-ok {
+  color: var(--cyan);
+}
+.survival-dark {
+  color: var(--dim);
+}
+.survival-hot {
+  color: var(--amber);
+}
+.survival-burning {
+  color: var(--red);
+  animation: blink 0.8s steps(2) infinite;
+}
+.blackout {
+  margin: 0;
+  padding: 10px;
+  text-align: center;
+  font: 600 17px var(--font-head);
+  color: #fff;
+  background: var(--red);
+  animation: blink 0.8s steps(2) infinite;
+}
+@keyframes blink {
+  50% {
+    opacity: 0.55;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .blackout,
+  .survival-burning {
+    animation: none;
+  }
+}
+.sbar {
+  display: grid;
+  gap: 3px;
+}
+.sbar-label {
+  font: 600 12px var(--font-head);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.sbar-track {
+  position: relative;
+  height: 14px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+.sbar-track > div {
+  height: 100%;
+  transition: width 0.25s;
+}
+.sbar-track > i {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: var(--dim);
+}
+.sbar-good .sbar-track > div {
+  background: var(--cyan);
+}
+.sbar-warn .sbar-track > div {
+  background: var(--amber);
+}
+.sbar-bad .sbar-track > div {
+  background: var(--red);
+}
+.survival-control input[type="range"] {
+  height: 34px;
+}
+.gameover {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 14px;
+  margin-bottom: 10px;
+  border: 2px solid;
+  text-align: center;
+}
+.gameover-success {
+  border-color: var(--cyan);
+}
+.gameover-partial {
+  border-color: var(--amber);
+}
+.gameover-failure {
+  border-color: var(--red);
+}
+.gameover-title {
+  margin: 0;
+  font: 600 26px var(--font-head);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.gameover-failure .gameover-title {
+  color: var(--red);
+}
+.gameover-success .gameover-title {
+  color: var(--cyan);
+}
+.gameover-reason {
+  margin: 0;
+  font-size: 15px;
+}
+.decision {
+  border-width: 2px;
+}
+.decision-text {
+  font: 600 16px var(--font-head);
+  letter-spacing: 0.03em;
+}
+.choice {
+  padding: 10px 12px;
+}
+.choice b {
+  font-size: 15px;
+}

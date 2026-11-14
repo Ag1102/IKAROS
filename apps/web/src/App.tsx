@@ -1,6 +1,7 @@
 import { lazy, Suspense, useState } from "react";
 import { Menu } from "./ui/Menu";
 import { Overlay, type OverlayKind } from "./ui/Overlay";
+import { AchievementToast } from "./game/achievements";
 import { hasWebGL } from "./ui/webgl";
 import { tr, useLang } from "./i18n";
 
@@ -28,6 +29,7 @@ export function App() {
         {screen === "servicio-orbita" && <ServicioOrbitaScreen onExit={exit} />}
         {screen === "observacion-tierra" && <ObservacionTierraScreen onExit={exit} />}
         {screen === "ikaros" && <IkarosScreen onExit={exit} />}
+        <AchievementToast />
       </Suspense>
     );
   }

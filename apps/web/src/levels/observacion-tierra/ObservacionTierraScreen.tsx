@@ -16,6 +16,8 @@ import { useHotkey } from "../../hooks/useHotkey";
 import { MODELS } from "../../ships/models";
 import { HangarLayout, focusName } from "../../ui/hangar/HangarLayout";
 import { usePreview } from "../../ships/usePreview";
+import { OrbitLaunch } from "../../game/OrbitLaunch";
+import { PrepCard } from "../../game/PrepCard";
 import { tr } from "../../i18n";
 
 const scales = (): TimeScale[] => [
@@ -85,12 +87,7 @@ export function ObservacionTierraScreen({ onExit }: { onExit: () => void }) {
         <ResourcesPanel state={state} />
         <EventLog events={state.events} />
       </aside>
-      <footer className="orbit-note">
-        {tr(
-          "Tierra y órbita a escala real; satélite con tamaño mínimo para verlo · Línea azul: enlace con la estación terrena · H: paneles",
-          "Earth and orbit to real scale; satellite drawn at a minimum size so you can see it · Blue line: link with the ground station · H: panels",
-        )}
-      </footer>
+      <footer className="orbit-note">{tr("H · ocultar paneles", "H · hide panels")}</footer>
       <aside className="guide-wrap">
         <section className="panel guide" aria-labelledby="ops-h">
           <h2 id="ops-h">{tr("Operación", "Operations")}</h2>
@@ -130,73 +127,99 @@ function HangarPage({
   const gen = state.resources.power_generated_w;
   const load = state.resources.power_consumed_w;
   const { preview, highlight, onPreview } = usePreview(state.selected);
+  // Taller de órbitas: se valida para la órbita y el objetivo elegidos; si cambian, hay que repetirlo.
+  const [taller, setTaller] = useState(false);
+  const [validatedFor, setValidatedFor] = useState<string | null>(null);
+  const orbitKey =
+    state.selected?.orbit && state.selected?.objective ? `${state.selected.orbit}|${state.selected.objective}` : null;
+  const validated = orbitKey !== null && validatedFor === orbitKey;
+  const tallerProblems = validated
+    ? []
+    : [tr("Pon tu satélite en órbita (botón Jugar).", "Put your satellite in orbit (Play button).")];
 
   return (
-    <HangarLayout
-      levelTitle={def.title}
-      heading={tr("Diseño de la misión", "Mission design")}
-      stage={tr(
-        "Etapa de diseño: del objetivo científico a los requisitos y el diseño (CML 1 a 4).",
-        "Design stage: from the science objective to requirements and design (CML 1 to 4).",
+    <>
+      <HangarLayout
+        levelTitle={def.title}
+        heading={tr("Diseño de la misión", "Mission design")}
+        stage={tr(
+          "Etapa de diseño: del objetivo científico a los requisitos y el diseño (CML 1 a 4).",
+          "Design stage: from the science goal to requirements and design (CML 1 to 4).",
+        )}
+        briefing={def.briefing}
+        objectives={def.objectives}
+        model={MODELS.landsat}
+        focus={focusName(def, preview, highlight)}
+        slots={<HangarSlots def={def} state={state} act={act} onPreview={onPreview} />}
+        stats={[
+          cap !== undefined
+            ? {
+                label: tr("Masa / capacidad del lanzador", "Mass / launcher capacity"),
+                value: mass,
+                max: cap,
+                unit: "kg",
+                warn: mass > cap,
+              }
+            : { label: tr("Masa", "Mass"), value: mass, unit: "kg" },
+          {
+            label: tr("Presupuesto restante", "Budget left"),
+            value: budget,
+            max: param(def, "budget_usd_m"),
+            unit: "M USD",
+            warn: budget < 0,
+          },
+          {
+            label: tr("Potencia al sol / consumo", "Power in sunlight / load"),
+            value: gen,
+            max: Math.max(load, 1),
+            unit: "W",
+            warn: gen < load,
+          },
+          { label: tr("Batería", "Battery"), value: state.battery_capacity_wh ?? 0, unit: "Wh" },
+        ]}
+        extra={
+          <>
+            <PrepCard
+              title={tr("Ponlo en órbita", "Put it in orbit")}
+              ready={Boolean(state.selected?.objective)}
+              done={validated}
+              onOpen={() => setTaller(true)}
+            />
+            <h3 className="hstat-title">{tr("Órbita", "Orbit")}</h3>
+            <div className="orbit-preview" aria-label="Órbita elegida">
+              <OrbitPreview2 altitude_km={state.altitude_km ?? null} inclination_deg={state.inclination_deg ?? 0} />
+              <span className="preview-note">
+                {state.altitude_km === undefined
+                  ? tr("Elige una órbita.", "Choose an orbit.")
+                  : `${formatNumber(state.altitude_km)} km · ${formatNumber(state.inclination_deg ?? 0, 1)}°`}
+              </span>
+            </div>
+          </>
+        }
+        problems={[...tallerProblems, ...blocked.map((e) => e.text.replace(/^Lanzamiento bloqueado: /, ""))]}
+        onLaunch={() => {
+          if (!validated) {
+            setTaller(true);
+            return;
+          }
+          setAttemptFrom(state.events.length);
+          act({ type: "launch" });
+        }}
+        assistant={<Assistant events={state.events} max={1} />}
+        onExit={onExit}
+        onGlossary={() => onOverlay("glossary")}
+        onCredits={() => onOverlay("credits")}
+      />
+      {taller && (
+        <OrbitLaunch
+          def={def}
+          state={state}
+          act={act}
+          onDone={() => setValidatedFor(`${state.selected?.orbit}|${state.selected?.objective}`)}
+          onClose={() => setTaller(false)}
+        />
       )}
-      briefing={def.briefing}
-      objectives={def.objectives}
-      model={MODELS.landsat}
-      focus={focusName(def, preview, highlight)}
-      slots={<HangarSlots def={def} state={state} act={act} onPreview={onPreview} />}
-      stats={[
-        cap !== undefined
-          ? {
-              label: tr("Masa / capacidad del lanzador", "Mass / launcher capacity"),
-              value: mass,
-              max: cap,
-              unit: "kg",
-              warn: mass > cap,
-            }
-          : { label: tr("Masa", "Mass"), value: mass, unit: "kg" },
-        {
-          label: tr("Presupuesto restante", "Budget left"),
-          value: budget,
-          max: param(def, "budget_usd_m"),
-          unit: "M USD",
-          warn: budget < 0,
-        },
-        {
-          label: tr("Potencia al sol / consumo", "Power in sunlight / load"),
-          value: gen,
-          max: Math.max(load, 1),
-          unit: "W",
-          warn: gen < load,
-        },
-        { label: tr("Batería", "Battery"), value: state.battery_capacity_wh ?? 0, unit: "Wh" },
-      ]}
-      extra={
-        <>
-          <h3 className="hstat-title">{tr("Órbita", "Orbit")}</h3>
-          <div className="orbit-preview" aria-label={tr("Órbita elegida", "Chosen orbit")}>
-            <OrbitPreview2 altitude_km={state.altitude_km ?? null} inclination_deg={state.inclination_deg ?? 0} />
-            <span className="preview-note">
-              {state.altitude_km === undefined
-                ? tr("Elige una órbita.", "Choose an orbit.")
-                : `${formatNumber(state.altitude_km)} km · ${tr("inclinación", "inclination")} ${formatNumber(state.inclination_deg ?? 0, 1)}°. ${tr("Escala real.", "Real scale.")}`}
-            </span>
-          </div>
-          <p className="note">
-            {tr("A la heliosíncrona el lanzador lleva el", "To the sun-synchronous orbit the launcher carries")}{" "}
-            {formatNumber(param(def, "sso_capacity_factor") * 100)} % {tr("de su carga.", "of its payload.")}
-          </p>
-        </>
-      }
-      problems={blocked.map((e) => e.text.replace(/^(Lanzamiento bloqueado|Launch blocked): /, ""))}
-      onLaunch={() => {
-        setAttemptFrom(state.events.length);
-        act({ type: "launch" });
-      }}
-      assistant={<Assistant events={state.events} max={1} />}
-      onExit={onExit}
-      onGlossary={() => onOverlay("glossary")}
-      onCredits={() => onOverlay("credits")}
-    />
+    </>
   );
 }
 
@@ -257,12 +280,6 @@ function Operations({ def, state }: { def: ScenarioDefinition; state: SimState }
       <div className="bar" role="progressbar" aria-valuemin={0} aria-valuemax={goal} aria-valuenow={Math.round(sent)}>
         <div style={{ width: `${Math.min(100, (sent / goal) * 100)}%` }} />
       </div>
-      <p className="note">
-        {tr(
-          "En la operación no hay mandos: el resultado depende del diseño. Observa los eclipses, los pases y la memoria.",
-          "There are no controls during operations: the result depends on the design. Watch the eclipses, the passes and the memory.",
-        )}
-      </p>
     </>
   );
 }

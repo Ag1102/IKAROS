@@ -227,7 +227,7 @@ const kindLabel = (k: SimEvent["kind"]) =>
   })[k];
 
 export function EventLog({ events }: { events: SimEvent[] }) {
-  const recent = [...events].reverse().slice(0, 8);
+  const recent = [...events].reverse().slice(0, 4);
   return (
     <section className="panel log" aria-labelledby="log-h">
       <h2 id="log-h">{tr("Registro de misión", "Mission log")}</h2>

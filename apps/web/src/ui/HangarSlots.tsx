@@ -33,6 +33,7 @@ export function HangarSlots({
                 <label
                   key={c.id}
                   className={on ? "part on" : "part"}
+                  title={c.description}
                   onMouseEnter={() => onPreview?.(slot.id, c.id)}
                   onMouseLeave={() => onPreview?.(null, null)}
                   onFocus={() => onPreview?.(slot.id, c.id)}
@@ -47,31 +48,12 @@ export function HangarSlots({
                     }
                   />
                   <span className="pn">
-                    {c.name}{" "}
-                    {c.origin === "real" ? (
-                      <span className="tag tag-real" title={c.source}>
-                        {tr("real", "real")}
-                      </span>
-                    ) : (
-                      <span className="tag tag-theory">⚗ {tr("teórico", "theoretical")}</span>
-                    )}
-                    {c.figures_origin === "theoretical" && (
-                      <span
-                        className="tag tag-test"
-                        title={tr(
-                          "Masa, costo y potencia son supuestos del juego",
-                          "Mass, cost and power are game assumptions",
-                        )}
-                      >
-                        {tr("cifras supuestas", "assumed figures")}
-                      </span>
-                    )}
+                    {c.name} {c.origin === "theoretical" && <span className="tag tag-theory">⚗</span>}
                   </span>
                   <span className="num">
                     {formatNumber(c.mass_kg)} kg · {formatNumber(c.cost_usd_m)} M$
                     {c.power_w !== 0 && ` · ${c.power_w > 0 ? "+" : ""}${formatNumber(c.power_w)} W`}
                   </span>
-                  <span className="pd">{c.description}</span>
                 </label>
               );
             })}

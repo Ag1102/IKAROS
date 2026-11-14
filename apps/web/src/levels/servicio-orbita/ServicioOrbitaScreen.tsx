@@ -14,6 +14,12 @@ import { useLaunchSequence } from "../../ui/LaunchSequence";
 import { Overlay, type OverlayKind } from "../../ui/Overlay";
 import { formatNumber } from "../../ui/format";
 import { useHotkey } from "../../hooks/useHotkey";
+import { HoldToBurn } from "../../game/HoldToBurn";
+import { Callout } from "../../game/Callout";
+import { Why } from "../../game/Why";
+import { Stars } from "../../game/Stars";
+import { unlock } from "../../game/achievements";
+import { why } from "../../game/explanations";
 import { MODELS } from "../../ships/models";
 import { HangarLayout, focusName } from "../../ui/hangar/HangarLayout";
 import { usePreview } from "../../ships/usePreview";
@@ -23,6 +29,27 @@ import { tr } from "../../i18n";
 const STEPS = ["hangar", "transfer", "repair", "complete"];
 
 /** Altitud que alcanzaría una transferencia de Hohmann con este Δv, km (física del motor). */
+/** Resultado del último encendido, en una frase. */
+function LastBurn({ state }: { state: SimState }) {
+  const miss = [...state.events].reverse().find((e) => e.trigger === "level1:miss");
+  if (!miss) return null;
+  const diff = (state.target_altitude_km ?? 0) - (state.altitude_km ?? 0);
+  return (
+    <Callout tone="almost">
+      {diff > 0
+        ? tr(`Te faltaron ${formatNumber(diff, 1)} km.`, `You were ${formatNumber(diff, 1)} km short.`)
+        : tr(`Te pasaste ${formatNumber(-diff, 1)} km.`, `You overshot by ${formatNumber(-diff, 1)} km.`)}{" "}
+      {tr("¡Corrige con otro impulso!", "Correct with another burn!")}
+    </Callout>
+  );
+}
+
+/** Estrellas del acople: menos encendidos, más estrellas. */
+export function dockStars(state: SimState): number {
+  const burns = state.events.filter((e) => e.trigger === "level1:burn").length;
+  return burns <= 1 ? 3 : burns === 2 ? 2 : 1;
+}
+
 function altitudeAfter(state: SimState, dv_m_s: number): number {
   const r1 = C.earthRadius + (state.altitude_km ?? 0);
   return physics.hohmannTarget(C.muEarth, r1, dv_m_s / 1000) - C.earthRadius;
@@ -112,12 +139,7 @@ export function ServicioOrbitaScreen({ onExit }: { onExit: () => void }) {
         <ResourcesPanel state={state} />
         <EventLog events={state.events} />
       </aside>
-      <footer className="orbit-note">
-        {tr(
-          "Tierra y órbitas a escala real; naves con tamaño mínimo para verlas · Arrastra: girar · Rueda: zoom · Clic derecho: desplazar · H: paneles",
-          "Earth and orbits to real scale; spacecraft drawn at a minimum size so you can see them · Drag: rotate · Wheel: zoom · Right-click: pan · H: panels",
-        )}
-      </footer>
+      <footer className="orbit-note">{tr("H · ocultar paneles", "H · hide panels")}</footer>
       <aside className="guide-wrap">
         <section className="panel guide" aria-labelledby="guide-h">
           <h2 id="guide-h">{tr("Guía de misión", "Mission guide")}</h2>
@@ -125,12 +147,10 @@ export function ServicioOrbitaScreen({ onExit }: { onExit: () => void }) {
           {state.phase === "transfer" && (
             <TransferStep
               state={state}
-              dv={dv}
               setDv={setDv}
-              preview={preview}
               transferring={transferring}
-              onBurn={() => {
-                act({ type: "burn", delta_v_m_s: dv });
+              onBurn={(value) => {
+                act({ type: "burn", delta_v_m_s: value });
                 setDv(0);
               }}
             />
@@ -195,14 +215,6 @@ function HangarPage({
           warn: budget < 0,
         },
       ]}
-      extra={
-        <p className="note">
-          {tr(
-            "Cada kilo en la bodega reduce el Δv (ecuación de Tsiolkovsky). Lleva solo lo que piden las reparaciones.",
-            "Every kilogram in the bay reduces Δv (Tsiolkovsky equation). Carry only what the repairs need.",
-          )}
-        </p>
-      }
       problems={blocked.map((e) => e.text)}
       launchLabel={tr("Lanzar", "Launch")}
       onLaunch={() => {
@@ -219,22 +231,17 @@ function HangarPage({
 
 function TransferStep({
   state,
-  dv,
   setDv,
-  preview,
   transferring,
   onBurn,
 }: {
   state: SimState;
-  dv: number;
   setDv: (v: number) => void;
-  preview: number | null;
   transferring: boolean;
-  onBurn: () => void;
+  onBurn: (dv_m_s: number) => void;
 }) {
   const alt = state.altitude_km ?? 0;
   const target = state.target_altitude_km ?? 0;
-  const max = Math.max(1, Math.min(80, state.delta_v_remaining_m_s ?? 0));
   return (
     <>
       <table className="mini">
@@ -254,38 +261,19 @@ function TransferStep({
         </tbody>
       </table>
       {transferring ? (
-        <p className="note">
-          {tr(
-            "Transferencia en curso. Puedes acelerar el tiempo hasta la llegada.",
-            "Transfer in progress. You can speed up time until arrival.",
-          )}
-        </p>
+        <p className="note">{tr("En camino… acelera el tiempo.", "On the way… speed up time.")}</p>
       ) : (
-        <div className="burn">
-          <label htmlFor="dv">
-            {tr("Δv del encendido", "Burn Δv")} <span className="num">{formatNumber(dv, 1)} m/s</span>
-          </label>
-          <input
-            id="dv"
-            type="range"
-            min={-20}
-            max={max}
-            step={0.1}
-            value={dv}
-            onChange={(e) => setDv(Number(e.target.value))}
+        <>
+          <LastBurn state={state} />
+          <HoldToBurn
+            alt_km={alt}
+            target_km={target}
+            maxDv_m_s={state.delta_v_remaining_m_s ?? 0}
+            onAim={(v) => setDv(v ?? 0)}
+            onBurn={onBurn}
           />
-          <p className="note">
-            {tr("Altitud tras la transferencia:", "Altitude after the transfer:")}{" "}
-            <span className="num">{preview === null ? "—" : `${formatNumber(preview, 1)} km`}</span>{" "}
-            {tr(
-              "(línea punteada). Hay que quedar a ±2 km del satélite.",
-              "(dotted line). You must end up within ±2 km of the satellite.",
-            )}
-          </p>
-          <button className="primary" disabled={dv === 0} onClick={onBurn}>
-            {tr("Encender", "Burn")}
-          </button>
-        </div>
+          <Why {...why("hohmann")} />
+        </>
       )}
     </>
   );
@@ -293,14 +281,14 @@ function TransferStep({
 
 function RepairStep({ state }: { state: SimState }) {
   const progress = state.repair_progress_pct ?? 0;
+  const stars = dockStars(state);
+  useEffect(() => {
+    if (stars === 3) unlock("dock-first-try");
+  }, [stars]);
   return (
     <>
-      <p>
-        {tr("Acoplado.", "Docked.")}{" "}
-        {state.comm_window_open
-          ? tr("Estación terrena a la vista: se repara.", "Ground station in view: repairing.")
-          : tr("Sin enlace: la reparación espera al siguiente pase.", "No link: the repair waits for the next pass.")}
-      </p>
+      <Stars n={stars} />
+      <Callout tone="good">{tr("¡Acoplado!", "Docked!")}</Callout>
       <div
         className="bar"
         role="progressbar"
@@ -311,9 +299,9 @@ function RepairStep({ state }: { state: SimState }) {
         <div style={{ width: `${progress}%` }} />
       </div>
       <p className="note">
-        {tr("Progreso", "Progress")} <span className="num">{formatNumber(progress, 0)} %</span> ·{" "}
-        {tr("datos enviados", "data sent")}{" "}
-        <span className="num">{formatNumber(state.data_downlinked_mb ?? 0, 1)} MB</span>
+        {state.comm_window_open
+          ? tr("Reparando…", "Repairing…")
+          : tr("Esperando a la estación terrena…", "Waiting for the ground station…")}
       </p>
     </>
   );
