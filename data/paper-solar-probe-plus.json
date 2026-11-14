@@ -1,0 +1,163 @@
+{
+  "perihelion_rsun": {
+    "value": 9.5,
+    "unit": "R_sun",
+    "source": "Landis et al., AIAA 2008-5712, p. 1-2",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "perihelion_intensity_am0": {
+    "value": 510,
+    "unit": "x AM0",
+    "source": "Landis et al., AIAA 2008-5712, p. 1-2",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "first_perihelion_au": {
+    "value": 0.18,
+    "unit": "AU",
+    "source": "Landis et al., AIAA 2008-5712, p. 2",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "venus_flybys": {
+    "value": 7,
+    "unit": "sobrevuelos",
+    "source": "Landis et al., AIAA 2008-5712, p. 2",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "solar_passes": {
+    "value": 24,
+    "unit": "pasadas",
+    "source": "Landis et al., AIAA 2008-5712, p. 2",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "mission_years": {
+    "value": 6.9,
+    "unit": "años",
+    "source": "Landis et al., AIAA 2008-5712, p. 2",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "hours_inside_10_rsun": {
+    "value": 10,
+    "unit": "h",
+    "source": "Landis et al., AIAA 2008-5712, p. 2",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "min_power_w": {
+    "value": 482,
+    "unit": "W",
+    "source": "Landis et al., AIAA 2008-5712, p. 4",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "main_array_limit_au": {
+    "value": 0.25,
+    "unit": "AU",
+    "source": "Landis et al., AIAA 2008-5712, p. 4 (útil de 1 AU a ~0.25 AU, 16 soles; luego se pliega tras el escudo)",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "main_array_max_tilt_deg": {
+    "value": 74,
+    "unit": "deg",
+    "source": "Landis et al., AIAA 2008-5712, p. 4 (inclinación hasta ~74° para mantener <180 °C)",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "main_array_temp_limit_c": {
+    "value": 180,
+    "unit": "°C",
+    "source": "Landis et al., AIAA 2008-5712, p. 4",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "secondary_arrays": {
+    "value": 2,
+    "unit": "matrices",
+    "source": "Landis et al., AIAA 2008-5712, p. 6",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "secondary_strings_per_array": {
+    "value": 25,
+    "unit": "cadenas",
+    "source": "Landis et al., AIAA 2008-5712, p. 6",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "secondary_cells_per_string": {
+    "value": 27,
+    "unit": "celdas",
+    "source": "Landis et al., AIAA 2008-5712, p. 6",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "secondary_cell_area_cm2": {
+    "value": 1,
+    "unit": "cm^2",
+    "source": "Landis et al., AIAA 2008-5712, p. 6 (celdas concentradoras de ~1 cm^2)",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "cell_efficiency": {
+    "value": 0.28,
+    "unit": "fracción",
+    "source": "Landis et al., AIAA 2008-5712, p. 6 (~28 % AM0 a 120 °C)",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "cell_design_limit_c": {
+    "value": 120,
+    "unit": "°C",
+    "source": "Landis et al., AIAA 2008-5712, p. 6",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "cell_degradation_c": {
+    "value": 350,
+    "unit": "°C",
+    "source": "Landis et al., AIAA 2008-5712, p. 3 (degradación irreversible por encima de ~350 °C)",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "coolant_delta_t_c": {
+    "value": 20,
+    "unit": "°C",
+    "source": "Landis et al., AIAA 2008-5712, p. 6-7 (lazo de refrigerante bombeado, ΔT 20 °C)",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "radiator_temp_c": {
+    "value": 100,
+    "unit": "°C",
+    "source": "Landis et al., AIAA 2008-5712, p. 7 (radiadores a 373 K, tras el escudo)",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "perihelion_illuminated_cm2": {
+    "value": 34,
+    "unit": "cm^2",
+    "source": "Landis et al., AIAA 2008-5712, p. 7-8 (en perihelio solo ~34 cm^2 iluminados)",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "stirling_system_efficiency": {
+    "value": 0.26,
+    "unit": "fracción",
+    "source": "Landis et al., AIAA 2008-5712, p. 5-6 (~26 % del sistema)",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "stirling_cold_end_limit_c": {
+    "value": 147,
+    "unit": "°C",
+    "source": "Landis et al., AIAA 2008-5712, p. 6 (28 % con cold-end a 420 K)",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  }
+}

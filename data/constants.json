@@ -1,0 +1,65 @@
+{
+  "mu_earth_km3_s2": {
+    "value": 398600.4418,
+    "unit": "km^3/s^2",
+    "source": "NASA GSFC, Earth Fact Sheet (nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html), GM = 0.39860 x 10^6 km^3/s^2; valor completo de WGS 84",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "earth_radius_km": {
+    "value": 6378.137,
+    "unit": "km",
+    "source": "NASA GSFC, Earth Fact Sheet, radio ecuatorial",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "mu_sun_km3_s2": {
+    "value": 132712440018,
+    "unit": "km^3/s^2",
+    "source": "NASA GSFC, Sun Fact Sheet (nssdc.gsfc.nasa.gov/planetary/factsheet/sunfact.html), GM = 132,712 x 10^6 km^3/s^2",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "sun_radius_km": {
+    "value": 696000,
+    "unit": "km",
+    "source": "Landis et al., AIAA 2008-5712, p. 2",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "au_km": {
+    "value": 149597870.7,
+    "unit": "km",
+    "source": "IAU 2012, Resolución B2",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "am0_w_m2": {
+    "value": 1367,
+    "unit": "W/m^2",
+    "source": "Landis et al., AIAA 2008-5712, p. 1",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "stefan_boltzmann_w_m2_k4": {
+    "value": 5.67e-8,
+    "unit": "W/(m^2 K^4)",
+    "source": "Landis et al., AIAA 2008-5712, p. 3",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "g0_m_s2": {
+    "value": 9.80665,
+    "unit": "m/s^2",
+    "source": "Gravedad estándar, 3.ª CGPM (1901)",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "venus_orbit_au": {
+    "value": 0.723,
+    "unit": "AU",
+    "source": "NASA GSFC, Venus Fact Sheet, semieje mayor 108.21 x 10^6 km",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "parker_perihelion_rsun": {
+    "value": 9.86,
+    "unit": "R_sun",
+    "source": "NASA, Parker Solar Probe: máximo acercamiento del 24 dic 2024 (~6.1 millones de km de la superficie)",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "parker_max_speed_km_s": {
+    "value": 192,
+    "unit": "km/s",
+    "source": "NASA, Parker Solar Probe: velocidad en el perihelio del 24 dic 2024 (~692,000 km/h)",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "parker_venus_flybys": {
+    "value": 7,
+    "unit": "sobrevuelos",
+    "source": "NASA, Parker Solar Probe, trayectoria de la misión (7 sobrevuelos de Venus, 2018-2024)",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "parker_launch_mass_kg": {
+    "value": 685,
+    "unit": "kg",
+    "source": "NASA/JHU-APL, Parker Solar Probe press kit (2018), masa al lanzamiento",
+    "retrieved": "2026-11-14",
+    "origin": "real",
+    "note": "Verificar contra el press kit antes del envío."
+  },
+  "parker_shield_front_c": {
+    "value": 1377,
+    "unit": "°C",
+    "source": "NASA/JHU-APL, Thermal Protection System de Parker Solar Probe (cara frontal ~1,377 °C, compuesto carbono-carbono)",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "hubble_altitude_km": {
+    "value": 535,
+    "unit": "km",
+    "source": "NASA, Hubble Space Telescope: datos rápidos (órbita de ~535 km)",
+    "retrieved": "2026-11-14",
+    "origin": "real",
+    "note": "La altitud de Hubble decae con el tiempo; verificar el valor de referencia."
+  },
+  "hubble_sm4_spacewalks": {
+    "value": 5,
+    "unit": "caminatas espaciales",
+    "source": "NASA, Hubble Servicing Mission 4 (STS-125, Atlantis, mayo 2009)",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  }
+}
