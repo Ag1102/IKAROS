@@ -10,6 +10,8 @@ import { Assistant } from "../ui/Assistant";
 import { Overlay, type OverlayKind } from "../ui/Overlay";
 import { formatElapsed, formatNumber } from "../ui/format";
 import { useHotkey } from "../hooks/useHotkey";
+import { ShipPreview } from "../ships/ShipPreview";
+import { usePreview } from "../ships/usePreview";
 
 const SCALES: TimeScale[] = [
   { value: 0, label: "Pausa" },
@@ -108,6 +110,7 @@ function HangarPage({
   const cap = state.mass_capacity_kg;
   const budget = state.budget_remaining_usd_m ?? 0;
   const gen = state.resources.power_generated_w;
+  const { preview, highlight, onPreview } = usePreview(state.selected);
   const load = state.resources.power_consumed_w;
 
   return (
@@ -139,10 +142,15 @@ function HangarPage({
               <li key={o}>{o}</li>
             ))}
           </ul>
-          <HangarSlots def={def} state={state} act={act} />
+          <HangarSlots def={def} state={state} act={act} onPreview={onPreview} />
         </section>
 
         <section className="panel summary">
+          <h2>Tu satélite</h2>
+          <div className="ship-preview large" aria-label="Tu satélite">
+            <ShipPreview kind="smallsat" selected={preview} highlight={highlight} />
+            <span className="preview-note">Pasa el ratón por una pieza para verla montada</span>
+          </div>
           <h2>Órbita</h2>
           <div className="orbit-preview" aria-label="Órbita elegida">
             <OrbitPreview2 altitude_km={state.altitude_km ?? null} inclination_deg={state.inclination_deg ?? 0} />

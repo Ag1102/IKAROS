@@ -4,6 +4,7 @@ import { Html, Stars, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import type { SimState } from "@ikaros/contracts";
 import { FollowControls } from "../scene/FollowControls";
+import { Spacecraft, matchesParker } from "../ships/Spacecraft";
 import { displaySize } from "../scene/screenSize";
 import { anomalyFromDistance, ellipsePoints, orbitFromApsides, type HelioOrbit } from "../sim/kepler";
 import { C, PAPER } from "../data/sources";
@@ -192,7 +193,8 @@ function useProbePosition(latest: MutableRefObject<SimState>, aphelion_au: numbe
   };
 }
 
-// Modelo de NASA sin modificar (public/CREDITS.md). A escala real no se vería: tamaño mínimo en pantalla.
+// Si el diseño coincide con Parker Solar Probe se usa el modelo de NASA sin modificar
+// (public/CREDITS.md); si no, la nave armada en el hangar. A escala real no se vería: tamaño mínimo.
 function Probe({
   getPos,
   getEarth,
@@ -204,6 +206,7 @@ function Probe({
   latest: MutableRefObject<SimState>;
   emphasis: boolean;
 }) {
+  const parker = matchesParker(latest.current.selected);
   const group = useRef<THREE.Group>(null);
   const camera = useThree((st) => st.camera);
   const { scene } = useGLTF(PROBE_URL);
@@ -223,10 +226,15 @@ function Probe({
   });
   return (
     <group ref={group}>
-      {/* lookAt apunta +Z al objetivo; el escudo del modelo mira hacia −Z, así que se gira media vuelta. */}
-      <group rotation={[0, Math.PI, 0]}>
-        <primitive object={model} scale={scale} />
-      </group>
+      {parker ? (
+        // lookAt apunta +Z al objetivo; el escudo del modelo de NASA mira hacia −Z: media vuelta.
+        <group rotation={[0, Math.PI, 0]}>
+          <primitive object={model} scale={scale} />
+        </group>
+      ) : (
+        // El diseño propio ya tiene el escudo en +Z.
+        <Spacecraft kind="probe" selected={latest.current.selected} />
+      )}
     </group>
   );
 }

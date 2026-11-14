@@ -4,6 +4,7 @@ import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import { SCENE_UNIT_KM, planeToScene } from "../sim/orbit";
 import { MARKER_FRACTION, displaySize } from "./screenSize";
+import { Spacecraft, type Selection } from "../ships/Spacecraft";
 
 type PlanePos = () => { x: number; y: number };
 
@@ -60,56 +61,22 @@ export function TargetSatellite(props: Omit<ShipProps, "realSize_km">) {
 
 useGLTF.preload(HUBBLE_URL);
 
-/** Vehículo de servicio: modelo low poly propio, de unos 8 m. */
-export function Servicer(props: Omit<ShipProps, "realSize_km">) {
+/** Vehículo de servicio con la carga elegida en el hangar (modelo low poly propio, unos 8 m). */
+export function Servicer(props: Omit<ShipProps, "realSize_km"> & { selected: Selection }) {
   const group = useShip({ ...props, realSize_km: 0.008 });
   return (
     <group ref={group}>
-      <group scale={0.28}>
-        <mesh>
-          <boxGeometry args={[0.9, 0.9, 1.3]} />
-          <meshStandardMaterial color="#e6e8e9" flatShading roughness={0.5} metalness={0.2} />
-        </mesh>
-        <mesh position={[0, 0, -0.8]}>
-          <cylinderGeometry args={[0.35, 0.5, 0.4, 6]} />
-          <meshStandardMaterial color="#e0a030" flatShading />
-        </mesh>
-        <mesh position={[1.1, 0, 0]}>
-          <boxGeometry args={[1.3, 0.05, 0.7]} />
-          <meshStandardMaterial color="#27415f" flatShading />
-        </mesh>
-        <mesh position={[-1.1, 0, 0]}>
-          <boxGeometry args={[1.3, 0.05, 0.7]} />
-          <meshStandardMaterial color="#27415f" flatShading />
-        </mesh>
-      </group>
+      <Spacecraft kind="servicer" selected={props.selected} />
     </group>
   );
 }
 
-/** Satélite pequeño de observación: modelo low poly propio, de unos 1,5 m. */
-export function SmallSat(props: Omit<ShipProps, "realSize_km">) {
+/** Satélite de observación armado en el hangar (modelo low poly propio, unos 1,5 m). */
+export function SmallSat(props: Omit<ShipProps, "realSize_km"> & { selected: Selection }) {
   const group = useShip({ ...props, realSize_km: 0.0015 });
   return (
     <group ref={group}>
-      <group scale={0.32}>
-        <mesh>
-          <boxGeometry args={[0.8, 0.8, 0.8]} />
-          <meshStandardMaterial color="#c9b37a" flatShading roughness={0.6} metalness={0.3} />
-        </mesh>
-        <mesh position={[1.05, 0, 0]}>
-          <boxGeometry args={[1.2, 0.04, 0.6]} />
-          <meshStandardMaterial color="#27415f" flatShading />
-        </mesh>
-        <mesh position={[-1.05, 0, 0]}>
-          <boxGeometry args={[1.2, 0.04, 0.6]} />
-          <meshStandardMaterial color="#27415f" flatShading />
-        </mesh>
-        <mesh position={[0, 0, 0.5]} rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.18, 0.22, 0.2, 6]} />
-          <meshStandardMaterial color="#1a1f24" flatShading />
-        </mesh>
-      </group>
+      <Spacecraft kind="smallsat" selected={props.selected} />
     </group>
   );
 }

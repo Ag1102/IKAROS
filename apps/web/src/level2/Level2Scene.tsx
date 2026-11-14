@@ -86,7 +86,7 @@ export function Level2Scene({
         color="#e0a030"
         opacity={0.7}
       />
-      <SmallSat pos={planePos} inclination_deg={inclination_deg} />
+      <SmallSat pos={planePos} inclination_deg={inclination_deg} selected={latest.current.selected} />
       <DownlinkBeam getPos={scenePos} latest={latest} />
       <FollowControls
         follow={follow}

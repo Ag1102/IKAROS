@@ -11,6 +11,8 @@ import { Report } from "../ui/Report";
 import { Overlay, type OverlayKind } from "../ui/Overlay";
 import { formatNumber } from "../ui/format";
 import { useHotkey } from "../hooks/useHotkey";
+import { ShipPreview } from "../ships/ShipPreview";
+import { usePreview } from "../ships/usePreview";
 
 const STEPS = [
   { phase: "hangar", label: "Hangar" },
@@ -76,7 +78,7 @@ export function Level1Screen({ onExit }: { onExit: () => void }) {
   return (
     <div className={hideUi ? "shell hide-ui" : "shell"}>
       <div className="viewport">
-        <Scene latest={latest} docked={docked} previewAltitude={preview} follow={follow} />
+        <Scene latest={latest} docked={docked} previewAltitude={preview} follow={follow} selected={state.selected} />
       </div>
       <TopBar
         state={state}
@@ -129,6 +131,7 @@ export function Level1Screen({ onExit }: { onExit: () => void }) {
 function HangarStep({ def, state, act }: { def: ScenarioDefinition; state: SimState; act: (a: PlayerAction) => void }) {
   const cargo = def.components.filter((c) => state.selected?.[c.slot] === c.id).reduce((m, c) => m + c.mass_kg, 0);
   const cap = state.mass_capacity_kg ?? 0;
+  const { preview, highlight, onPreview } = usePreview(state.selected);
   return (
     <>
       {def.briefing.map((b) => (
@@ -140,7 +143,11 @@ function HangarStep({ def, state, act }: { def: ScenarioDefinition; state: SimSt
         ))}
       </ul>
       <p className="stage">Etapa de diseño: estudio de compromisos (CML 3).</p>
-      <HangarSlots def={def} state={state} act={act} />
+      <div className="ship-preview" aria-label="Tu vehículo de servicio">
+        <ShipPreview kind="servicer" selected={preview} highlight={highlight} />
+        <span className="preview-note">Tu vehículo de servicio · pasa el ratón por una pieza para verla montada</span>
+      </div>
+      <HangarSlots def={def} state={state} act={act} onPreview={onPreview} />
       <table className="mini">
         <tbody>
           <tr className={cargo > cap ? "neg" : ""}>

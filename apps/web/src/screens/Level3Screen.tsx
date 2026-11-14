@@ -11,6 +11,11 @@ import { Overlay, type OverlayKind } from "../ui/Overlay";
 import { formatNumber } from "../ui/format";
 import { PAPER } from "../data/sources";
 import { useHotkey } from "../hooks/useHotkey";
+import { ShipPreview } from "../ships/ShipPreview";
+import { usePreview } from "../ships/usePreview";
+import { matchesParker } from "../ships/Spacecraft";
+
+const PARKER_URL = "/models/parker-solar-probe.glb";
 
 const SCALES: TimeScale[] = [
   { value: 0, label: "Pausa" },
@@ -147,6 +152,8 @@ function HangarPage({
   const mass = state.resources.mass_kg;
   const cap = state.mass_capacity_kg ?? 0;
   const budget = state.budget_remaining_usd_m ?? 0;
+  const { preview, highlight, onPreview } = usePreview(state.selected);
+  const parker = matchesParker(preview);
 
   return (
     <div className="hangar">
@@ -174,10 +181,25 @@ function HangarPage({
           {def.briefing.map((b) => (
             <p key={b}>{b}</p>
           ))}
-          <HangarSlots def={def} state={state} act={act} />
+          <HangarSlots def={def} state={state} act={act} onPreview={onPreview} />
         </section>
 
         <section className="panel summary">
+          <h2>Tu sonda</h2>
+          <div className="ship-preview large" aria-label="Tu sonda">
+            <ShipPreview kind="probe" selected={preview} highlight={highlight} nasaUrl={parker ? PARKER_URL : null} />
+            <span className="preview-note">
+              {parker
+                ? "Coincide con el diseño real: volarás con el modelo de Parker Solar Probe de NASA"
+                : "Pasa el ratón por una pieza para verla montada"}
+            </span>
+          </div>
+          {!parker && (
+            <p className="note">
+              Elige la configuración del paper (fotovoltaica refrigerada, escudo carbono-carbono y sensores de corona,
+              sin extras) y tu sonda será la Parker Solar Probe real.
+            </p>
+          )}
           <h2>Trayectoria</h2>
           <p className="note">
             Tras el lanzamiento, Venus abre {flybys} ventanas de sobrevuelo. Cada una baja el perihelio si se ejecuta la

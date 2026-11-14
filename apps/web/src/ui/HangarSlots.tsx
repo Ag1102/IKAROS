@@ -6,10 +6,13 @@ export function HangarSlots({
   def,
   state,
   act,
+  onPreview,
 }: {
   def: ScenarioDefinition;
   state: SimState;
   act: (a: PlayerAction) => void;
+  /** Avisa qué opción se está mirando (ratón o teclado), para mostrarla montada en la vista previa. */
+  onPreview?: (slot: string | null, componentId: string | null) => void;
 }) {
   return (
     <>
@@ -26,7 +29,14 @@ export function HangarSlots({
             {options.map((c) => {
               const on = current === c.id;
               return (
-                <label key={c.id} className={on ? "part on" : "part"}>
+                <label
+                  key={c.id}
+                  className={on ? "part on" : "part"}
+                  onMouseEnter={() => onPreview?.(slot.id, c.id)}
+                  onMouseLeave={() => onPreview?.(null, null)}
+                  onFocus={() => onPreview?.(slot.id, c.id)}
+                  onBlur={() => onPreview?.(null, null)}
+                >
                   <input
                     type={single ? "checkbox" : "radio"}
                     name={slot.id}

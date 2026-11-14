@@ -7,6 +7,7 @@ import { Earth } from "./Earth";
 import { Servicer, TargetSatellite } from "./Ships";
 import { FollowControls } from "./FollowControls";
 import { OrbitRing } from "./OrbitRing";
+import type { Selection } from "../ships/Spacecraft";
 import { C } from "../data/sources";
 import { SCENE_UNIT_KM, planeToScene } from "../sim/orbit";
 
@@ -46,9 +47,10 @@ interface Props {
   /** Altitud que dejaría el encendido que se está preparando, km. */
   previewAltitude: number | null;
   follow: boolean;
+  selected: Selection;
 }
 
-export function Scene({ latest, docked, previewAltitude, follow }: Props) {
+export function Scene({ latest, docked, previewAltitude, follow, selected }: Props) {
   const angleOf = useAngles(latest);
   const previewRef = useRef(previewAltitude);
   previewRef.current = previewAltitude;
@@ -93,6 +95,7 @@ export function Scene({ latest, docked, previewAltitude, follow }: Props) {
         <TargetSatellite pos={targetPos} inclination_deg={INCLINATION_DEG} />
       </Suspense>
       <Servicer
+        selected={selected}
         pos={docked ? targetPos : servicerPos}
         inclination_deg={INCLINATION_DEG}
         offset={docked ? [1.1, 0.4, 0] : undefined}
