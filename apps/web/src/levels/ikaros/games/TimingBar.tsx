@@ -1,0 +1,89 @@
+import { useRef, useState } from "react";
+import { GameCard, useFinish, useFrameLoop, useKeys } from "./common";
+
+/**
+ * Juego de tiempo: un marcador recorre la barra; se pulsa cuando pasa por la ventana.
+ * `attempts` intentos; el resultado es cuántos aciertos hubo.
+ */
+export function TimingBar({
+  kicker,
+  title,
+  hint,
+  button,
+  attempts,
+  window: win,
+  speed,
+  theoretical,
+  resultText,
+  onDone,
+}: {
+  kicker: string;
+  title: string;
+  hint: string;
+  button: string;
+  attempts: number;
+  window: number;
+  speed: number;
+  theoretical?: boolean;
+  resultText: (hits: number) => { ok: boolean; text: string };
+  onDone: (hits: number) => void;
+}) {
+  const [pos, setPos] = useState(0);
+  const x = useRef(0);
+  const dir = useRef(1);
+  const [hits, setHits] = useState<boolean[]>([]);
+  const live = useRef<boolean[]>([]);
+  const center = useRef(0.3 + Math.random() * 0.4);
+  const [winCenter, setWinCenter] = useState(center.current);
+  const { result, finish } = useFinish(onDone);
+  useFrameLoop((dt) => {
+    x.current += dir.current * speed * dt;
+    if (x.current > 1) {
+      x.current = 1;
+      dir.current = -1;
+    } else if (x.current < 0) {
+      x.current = 0;
+      dir.current = 1;
+    }
+    setPos(x.current);
+  }, !result);
+  const press = () => {
+    if (result) return;
+    const hit = Math.abs(x.current - center.current) <= win / 2;
+    if (live.current.length >= attempts) return;
+    const next = [...live.current, hit];
+    live.current = next;
+    setHits(next);
+    center.current = 0.2 + Math.random() * 0.6;
+    setWinCenter(center.current);
+    if (next.length >= attempts) {
+      const n = next.filter(Boolean).length;
+      const r = resultText(n);
+      finish(r.ok, r.text, n);
+    }
+  };
+  useKeys((k, e) => {
+    if (k === " " || k === "Enter") {
+      e.preventDefault();
+      press();
+    }
+  });
+  return (
+    <GameCard kicker={kicker} title={title} hint={hint} theoretical={theoretical} result={result}>
+      <div className="timing">
+        <div className="timing-track">
+          <i style={{ left: `${(winCenter - win / 2) * 100}%`, width: `${win * 100}%` }} />
+          <b style={{ left: `${pos * 100}%` }} />
+        </div>
+        <div className="timing-shots">
+          {Array.from({ length: attempts }, (_, i) => (
+            <span key={i} className={hits[i] === undefined ? "" : hits[i] ? "hit" : "miss"} />
+          ))}
+        </div>
+        <button className="tap-btn" onClick={press} disabled={Boolean(result)}>
+          {button}
+        </button>
+      </div>
+    </GameCard>
+  );
+}

@@ -23,6 +23,7 @@ export const C = {
   earthRadius: read(constants, "earth_radius_km"),
   sunRadius: read(constants, "sun_radius_km"),
   au: read(constants, "au_km"),
+  am0: read(constants, "am0_w_m2"),
 };
 
 export const PAPER = {
@@ -32,6 +33,8 @@ export const PAPER = {
   mainArrayLimit_au: read(paper, "main_array_limit_au"),
   minPower_w: read(paper, "min_power_w"),
   perihelionIlluminated_cm2: read(paper, "perihelion_illuminated_cm2"),
+  cellEfficiency: read(paper, "cell_efficiency"),
+  radiatorTemp_c: read(paper, "radiator_temp_c"),
 };
 
 export interface Fact {

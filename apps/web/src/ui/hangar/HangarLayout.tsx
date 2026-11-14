@@ -60,6 +60,7 @@ export function HangarLayout({
   launchLabel = tr("Lanzar misión", "Launch mission"),
   onLaunch,
   assistant,
+  overlay,
   onExit,
   onGlossary,
   onCredits,
@@ -79,6 +80,8 @@ export function HangarLayout({
   launchLabel?: string;
   onLaunch: () => void;
   assistant?: ReactNode;
+  /** Capa sobre la nave (p. ej. la zona donde se sueltan las piezas). */
+  overlay?: ReactNode;
   onExit: () => void;
   onGlossary: () => void;
   onCredits: () => void;
@@ -89,6 +92,7 @@ export function HangarLayout({
         <HangarStage model={model} active={Boolean(focus)} />
       </Suspense>
       <div className="hangar-shade" aria-hidden="true" />
+      {overlay}
 
       <header className="hangar-top">
         <div className="brand">

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import type { MissionReport, MissionSegment } from "@ikaros/contracts";
 import { formatNumber } from "./format";
@@ -48,11 +48,14 @@ export function Report({
   report,
   onRestart,
   unlocks,
+  extra,
 }: {
   report: MissionReport;
   onRestart: () => void;
   /** Nombre del nivel que abre una misión cumplida, si hay uno. */
   unlocks?: string;
+  /** Contenido propio del nivel bajo la puntuación (p. ej. la bitácora de minijuegos). */
+  extra?: ReactNode;
 }) {
   const [open, setOpen] = useState(true);
   const score = useCountUp(report.score);
@@ -91,6 +94,7 @@ export function Report({
             {tr("Nivel desbloqueado", "Level unlocked")}: <b>{unlocks}</b>
           </p>
         )}
+        {extra}
         <ul className="segments" aria-label={tr("Informe por segmentos de misión", "Report by mission segment")}>
           {segments().map((seg, i) => {
             const causes = report.causes.filter((c) => (c.segment ?? "space") === seg.id);
