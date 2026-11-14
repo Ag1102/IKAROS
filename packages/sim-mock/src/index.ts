@@ -48,7 +48,7 @@ function baseState(scenario: ScenarioId): SimState {
         mission_elapsed_s: 0,
       },
       altitude_km: 400,
-      target_altitude_km: 535,
+      target_altitude_km: 480,
       delta_v_remaining_m_s: 120,
       comm_window_open: false,
       repair_progress_pct: 0,

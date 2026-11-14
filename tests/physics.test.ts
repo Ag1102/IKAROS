@@ -29,7 +29,7 @@ describe("física con casos conocidos", () => {
 
   it("hohmannTarget invierte a hohmannDeltaV (subida y bajada)", () => {
     const r1 = Re + 400;
-    const r2 = Re + 535;
+    const r2 = Re + 480;
     const dv = physics.hohmannDeltaV(mu, r1, r2);
     expect(physics.hohmannTarget(mu, r1, dv)).toBeCloseTo(r2, 3);
     expect(physics.hohmannTarget(mu, r2, -dv)).toBeCloseTo(r1, 3);

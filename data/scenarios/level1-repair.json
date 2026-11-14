@@ -3,7 +3,7 @@
   "title": "Nivel 1 — Servicio en órbita",
   "subtitle": "Reparar un satélite que perdió un panel solar y su antena",
   "briefing": [
-    "El satélite de referencia orbita a 535 km. Perdió un panel solar y la antena de alta ganancia.",
+    "El satélite de referencia orbita a 480 km, como Hubble hoy. Perdió un panel solar y la antena de alta ganancia.",
     "Tu vehículo de servicio parte de 400 km. Sube con maniobras de transferencia (delta-V) y acóplate.",
     "La carga es limitada: cada kilo de herramientas reduce el delta-V disponible (ecuación de Tsiolkovsky).",
     "Las reparaciones solo avanzan con la estación terrena a la vista (ventana de comunicaciones)."
@@ -94,12 +94,11 @@
       "note": "Órbita de partida del vehículo de servicio."
     },
     "target_altitude_km": {
-      "value": 535,
+      "value": 480,
       "unit": "km",
-      "source": "NASA, Hubble Space Telescope: datos rápidos",
+      "source": "STScI, HST Overview and Status: altitud actual de Hubble",
       "retrieved": "2026-11-14",
-      "origin": "real",
-      "note": "Altitud de referencia tipo Hubble; verificar."
+      "origin": "real"
     },
     "dock_tolerance_km": {
       "value": 2,

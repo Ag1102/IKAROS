@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { SimState, Simulation } from "@ikaros/contracts";
-import { createSimulation } from "../packages/sim/src/index";
+import { createSimulation, physics } from "../packages/sim/src/index";
+import constants from "../data/constants.json";
 import { createSimulation as createMock } from "../packages/sim-mock/src/index";
 import { pickAll, REAL_CONFIG } from "../packages/sim/src/autopilot";
 import { createRng } from "../packages/sim/src/rng";
@@ -120,7 +121,13 @@ describe("misiones que no se traban", () => {
     sim.load("level1-repair", 1);
     pickAll(sim, { panel: "panel-spare", antenna: "antenna-spare" });
     let s = sim.act({ type: "launch" });
-    s = sim.act({ type: "burn", delta_v_m_s: 75.2398 });
+    const r = (alt: number) => constants.earth_radius_km.value + alt;
+    const dv = physics.hohmannDeltaV(
+      constants.mu_earth_km3_s2.value,
+      r(s.altitude_km ?? 0),
+      r(s.target_altitude_km ?? 0),
+    );
+    s = sim.act({ type: "burn", delta_v_m_s: dv * 1000 });
     while (s.phase !== "complete") s = sim.step(600);
     expect(s.resources.mission_elapsed_s).toBeLessThan(6 * 3600);
     expect(sim.report().outcome).toBe("failure");

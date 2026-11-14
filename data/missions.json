@@ -2,7 +2,7 @@
   "parker_perihelion_rsun": {
     "value": 9.86,
     "unit": "R_sun",
-    "source": "NASA, Parker Solar Probe: máximo acercamiento del 24 dic 2024 (~6.1 millones de km de la superficie)",
+    "source": "NASA, Parker Solar Probe: máximo acercamiento del 24 dic 2024, 6.1 millones de km de la superficie (Guinness: 6,167,590 km)",
     "retrieved": "2026-11-14",
     "origin": "real"
   },
@@ -23,10 +23,10 @@
   "parker_launch_mass_kg": {
     "value": 685,
     "unit": "kg",
-    "source": "NASA/JHU-APL, Parker Solar Probe press kit (2018), masa al lanzamiento",
+    "source": "NASA/JHU-APL, Parker Solar Probe: masa al lanzamiento con 130 kg de propelente",
     "retrieved": "2026-11-14",
     "origin": "real",
-    "note": "Verificar contra el press kit antes del envío."
+    "note": "Coinciden varias fuentes (JHU-APL, Planetary Society); el press kit de NASA no lo muestra en su resumen."
   },
   "parker_shield_front_c": {
     "value": 1377,
@@ -36,12 +36,12 @@
     "origin": "real"
   },
   "hubble_altitude_km": {
-    "value": 535,
+    "value": 480,
     "unit": "km",
-    "source": "NASA, Hubble Space Telescope: datos rápidos (órbita de ~535 km)",
+    "source": "STScI, HST Overview and Status (hst-docs.stsci.edu/hstos): \"Hubble currently operates at an altitude of 480 km\"",
     "retrieved": "2026-11-14",
     "origin": "real",
-    "note": "La altitud de Hubble decae con el tiempo; verificar el valor de referencia."
+    "note": "La órbita decae; reentrada prevista a mediados de 2033."
   },
   "hubble_sm4_spacewalks": {
     "value": 5,
