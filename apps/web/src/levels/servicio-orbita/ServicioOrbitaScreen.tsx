@@ -11,7 +11,8 @@ import { Report } from "../../ui/Report";
 import { Overlay, type OverlayKind } from "../../ui/Overlay";
 import { formatNumber } from "../../ui/format";
 import { useHotkey } from "../../hooks/useHotkey";
-import { ShipPreview } from "../../ships/ShipPreview";
+import { MODELS } from "../../ships/models";
+import { HangarLayout, focusName } from "../../ui/hangar/HangarLayout";
 import { usePreview } from "../../ships/usePreview";
 
 const STEPS = [
@@ -75,6 +76,15 @@ export function ServicioOrbitaScreen({ onExit }: { onExit: () => void }) {
     restart();
   };
 
+  if (state.phase === "hangar") {
+    return (
+      <>
+        <HangarPage def={def} state={state} act={act} onExit={onExit} onOverlay={setOverlay} />
+        <Overlay kind={overlay} onClose={() => setOverlay(null)} />
+      </>
+    );
+  }
+
   return (
     <div className={hideUi ? "shell hide-ui" : "shell"}>
       <div className="viewport">
@@ -104,7 +114,6 @@ export function ServicioOrbitaScreen({ onExit }: { onExit: () => void }) {
         <section className="panel guide" aria-labelledby="guide-h">
           <h2 id="guide-h">Guía de misión</h2>
           <Stepper phase={state.phase} />
-          {state.phase === "hangar" && <HangarStep def={def} state={state} act={act} />}
           {state.phase === "transfer" && (
             <TransferStep
               state={state}
@@ -128,44 +137,66 @@ export function ServicioOrbitaScreen({ onExit }: { onExit: () => void }) {
   );
 }
 
-function HangarStep({ def, state, act }: { def: ScenarioDefinition; state: SimState; act: (a: PlayerAction) => void }) {
+function HangarPage({
+  def,
+  state,
+  act,
+  onExit,
+  onOverlay,
+}: {
+  def: ScenarioDefinition;
+  state: SimState;
+  act: (a: PlayerAction) => void;
+  onExit: () => void;
+  onOverlay: (k: OverlayKind) => void;
+}) {
+  const [attemptFrom, setAttemptFrom] = useState<number | null>(null);
+  const blocked =
+    attemptFrom === null
+      ? []
+      : state.events.slice(attemptFrom).filter((e) => e.kind === "warning" && /bloqueado/i.test(e.text));
   const cargo = def.components.filter((c) => state.selected?.[c.slot] === c.id).reduce((m, c) => m + c.mass_kg, 0);
   const cap = state.mass_capacity_kg ?? 0;
+  const budget = state.budget_remaining_usd_m ?? 0;
   const { preview, highlight, onPreview } = usePreview(state.selected);
+
   return (
-    <>
-      {def.briefing.map((b) => (
-        <p key={b}>{b}</p>
-      ))}
-      <ul className="causes">
-        {def.objectives.map((o) => (
-          <li key={o}>{o}</li>
-        ))}
-      </ul>
-      <p className="stage">Etapa de diseño: estudio de compromisos (CML 3).</p>
-      <div className="ship-preview" aria-label="Tu vehículo de servicio">
-        <ShipPreview kind="servicer" selected={preview} highlight={highlight} />
-        <span className="preview-note">Tu vehículo de servicio · pasa el ratón por una pieza para verla montada</span>
-      </div>
-      <HangarSlots def={def} state={state} act={act} onPreview={onPreview} />
-      <table className="mini">
-        <tbody>
-          <tr className={cargo > cap ? "neg" : ""}>
-            <th>Carga</th>
-            <td className="num">
-              {formatNumber(cargo)} / {formatNumber(cap)} kg
-            </td>
-          </tr>
-          <tr>
-            <th>Δv disponible</th>
-            <td className="num">{formatNumber(state.delta_v_remaining_m_s ?? 0, 1)} m/s</td>
-          </tr>
-        </tbody>
-      </table>
-      <button className="primary" onClick={() => act({ type: "launch" })}>
-        Lanzar
-      </button>
-    </>
+    <HangarLayout
+      levelTitle={def.title}
+      heading="Carga del transbordador"
+      stage="Etapa de diseño: estudio de compromisos (CML 3)."
+      briefing={def.briefing}
+      objectives={def.objectives}
+      model={MODELS.shuttle}
+      focus={focusName(def, preview, highlight)}
+      slots={<HangarSlots def={def} state={state} act={act} onPreview={onPreview} />}
+      stats={[
+        { label: "Carga en bodega", value: cargo, max: cap, unit: "kg", warn: cargo > cap },
+        { label: "Δv disponible", value: state.delta_v_remaining_m_s ?? 0, digits: 1, unit: "m/s" },
+        {
+          label: "Presupuesto restante",
+          value: budget,
+          max: def.params.budget_usd_m?.value ?? budget,
+          unit: "M USD",
+          warn: budget < 0,
+        },
+      ]}
+      extra={
+        <p className="note">
+          Cada kilo en la bodega reduce el Δv (ecuación de Tsiolkovsky). Lleva solo lo que piden las reparaciones.
+        </p>
+      }
+      problems={blocked.map((e) => e.text)}
+      launchLabel="Lanzar"
+      onLaunch={() => {
+        setAttemptFrom(state.events.length);
+        act({ type: "launch" });
+      }}
+      assistant={<Assistant events={state.events} max={1} />}
+      onExit={onExit}
+      onGlossary={() => onOverlay("glossary")}
+      onCredits={() => onOverlay("credits")}
+    />
   );
 }
 

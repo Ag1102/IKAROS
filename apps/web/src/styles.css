@@ -1042,3 +1042,298 @@ kbd {
     display: none;
   }
 }
+
+/* ---------- Hangar de juego ---------- */
+
+.hangar-game {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  background: #030507;
+}
+.hangar-canvas {
+  position: absolute !important;
+  inset: 0;
+}
+.hangar-shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(3, 5, 7, 0.9) 0%, rgba(3, 5, 7, 0.35) 30%, rgba(3, 5, 7, 0) 45%),
+    linear-gradient(270deg, rgba(3, 5, 7, 0.9) 0%, rgba(3, 5, 7, 0.35) 24%, rgba(3, 5, 7, 0) 40%);
+}
+.hangar-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 24px;
+  z-index: 2;
+}
+.hangar-loadout,
+.hangar-stats {
+  position: absolute;
+  top: 62px;
+  bottom: 20px;
+  overflow-y: auto;
+  z-index: 2;
+  scrollbar-width: thin;
+  scrollbar-color: #2a3a44 transparent;
+}
+.hangar-loadout {
+  left: 24px;
+  width: min(420px, 34vw);
+  padding-right: 8px;
+}
+.hangar-stats {
+  right: 24px;
+  width: min(340px, 28vw);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.hangar-loadout h2,
+.hangar-stats h2 {
+  margin: 0 0 6px;
+  font: 600 22px var(--font-head);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #eef3f5;
+}
+.hangar-loadout .stage {
+  margin-bottom: 10px;
+}
+.briefing {
+  margin: 0 0 14px;
+  border: 1px solid rgba(201, 211, 216, 0.14);
+  background: rgba(8, 13, 17, 0.7);
+  padding: 8px 12px;
+}
+.briefing summary {
+  cursor: pointer;
+  font: 500 12px var(--font-head);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+.briefing p {
+  margin: 8px 0;
+}
+
+.hangar-game .slot {
+  border: 0;
+  margin: 14px 0 0;
+  padding: 0;
+}
+.hangar-game .slot legend {
+  margin-bottom: 6px;
+  color: var(--amber);
+  letter-spacing: 0.18em;
+}
+.hangar-game .part {
+  position: relative;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "check name"
+    "check stats"
+    "check desc";
+  row-gap: 2px;
+  margin-bottom: 6px;
+  padding: 10px 12px;
+  background: rgba(10, 16, 21, 0.78);
+  border: 1px solid rgba(201, 211, 216, 0.12);
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+  transition:
+    border-color 150ms,
+    background 150ms,
+    transform 150ms;
+}
+.hangar-game .part:hover {
+  border-color: rgba(95, 180, 196, 0.6);
+  background: rgba(14, 24, 30, 0.9);
+  transform: translateX(3px);
+}
+.hangar-game .part.on {
+  border-color: var(--amber);
+  background: linear-gradient(90deg, rgba(224, 160, 48, 0.16), rgba(10, 16, 21, 0.85) 60%);
+  box-shadow: inset 3px 0 0 var(--amber);
+}
+.hangar-game .part input {
+  grid-area: check;
+  align-self: start;
+  margin-top: 3px;
+  accent-color: var(--amber);
+}
+.hangar-game .part .pn {
+  grid-area: name;
+  font: 600 15px var(--font-head);
+  letter-spacing: 0.04em;
+  color: #eef3f5;
+}
+.hangar-game .part.on .pn {
+  color: var(--amber);
+}
+.hangar-game .part .num {
+  grid-area: stats;
+  color: var(--cyan);
+  font-size: 12px;
+}
+.hangar-game .part .pd {
+  grid-area: desc;
+  color: var(--dim);
+  font-size: 12px;
+}
+
+.hangar-caption {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+  z-index: 2;
+}
+.hangar-model {
+  font: 600 26px var(--font-head);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #eef3f5;
+  text-shadow: 0 0 24px rgba(95, 180, 196, 0.35);
+}
+.hangar-focus {
+  font: 400 12px var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+.hstat {
+  padding: 10px 12px;
+  background: rgba(10, 16, 21, 0.78);
+  border: 1px solid rgba(201, 211, 216, 0.12);
+  border-left: 2px solid var(--cyan);
+}
+.hstat.warn {
+  border-left-color: var(--red);
+  animation: warn-pulse 1.2s ease-in-out infinite;
+}
+.hstat-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.hstat-head .num {
+  font: 500 16px var(--font-mono);
+  color: #eef3f5;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.hstat.warn .hstat-head .num {
+  color: var(--red);
+}
+.hstat-max {
+  color: var(--dim);
+  font-size: 12px;
+}
+.hstat-bar {
+  position: relative;
+  height: 6px;
+  margin-top: 8px;
+  background: rgba(201, 211, 216, 0.08);
+  overflow: hidden;
+}
+.hstat-bar div {
+  height: 100%;
+  background: linear-gradient(90deg, #3f8d9c, var(--cyan));
+  box-shadow: 0 0 12px rgba(95, 180, 196, 0.6);
+  transition: width 400ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.hstat.warn .hstat-bar div {
+  background: linear-gradient(90deg, #a8433a, var(--red));
+  box-shadow: 0 0 12px rgba(212, 88, 74, 0.7);
+}
+.hstat-bar i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(3, 5, 7, 0.8);
+}
+.hstat-title {
+  margin: 6px 0 0;
+  font: 500 12px var(--font-head);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+.hangar-stats .orbit-preview {
+  height: 190px;
+}
+.launch-cta {
+  margin-top: 4px;
+  padding: 16px 20px;
+  border: 0;
+  background: var(--amber);
+  color: #12100a;
+  font: 600 18px var(--font-head);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  cursor: pointer;
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  box-shadow: 0 0 30px rgba(224, 160, 48, 0.35);
+  transition: filter 150ms;
+}
+.launch-cta:hover {
+  filter: brightness(1.15);
+}
+.launch-cta:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+}
+@keyframes warn-pulse {
+  50% {
+    background: rgba(60, 18, 14, 0.85);
+  }
+}
+
+@media (max-width: 1000px) {
+  .hangar-loadout,
+  .hangar-stats {
+    position: static;
+    width: auto;
+    margin: 0 16px 16px;
+    overflow: visible;
+  }
+  .hangar-game {
+    overflow-y: auto;
+    padding-top: 320px;
+  }
+  .hangar-canvas {
+    height: 320px !important;
+    bottom: auto;
+  }
+  .hangar-caption {
+    top: 270px;
+    bottom: auto;
+  }
+  .hangar-shade {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hstat.warn {
+    animation: none;
+  }
+}

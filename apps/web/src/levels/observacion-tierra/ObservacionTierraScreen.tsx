@@ -10,7 +10,8 @@ import { Assistant } from "../../ui/Assistant";
 import { Overlay, type OverlayKind } from "../../ui/Overlay";
 import { formatElapsed, formatNumber } from "../../ui/format";
 import { useHotkey } from "../../hooks/useHotkey";
-import { ShipPreview } from "../../ships/ShipPreview";
+import { MODELS } from "../../ships/models";
+import { HangarLayout, focusName } from "../../ui/hangar/HangarLayout";
 import { usePreview } from "../../ships/usePreview";
 
 const SCALES: TimeScale[] = [
@@ -110,48 +111,36 @@ function HangarPage({
   const cap = state.mass_capacity_kg;
   const budget = state.budget_remaining_usd_m ?? 0;
   const gen = state.resources.power_generated_w;
-  const { preview, highlight, onPreview } = usePreview(state.selected);
   const load = state.resources.power_consumed_w;
+  const { preview, highlight, onPreview } = usePreview(state.selected);
 
   return (
-    <div className="hangar">
-      <header className="topbar">
-        <div className="brand">
-          <span className="brand-name">IKAROS</span>
-          <span className="brand-sub">{def.title} · Hangar</span>
-        </div>
-        <div />
-        <div />
-        <div />
-        <div className="scale">
-          <button onClick={() => onOverlay("glossary")}>Glosario</button>
-          <button onClick={() => onOverlay("credits")}>Créditos</button>
-          <button onClick={onExit}>Menú</button>
-        </div>
-      </header>
-
-      <main className="hangar-body">
-        <section className="panel">
-          <h2>Diseño de la misión</h2>
-          <p className="stage">Etapa de diseño: del objetivo científico a los requisitos y el diseño (CML 1 a 4).</p>
-          {def.briefing.map((b) => (
-            <p key={b}>{b}</p>
-          ))}
-          <ul className="causes">
-            {def.objectives.map((o) => (
-              <li key={o}>{o}</li>
-            ))}
-          </ul>
-          <HangarSlots def={def} state={state} act={act} onPreview={onPreview} />
-        </section>
-
-        <section className="panel summary">
-          <h2>Tu satélite</h2>
-          <div className="ship-preview large" aria-label="Tu satélite">
-            <ShipPreview kind="smallsat" selected={preview} highlight={highlight} />
-            <span className="preview-note">Pasa el ratón por una pieza para verla montada</span>
-          </div>
-          <h2>Órbita</h2>
+    <HangarLayout
+      levelTitle={def.title}
+      heading="Diseño de la misión"
+      stage="Etapa de diseño: del objetivo científico a los requisitos y el diseño (CML 1 a 4)."
+      briefing={def.briefing}
+      objectives={def.objectives}
+      model={MODELS.landsat}
+      focus={focusName(def, preview, highlight)}
+      slots={<HangarSlots def={def} state={state} act={act} onPreview={onPreview} />}
+      stats={[
+        cap !== undefined
+          ? { label: "Masa / capacidad del lanzador", value: mass, max: cap, unit: "kg", warn: mass > cap }
+          : { label: "Masa", value: mass, unit: "kg" },
+        {
+          label: "Presupuesto restante",
+          value: budget,
+          max: param(def, "budget_usd_m"),
+          unit: "M USD",
+          warn: budget < 0,
+        },
+        { label: "Potencia al sol / consumo", value: gen, max: Math.max(load, 1), unit: "W", warn: gen < load },
+        { label: "Batería", value: state.battery_capacity_wh ?? 0, unit: "Wh" },
+      ]}
+      extra={
+        <>
+          <h3 className="hstat-title">Órbita</h3>
           <div className="orbit-preview" aria-label="Órbita elegida">
             <OrbitPreview2 altitude_km={state.altitude_km ?? null} inclination_deg={state.inclination_deg ?? 0} />
             <span className="preview-note">
@@ -160,57 +149,22 @@ function HangarPage({
                 : `${formatNumber(state.altitude_km)} km · inclinación ${formatNumber(state.inclination_deg ?? 0, 1)}°. Escala real.`}
             </span>
           </div>
-
-          <h2>Lanzamiento</h2>
-          <div className="meter">
-            <span>Masa</span>
-            <span className="num">
-              {formatNumber(mass)} {cap !== undefined ? `/ ${formatNumber(cap)}` : ""} kg
-            </span>
-            {cap !== undefined && (
-              <div className="bar">
-                <div className={mass > cap ? "over" : ""} style={{ width: `${Math.min(100, (mass / cap) * 100)}%` }} />
-              </div>
-            )}
-          </div>
           <p className="note">
-            La capacidad depende del lanzador y de la órbita: a la heliosíncrona se lleva el{" "}
-            {formatNumber(param(def, "sso_capacity_factor") * 100)} % de la carga.
+            A la heliosíncrona el lanzador lleva el {formatNumber(param(def, "sso_capacity_factor") * 100)} % de su
+            carga.
           </p>
-          <div className="meter">
-            <span>Presupuesto restante</span>
-            <span className={budget < 0 ? "num neg-text" : "num"}>{formatNumber(budget)} M USD</span>
-          </div>
-          <div className="meter">
-            <span>Potencia (sol) / consumo</span>
-            <span className={gen < load ? "num neg-text" : "num"}>
-              {formatNumber(gen)} / {formatNumber(load)} W
-            </span>
-          </div>
-          <div className="meter">
-            <span>Batería</span>
-            <span className="num">{formatNumber(state.battery_capacity_wh ?? 0)} Wh</span>
-          </div>
-          {blocked.length > 0 && (
-            <ul className="problems">
-              {blocked.map((e) => (
-                <li key={e.id}>{e.text.replace(/^Lanzamiento bloqueado: /, "")}</li>
-              ))}
-            </ul>
-          )}
-          <button
-            className="primary"
-            onClick={() => {
-              setAttemptFrom(state.events.length);
-              act({ type: "launch" });
-            }}
-          >
-            Lanzar misión
-          </button>
-          <Assistant events={state.events} max={1} />
-        </section>
-      </main>
-    </div>
+        </>
+      }
+      problems={blocked.map((e) => e.text.replace(/^Lanzamiento bloqueado: /, ""))}
+      onLaunch={() => {
+        setAttemptFrom(state.events.length);
+        act({ type: "launch" });
+      }}
+      assistant={<Assistant events={state.events} max={1} />}
+      onExit={onExit}
+      onGlossary={() => onOverlay("glossary")}
+      onCredits={() => onOverlay("credits")}
+    />
   );
 }
 

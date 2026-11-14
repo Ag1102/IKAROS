@@ -11,11 +11,9 @@ import { Overlay, type OverlayKind } from "../../ui/Overlay";
 import { formatNumber } from "../../ui/format";
 import { PAPER } from "../../data/sources";
 import { useHotkey } from "../../hooks/useHotkey";
-import { ShipPreview } from "../../ships/ShipPreview";
 import { usePreview } from "../../ships/usePreview";
-import { matchesParker } from "../../ships/Spacecraft";
-
-const PARKER_URL = "/models/parker-solar-probe.glb";
+import { MODELS } from "../../ships/models";
+import { HangarLayout, focusName } from "../../ui/hangar/HangarLayout";
 
 const SCALES: TimeScale[] = [
   { value: 0, label: "Pausa" },
@@ -153,105 +151,51 @@ function HangarPage({
   const cap = state.mass_capacity_kg ?? 0;
   const budget = state.budget_remaining_usd_m ?? 0;
   const { preview, highlight, onPreview } = usePreview(state.selected);
-  const parker = matchesParker(preview);
 
   return (
-    <div className="hangar">
-      <header className="topbar">
-        <div className="brand">
-          <span className="brand-name">IKAROS</span>
-          <span className="brand-sub">{def.title} · Hangar</span>
-        </div>
-        <div />
-        <div />
-        <div />
-        <div className="scale">
-          <button onClick={() => onOverlay("glossary")}>Glosario</button>
-          <button onClick={() => onOverlay("credits")}>Créditos</button>
-          <button onClick={onExit}>Menú</button>
-        </div>
-      </header>
-
-      <main className="hangar-body">
-        <section className="panel">
-          <h2>Diseño de la nave</h2>
-          <p className="stage">
-            Etapa de diseño: estudio de compromisos (CML 3). Al lanzar, el diseño queda fijo (CML 4).
-          </p>
-          {def.briefing.map((b) => (
-            <p key={b}>{b}</p>
-          ))}
-          <HangarSlots def={def} state={state} act={act} onPreview={onPreview} />
-        </section>
-
-        <section className="panel summary">
-          <h2>Tu sonda</h2>
-          <div className="ship-preview large" aria-label="Tu sonda">
-            <ShipPreview kind="probe" selected={preview} highlight={highlight} nasaUrl={parker ? PARKER_URL : null} />
-            <span className="preview-note">
-              {parker
-                ? "Coincide con el diseño real: volarás con el modelo de Parker Solar Probe de NASA"
-                : "Pasa el ratón por una pieza para verla montada"}
-            </span>
-          </div>
-          {!parker && (
-            <p className="note">
-              Elige la configuración del paper (fotovoltaica refrigerada, escudo carbono-carbono y sensores de corona,
-              sin extras) y tu sonda será la Parker Solar Probe real.
-            </p>
-          )}
-          <h2>Trayectoria</h2>
-          <p className="note">
-            Tras el lanzamiento, Venus abre {flybys} ventanas de sobrevuelo. Cada una baja el perihelio si se ejecuta la
-            maniobra de corrección: de {formatNumber(param(def, "perihelion_start_rsun"), 1)} R☉ a{" "}
-            {formatNumber(param(def, `perihelion_after_flyby_${flybys}_rsun`), 1)} R☉. Afelio{" "}
-            {formatNumber(aphelion, 3)} AU, cerca de la órbita de Venus.
-          </p>
+    <HangarLayout
+      levelTitle={def.title}
+      heading="Diseño de la nave"
+      stage="Etapa de diseño: estudio de compromisos (CML 3). Al lanzar, el diseño queda fijo (CML 4)."
+      briefing={def.briefing}
+      objectives={def.objectives}
+      model={MODELS.parker}
+      focus={focusName(def, preview, highlight)}
+      slots={<HangarSlots def={def} state={state} act={act} onPreview={onPreview} />}
+      stats={[
+        { label: "Masa al lanzamiento", value: mass, max: cap, unit: "kg", warn: mass > cap },
+        {
+          label: "Presupuesto restante",
+          value: budget,
+          max: param(def, "budget_usd_m"),
+          unit: "M USD",
+          warn: budget < 0,
+        },
+        { label: "Consumo eléctrico", value: state.power_load_w ?? 0, unit: "W" },
+      ]}
+      extra={
+        <>
+          <h3 className="hstat-title">Trayectoria</h3>
           <div className="orbit-preview" aria-label="Órbita inicial y final prevista">
             <OrbitPreview start={start} final={final} />
             <span className="preview-note">
-              Gris: primera órbita · Blanca: órbita final. Distancias y Sol a escala real.
+              Gris: primera órbita · Blanca: final tras {flybys} sobrevuelos de Venus (
+              {formatNumber(param(def, "perihelion_start_rsun"), 1)} →{" "}
+              {formatNumber(param(def, `perihelion_after_flyby_${flybys}_rsun`), 1)} R☉).
             </span>
           </div>
-
-          <h2>Lanzamiento</h2>
-          <div className="meter">
-            <span>Masa</span>
-            <span className="num">
-              {formatNumber(mass)} / {formatNumber(cap)} kg
-            </span>
-            <div className="bar">
-              <div className={mass > cap ? "over" : ""} style={{ width: `${Math.min(100, (mass / cap) * 100)}%` }} />
-            </div>
-          </div>
-          <div className="meter">
-            <span>Presupuesto restante</span>
-            <span className={budget < 0 ? "num neg-text" : "num"}>{formatNumber(budget)} M USD</span>
-          </div>
-          <div className="meter">
-            <span>Consumo eléctrico</span>
-            <span className="num">{formatNumber(state.power_load_w ?? 0)} W</span>
-          </div>
-          {blocked.length > 0 && (
-            <ul className="problems">
-              {blocked.map((e) => (
-                <li key={e.id}>{e.text.replace(/^Lanzamiento bloqueado: /, "")}</li>
-              ))}
-            </ul>
-          )}
-          <button
-            className="primary"
-            onClick={() => {
-              setAttemptFrom(state.events.length);
-              act({ type: "launch" });
-            }}
-          >
-            Lanzar misión
-          </button>
-          <Assistant events={state.events} max={1} />
-        </section>
-      </main>
-    </div>
+        </>
+      }
+      problems={blocked.map((e) => e.text.replace(/^Lanzamiento bloqueado: /, ""))}
+      onLaunch={() => {
+        setAttemptFrom(state.events.length);
+        act({ type: "launch" });
+      }}
+      assistant={<Assistant events={state.events} max={1} />}
+      onExit={onExit}
+      onGlossary={() => onOverlay("glossary")}
+      onCredits={() => onOverlay("credits")}
+    />
   );
 }
 
