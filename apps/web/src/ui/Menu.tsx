@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { LEVELS, menuLevels, type MenuLevel } from "../menu/levels";
 import { setLang, tr, useLang } from "../i18n";
+import { getUnlocked, resetProgress, useUnlocked } from "../progress";
 
 const MenuScene = lazy(() => import("../menu/MenuScene"));
 
@@ -17,11 +18,14 @@ export function Menu({
   onCredits: () => void;
   onGlossary: () => void;
 }) {
-  const [selected, setSelected] = useState<LevelN>(3);
+  // Se abre en el último nivel desbloqueado.
+  const [selected, setSelected] = useState<LevelN>(() => getUnlocked() as LevelN);
+  const unlocked = useUnlocked();
   const lang = useLang();
   const levels = menuLevels();
   const current = levels.find((l) => l.n === selected)!;
-  const canPlay = (l: MenuLevel) => l.ready && webgl;
+  const isLocked = (l: MenuLevel) => l.n > unlocked;
+  const canPlay = (l: MenuLevel) => l.ready && webgl && !isLocked(l);
   const enter = (n: LevelN) => {
     const l = LEVELS.find((x) => x.n === n);
     if (l && canPlay(l)) onPlay(n);
@@ -94,8 +98,9 @@ export function Menu({
         <ol>
           {levels.map((l) => {
             const active = l.n === selected;
+            const locked = isLocked(l) || !l.ready;
             return (
-              <li key={l.n} className={`mission${active ? " active" : ""}${l.ready ? "" : " locked"}`}>
+              <li key={l.n} className={`mission${active ? " active" : ""}${locked ? " locked" : ""}`}>
                 <button
                   className="mission-pick"
                   aria-current={active ? "true" : undefined}
@@ -104,13 +109,34 @@ export function Menu({
                 >
                   <span className="mission-num">{String(l.n).padStart(2, "0")}</span>
                   <span className="mission-name">{l.name}</span>
-                  <span className="mission-tag">{l.ready ? l.tag : tr("Bloqueada", "Locked")}</span>
+                  <span className="mission-tag">
+                    {locked ? (
+                      <>
+                        <LockIcon /> {tr("Bloqueada", "Locked")}
+                      </>
+                    ) : (
+                      l.tag
+                    )}
+                  </span>
                 </button>
                 {active && (
                   <div className="mission-detail">
                     <p>{l.text}</p>
+                    {isLocked(l) && (
+                      <p className="mission-lock">
+                        <LockIcon />{" "}
+                        {tr(
+                          `Supera el nivel ${l.n - 1} con la misión cumplida para desbloquearla.`,
+                          `Complete level ${l.n - 1} successfully to unlock it.`,
+                        )}
+                      </p>
+                    )}
                     <button className="mission-go" disabled={!canPlay(l)} onClick={() => enter(l.n)}>
-                      {l.ready ? tr("Entrar", "Enter") : tr("Pendiente", "Coming soon")}
+                      {isLocked(l)
+                        ? tr("Bloqueada", "Locked")
+                        : l.ready
+                          ? tr("Entrar", "Enter")
+                          : tr("Pendiente", "Coming soon")}
                       {canPlay(l) && <kbd>⏎</kbd>}
                     </button>
                   </div>
@@ -149,11 +175,38 @@ export function Menu({
           <button className="link" onClick={onGlossary}>
             {tr("Glosario", "Glossary")}
           </button>
+          {unlocked > 1 && (
+            <>
+              {" "}
+              ·{" "}
+              <button
+                className="link"
+                onClick={() => {
+                  if (window.confirm(tr("¿Volver a bloquear los niveles 2 y 3?", "Lock levels 2 and 3 again?"))) {
+                    resetProgress();
+                    setSelected(1);
+                  }
+                }}
+              >
+                {tr("Reiniciar progreso", "Reset progress")}
+              </button>
+            </>
+          )}
         </p>
       </footer>
       <p className="sr-only" aria-live="polite">
         {tr("Misión", "Mission")} {current.n}: {current.name}
       </p>
     </main>
+  );
+}
+
+/** Candado de trazo simple, del mismo grosor que el texto. */
+function LockIcon() {
+  return (
+    <svg className="lock-icon" viewBox="0 0 12 14" width="10" height="12" aria-hidden="true">
+      <rect x="1" y="6" width="10" height="7" rx="1" fill="none" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M3.5 6V4a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" strokeWidth="1.4" />
+    </svg>
   );
 }

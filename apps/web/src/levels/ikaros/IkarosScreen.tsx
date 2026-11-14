@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { PlayerAction, ScenarioDefinition, SimState } from "@ikaros/contracts";
 import { useSimulation } from "../../sim/useSimulation";
+import { recordResult } from "../../progress";
 import { IkarosScene, OrbitPreview, probeOrbit } from "./IkarosScene";
 import { EventLog, ResourcesPanel, TopBar, type TimeScale } from "../../ui/Panels";
 import { HangarSlots } from "../../ui/HangarSlots";
@@ -40,6 +41,11 @@ export function IkarosScreen({ onExit }: { onExit: () => void }) {
     s.phase === "encounter" ? ENCOUNTER_MAX_SCALE : Infinity,
   );
   const launchSeq = useLaunchSequence(state.phase, def.title);
+
+  // Una misión cumplida desbloquea el nivel siguiente.
+  useEffect(() => {
+    if (report) recordResult(3, report.outcome);
+  }, [report]);
 
   useHotkey("h", () => setHideUi((v) => !v));
 

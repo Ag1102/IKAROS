@@ -1633,3 +1633,30 @@ kbd {
     animation: none;
   }
 }
+
+/* ---------- Progreso ---------- */
+
+.lock-icon {
+  vertical-align: -1px;
+}
+.mission.locked .mission-tag {
+  color: var(--dim);
+}
+.mission-lock {
+  color: var(--amber) !important;
+  font-size: 13px !important;
+}
+.debrief-unlock {
+  display: inline-block;
+  margin: -8px 0 18px;
+  padding: 6px 12px;
+  border: 1px solid var(--amber);
+  color: var(--amber);
+  font: 500 13px var(--font-head);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  animation: launch-pop 600ms 900ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+.debrief-unlock b {
+  color: #eef3f5;
+}

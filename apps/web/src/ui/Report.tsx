@@ -44,7 +44,16 @@ const outcome = (o: MissionReport["outcome"]) =>
  * Informe post-misión del motor, ordenado por los cuatro segmentos de una misión NASA. Se abre
  * a pantalla completa sobre la escena; se puede cerrar para seguir mirándola.
  */
-export function Report({ report, onRestart }: { report: MissionReport; onRestart: () => void }) {
+export function Report({
+  report,
+  onRestart,
+  unlocks,
+}: {
+  report: MissionReport;
+  onRestart: () => void;
+  /** Nombre del nivel que abre una misión cumplida, si hay uno. */
+  unlocks?: string;
+}) {
   const [open, setOpen] = useState(true);
   const score = useCountUp(report.score);
   useEffect(() => {
@@ -77,6 +86,11 @@ export function Report({ report, onRestart }: { report: MissionReport; onRestart
         <p className="debrief-score">
           {tr("Puntuación", "Score")} <span className="num">{formatNumber(score)}</span>
         </p>
+        {report.outcome === "success" && unlocks && (
+          <p className="debrief-unlock">
+            {tr("Nivel desbloqueado", "Level unlocked")}: <b>{unlocks}</b>
+          </p>
+        )}
         <ul className="segments" aria-label={tr("Informe por segmentos de misión", "Report by mission segment")}>
           {segments().map((seg, i) => {
             const causes = report.causes.filter((c) => (c.segment ?? "space") === seg.id);

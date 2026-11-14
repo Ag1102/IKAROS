@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import type { PlayerAction, ScenarioDefinition, SimState } from "@ikaros/contracts";
 import { useSimulation } from "../../sim/useSimulation";
+import { recordResult } from "../../progress";
+import { menuLevels } from "../../menu/levels";
 import { ObservacionTierraScene, OrbitPreview2 } from "./ObservacionTierraScene";
 import { orbitGeometry } from "./geometry";
 import { EventLog, ResourcesPanel, TopBar, type TimeScale } from "../../ui/Panels";
@@ -33,6 +35,11 @@ export function ObservacionTierraScreen({ onExit }: { onExit: () => void }) {
   const [follow, setFollow] = useState(false);
   const { state, latest, act, restart, report, def } = useSimulation("level2-leo", timeScale);
   const launchSeq = useLaunchSequence(state.phase, def.title);
+
+  // Una misión cumplida desbloquea el nivel siguiente.
+  useEffect(() => {
+    if (report) recordResult(2, report.outcome);
+  }, [report]);
 
   useHotkey("h", () => setHideUi((v) => !v));
 
@@ -87,7 +94,11 @@ export function ObservacionTierraScreen({ onExit }: { onExit: () => void }) {
       <aside className="guide-wrap">
         <section className="panel guide" aria-labelledby="ops-h">
           <h2 id="ops-h">{tr("Operación", "Operations")}</h2>
-          {report ? <Report report={report} onRestart={onRestart} /> : <Operations def={def} state={state} />}
+          {report ? (
+            <Report report={report} onRestart={onRestart} unlocks={menuLevels()[2]?.name} />
+          ) : (
+            <Operations def={def} state={state} />
+          )}
           <Assistant events={state.events} />
         </section>
       </aside>

@@ -3,6 +3,8 @@ import type { PlayerAction, ScenarioDefinition, SimState } from "@ikaros/contrac
 import { physics } from "@ikaros/sim";
 import { Scene } from "../../scene/Scene";
 import { useSimulation } from "../../sim/useSimulation";
+import { recordResult } from "../../progress";
+import { menuLevels } from "../../menu/levels";
 import { C } from "../../data/sources";
 import { EventLog, ResourcesPanel, TopBar } from "../../ui/Panels";
 import { HangarSlots } from "../../ui/HangarSlots";
@@ -57,6 +59,11 @@ export function ServicioOrbitaScreen({ onExit }: { onExit: () => void }) {
   const [follow, setFollow] = useState(false);
   const { state, latest, act, restart, report, def } = useSimulation("level1-repair", timeScale);
   const launchSeq = useLaunchSequence(state.phase, def.title);
+
+  // Una misión cumplida desbloquea el nivel siguiente.
+  useEffect(() => {
+    if (report) recordResult(1, report.outcome);
+  }, [report]);
 
   useHotkey("h", () => setHideUi((v) => !v));
 
@@ -129,7 +136,7 @@ export function ServicioOrbitaScreen({ onExit }: { onExit: () => void }) {
             />
           )}
           {state.phase === "repair" && <RepairStep state={state} />}
-          {report && <Report report={report} onRestart={onRestart} />}
+          {report && <Report report={report} onRestart={onRestart} unlocks={menuLevels()[1]?.name} />}
           <Assistant events={state.events} />
         </section>
       </aside>

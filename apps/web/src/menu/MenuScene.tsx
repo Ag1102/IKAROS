@@ -7,6 +7,7 @@ import { Bloom } from "../scene/space/Bloom";
 import { Sky } from "../scene/space/Sky";
 import { Earth as EarthGlobe } from "../scene/Earth";
 import { MODELS } from "../ships/models";
+import { useUnlocked } from "../progress";
 import { menuLevels, type MenuLevel } from "./levels";
 
 type LevelN = MenuLevel["n"];
@@ -264,7 +265,12 @@ function Scene({
   onEnter: (n: LevelN) => void;
 }) {
   const [hovered, setHovered] = useState<LevelN | null>(null);
-  const level = (n: LevelN) => menuLevels().find((l) => l.n === n)!;
+  const unlocked = useUnlocked();
+  // Un nivel bloqueado se dibuja como no disponible y no se puede abrir con doble clic.
+  const level = (n: LevelN) => {
+    const l = menuLevels().find((x) => x.n === n)!;
+    return { ...l, ready: l.ready && n <= unlocked };
+  };
   const common = { selected, hovered, onHover: setHovered, onSelect, onEnter };
 
   useEffect(() => {
