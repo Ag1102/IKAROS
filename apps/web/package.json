@@ -1,0 +1,10 @@
+{
+  "name": "@ikaros/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@ikaros/contracts": "*",
+    "@ikaros/sim-mock": "*"
+  }
+}
