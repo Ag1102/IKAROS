@@ -35,7 +35,8 @@ describe("integridad de data/", () => {
         expect(ids.has(c.id), `id repetido ${c.id}`).toBe(false);
         ids.add(c.id);
         expect(c.source).toBeTruthy();
-        if (c.origin === "theoretical") expect(c.name.startsWith("⚗") || def.id !== "level3-ikaros").toBe(true);
+        if (c.origin === "theoretical")
+          expect(c.name.startsWith("⚗") || def.id !== "level3-ikaros").toBe(true);
       }
     });
   }

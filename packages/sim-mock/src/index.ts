@@ -11,6 +11,16 @@ import type {
 
 export type { Simulation } from "@ikaros/contracts";
 
+/** Segundos de misión que dura cada fase en el mock antes de pasar a la siguiente. */
+const PHASE_DURATION_S: Record<string, number> = {
+  transfer: 3600,
+  repair: 7200,
+  operations: 3 * 86_400,
+  cruise: 30 * 86_400,
+  encounter: 10 * 86_400,
+  exit: 86_400,
+};
+
 const PHASES: Record<ScenarioId, string[]> = {
   "level1-repair": ["hangar", "transfer", "repair", "complete"],
   "level2-leo": ["hangar", "operations", "complete"],
@@ -102,6 +112,7 @@ function baseState(scenario: ScenarioId): SimState {
 export function createSimulation(): Simulation {
   let state: SimState = baseState("level3-ikaros");
   let eventCount = 0;
+  let phaseStart = 0;
 
   const push = (text: string, kind: SimEvent["kind"] = "info", extra: Partial<SimEvent> = {}) => {
     state.events = [
@@ -114,6 +125,7 @@ export function createSimulation(): Simulation {
     const list = PHASES[state.scenario];
     const i = list.indexOf(state.phase);
     state.phase = list[Math.min(i + 1, list.length - 1)] ?? state.phase;
+    phaseStart = state.resources.mission_elapsed_s;
     push(`Fase: ${state.phase}`, "info", { trigger: `${state.scenario}:${state.phase}` });
   };
 
@@ -121,12 +133,18 @@ export function createSimulation(): Simulation {
     load(scenario, _seed) {
       state = baseState(scenario);
       eventCount = 0;
+      phaseStart = 0;
       push("Simulación falsa cargada (sim-mock).", "info", { trigger: `${scenario}:start` });
       return structuredClone(state);
     },
 
     step(dt_s) {
+      if (!Number.isFinite(dt_s) || dt_s <= 0 || state.phase === "hangar" || state.phase === "complete") {
+        return structuredClone(state);
+      }
       state.resources.mission_elapsed_s += dt_s;
+      const limit = PHASE_DURATION_S[state.phase];
+      if (limit !== undefined && state.resources.mission_elapsed_s - phaseStart >= limit) nextPhase();
       if (state.phase !== "hangar" && state.phase !== "complete") {
         state.resources.data_stored_mb += dt_s * 0.01;
         if (state.scenario === "level3-ikaros") {
@@ -200,11 +218,9 @@ export function createSimulation(): Simulation {
     report(): MissionReport {
       return {
         scenario: state.scenario,
-        outcome: "success",
-        score: 5000,
-        causes: [
-          { text: "Informe falso del sim-mock.", segment: "space", origin: "theoretical" },
-        ],
+        outcome: state.phase === "complete" ? "success" : "partial",
+        score: state.phase === "complete" ? 5000 : 0,
+        causes: [{ text: "Informe falso del sim-mock.", segment: "space", origin: "theoretical" }],
         metrics: { mission_elapsed_s: state.resources.mission_elapsed_s },
         advice: ["Cambiar a @ikaros/sim para ver resultados reales."],
         comparisons: [],

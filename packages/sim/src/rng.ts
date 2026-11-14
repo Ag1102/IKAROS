@@ -1,6 +1,8 @@
 /** Generador determinista (mulberry32): la misma semilla da la misma misión. */
 export function createRng(seed: number): () => number {
-  let a = seed >>> 0;
+  // Acepta semillas decimales, como las de Math.random().
+  const whole = Number.isInteger(seed) ? seed : Math.floor((Number.isFinite(seed) ? seed : 0) * 4294967296);
+  let a = whole >>> 0;
   return () => {
     a = (a + 0x6d2b79f5) >>> 0;
     let t = a;

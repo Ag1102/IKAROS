@@ -46,11 +46,13 @@ describe("física con casos conocidos", () => {
 
   it("ec. 1: matriz principal a 74° y 0.25 AU queda bajo 180 °C (paper, p. 4)", () => {
     const I = physics.solarIntensity(0.25) * Math.cos((74 * Math.PI) / 180);
-    const T = physics.toCelsius(physics.equilibriumTemperature(
+    const T = physics.toCelsius(
+      physics.equilibriumTemperature(
         level3.params.main_array_absorptance.value,
         I,
         level3.params.main_array_emittance_total.value,
-      ));
+      ),
+    );
     expect(T).toBeLessThan(paper.main_array_temp_limit_c.value);
     expect(T).toBeGreaterThan(150);
   });

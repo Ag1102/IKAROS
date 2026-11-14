@@ -29,6 +29,9 @@ export function hohmannTime(mu: number, r1_km: number, r2_km: number): number {
   return Math.PI * Math.sqrt((at * at * at) / mu);
 }
 
+/** Factor máximo de subida que resuelve hohmannTarget. */
+export const HOHMANN_MAX_RAISE = 4;
+
 /**
  * Radio final de una transferencia de Hohmann que gasta dv_km_s en total.
  * Positivo sube, negativo baja. Se resuelve por bisección.
@@ -38,7 +41,7 @@ export function hohmannTarget(mu: number, r1_km: number, dv_km_s: number): numbe
   const up = dv_km_s > 0;
   const target = Math.abs(dv_km_s);
   let lo = up ? r1_km : r1_km * 0.5;
-  let hi = up ? r1_km * 4 : r1_km;
+  let hi = up ? r1_km * HOHMANN_MAX_RAISE : r1_km;
   for (let i = 0; i < 80; i++) {
     const mid = (lo + hi) / 2;
     const dv = hohmannDeltaV(mu, r1_km, mid);

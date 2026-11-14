@@ -13,6 +13,8 @@ import { createRng } from "../rng";
 
 /** Paso interno máximo, s de misión. Un step() largo se parte en pasos de este tamaño. */
 export const MAX_SUBSTEP_S = 60;
+/** Tope de un solo step(): un año de misión. */
+export const MAX_STEP_S = 365 * 86_400;
 
 export abstract class Level {
   readonly def: ScenarioDefinition;
@@ -48,15 +50,17 @@ export abstract class Level {
     return this.state.resources.mission_elapsed_s;
   }
 
-  get done(): boolean {
-    return this.finished;
+  /** Subpaso de cada fase; las fases sin física fina pueden usar uno mayor. */
+  protected substep(): number {
+    return MAX_SUBSTEP_S;
   }
 
   step(dt_s: number): void {
-    if (!(dt_s > 0) || this.finished) return;
-    let left = dt_s;
+    // En el hangar el reloj de misión no corre: el diseño no gasta tiempo de misión.
+    if (!Number.isFinite(dt_s) || dt_s <= 0 || this.finished || this.state.phase === "hangar") return;
+    let left = Math.min(dt_s, MAX_STEP_S);
     while (left > 0 && !this.finished) {
-      const dt = Math.min(left, MAX_SUBSTEP_S);
+      const dt = Math.min(left, this.substep());
       this.state.resources.mission_elapsed_s += dt;
       this.expireDeadlines();
       this.tick(dt);
@@ -66,11 +70,13 @@ export abstract class Level {
 
   act(action: PlayerAction): void {
     if (action.type === "set-time-scale") return; // la escala de tiempo es del cliente
+    if (!hasFiniteNumbers(action)) return;
     if (action.type === "select-component") {
       this.select(action.slot, action.componentId);
       return;
     }
     if (action.type === "resolve-event") {
+      if (this.finished) return;
       const ev = this.state.events.find((e) => e.id === action.eventId);
       if (!ev || ev.resolved || !ev.choices) return;
       if (!ev.choices.some((c) => c.id === action.choice)) return;
@@ -133,6 +139,14 @@ export abstract class Level {
     text: string,
     extra: { trigger?: string; source?: string; choices?: EventChoice[]; deadline_s?: number } = {},
   ): SimEvent {
+    // Un mismo aviso repetido en el mismo instante (clics repetidos) se registra una sola vez.
+    if (!extra.choices) {
+      for (let i = this.state.events.length - 1; i >= 0; i--) {
+        const e = this.state.events[i]!;
+        if (e.at_s !== this.t) break;
+        if (e.text === text && e.kind === kind) return e;
+      }
+    }
     const ev: SimEvent = { id: `${this.def.id}-${++this.eventSeq}`, at_s: this.t, kind, text };
     if (extra.trigger) ev.trigger = extra.trigger;
     if (extra.source) ev.source = extra.source;
@@ -171,6 +185,10 @@ export abstract class Level {
     if (this.finished) return;
     this.finished = true;
     this.state.phase = "complete";
+    // Una decisión que queda abierta al terminar ya no tiene efecto.
+    for (const ev of this.state.events) {
+      if (ev.choices && !ev.resolved) ev.resolved = "timeout";
+    }
   }
 
   snapshot(): SimState {
@@ -185,4 +203,8 @@ export function clamp(x: number, lo: number, hi: number): number {
 export function round(x: number, digits = 1): number {
   const f = 10 ** digits;
   return Math.round(x * f) / f;
+}
+
+function hasFiniteNumbers(action: PlayerAction): boolean {
+  return Object.values(action).every((v) => typeof v !== "number" || Number.isFinite(v));
 }

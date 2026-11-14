@@ -27,7 +27,7 @@ export class Level3 extends Level {
   private flybyWindows = 0;
   private encounterStart = 0;
   private encounterHalf = 0;
-  private dv_m_s = 0;
+  private deltaVUsed = 0;
   private cellEfficiency = 0;
   private mainArrayLost = false;
   private stirlingFailAt: number | null = null;
@@ -140,10 +140,14 @@ export class Level3 extends Level {
     const { mass, cost } = this.totals();
     const cap = this.param("launcher_capacity_kg");
     if (mass > cap) {
-      problems.push(`La nave pesa ${mass} kg y el lanzador lleva ${cap} kg (misión limitada por masa, ${PAPER}, p. 6).`);
+      problems.push(
+        `La nave pesa ${mass} kg y el lanzador lleva ${cap} kg (misión limitada por masa, ${PAPER}, p. 6).`,
+      );
     }
     if (cost > this.param("budget_usd_m")) {
-      problems.push(`El diseño cuesta ${cost} M USD y el presupuesto es ${this.param("budget_usd_m")} M USD.`);
+      problems.push(
+        `El diseño cuesta ${cost} M USD y el presupuesto es ${this.param("budget_usd_m")} M USD.`,
+      );
     }
     return problems;
   }
@@ -162,7 +166,12 @@ export class Level3 extends Level {
       case "stow-main-array":
         if (!this.state.main_array_stowed) {
           this.state.main_array_stowed = true;
-          this.info("Matriz principal plegada tras el escudo.", "info", "level3:main-stowed", sourceOf(paper, "main_array_limit_au"));
+          this.info(
+            "Matriz principal plegada tras el escudo.",
+            "info",
+            "level3:main-stowed",
+            sourceOf(paper, "main_array_limit_au"),
+          );
         }
         return;
       case "set-attitude":
@@ -197,7 +206,9 @@ export class Level3 extends Level {
     this.launchedAt = this.t;
     this.state.phase = "cruise";
     this.cellEfficiency =
-      this.energy() === "stirling" ? value(paper, "stirling_system_efficiency") : value(paper, "cell_efficiency");
+      this.energy() === "stirling"
+        ? value(paper, "stirling_system_efficiency")
+        : value(paper, "cell_efficiency");
     this.nextFlybyAt = this.t + this.param("flyby_interval_s");
     this.info(
       `Lanzamiento. Primer perihelio a ${value(paper, "first_perihelion_au")} AU (${this.param("perihelion_start_rsun")} R☉).`,
@@ -208,6 +219,11 @@ export class Level3 extends Level {
   }
 
   // ---- Simulación ----
+
+  protected substep(): number {
+    // El crucero no tiene física fina: basta un subpaso de una hora.
+    return this.state.phase === "cruise" ? 3600 : super.substep();
+  }
 
   protected tick(dt: number): void {
     switch (this.state.phase) {
@@ -230,23 +246,31 @@ export class Level3 extends Level {
     const since = (this.t - this.launchedAt) % period;
     this.setDistance(distanceAt(q, Q, since - period / 2));
 
-    if (this.flybyWindows < FLYBYS && this.t >= this.nextFlybyAt && !this.openDecision("level3:venus-window")) {
+    if (
+      this.flybyWindows < FLYBYS &&
+      this.t >= this.nextFlybyAt &&
+      !this.openDecision("level3:venus-window")
+    ) {
       this.flybyWindows++;
       const next = this.param(`perihelion_after_flyby_${this.flybyWindows}_rsun`);
-      this.emit("crisis", `Ventana de Venus ${this.flybyWindows} de ${FLYBYS}: el sobrevuelo puede bajar el perihelio a ${next} R☉.`, {
-        trigger: "level3:venus-window",
-        source: sourceOf(paper, "venus_flybys"),
-        deadline_s: this.t + this.param("flyby_window_s"),
-        choices: [
-          {
-            id: "execute",
-            label: "Ejecutar sobrevuelo",
-            detail: `Maniobra de corrección de ${this.param("flyby_tcm_delta_v_m_s")} m/s.`,
-            origin: "real",
-          },
-          { id: "skip", label: "Dejar pasar", detail: "El perihelio no cambia.", origin: "theoretical" },
-        ],
-      });
+      this.emit(
+        "crisis",
+        `Ventana de Venus ${this.flybyWindows} de ${FLYBYS}: el sobrevuelo puede bajar el perihelio a ${next} R☉.`,
+        {
+          trigger: "level3:venus-window",
+          source: sourceOf(paper, "venus_flybys"),
+          deadline_s: this.t + this.param("flyby_window_s"),
+          choices: [
+            {
+              id: "execute",
+              label: "Ejecutar sobrevuelo",
+              detail: `Maniobra de corrección de ${this.param("flyby_tcm_delta_v_m_s")} m/s.`,
+              origin: "real",
+            },
+            { id: "skip", label: "Dejar pasar", detail: "El perihelio no cambia.", origin: "theoretical" },
+          ],
+        },
+      );
     }
   }
 
@@ -259,14 +283,23 @@ export class Level3 extends Level {
   private resolveFlyby(choice: string): void {
     const s = this.state;
     const cost = this.param("flyby_tcm_delta_v_m_s");
-    if (choice === "execute" && this.dv_m_s_left() >= cost) {
-      this.dv_m_s += cost;
-      s.delta_v_remaining_m_s = round(this.dv_m_s_left(), 1);
+    if (choice === "execute" && this.deltaVLeft() >= cost) {
+      this.deltaVUsed += cost;
+      s.delta_v_remaining_m_s = round(this.deltaVLeft(), 1);
       s.venus_flybys_done = (s.venus_flybys_done ?? 0) + 1;
       s.perihelion_rsun = this.param(`perihelion_after_flyby_${this.flybyWindows}_rsun`);
-      this.info(`Sobrevuelo de Venus completo. Nuevo perihelio: ${s.perihelion_rsun} R☉.`, "info", "level3:venus-flyby", sourceOf(paper, "venus_flybys"));
+      this.info(
+        `Sobrevuelo de Venus completo. Nuevo perihelio: ${s.perihelion_rsun} R☉.`,
+        "info",
+        "level3:venus-flyby",
+        sourceOf(paper, "venus_flybys"),
+      );
     } else if (choice === "execute") {
-      this.info("Sin delta-V para la maniobra de corrección: se pierde la ventana.", "warning", "level3:venus-missed");
+      this.info(
+        "Sin delta-V para la maniobra de corrección: se pierde la ventana.",
+        "warning",
+        "level3:venus-missed",
+      );
     } else {
       this.info("Ventana de Venus perdida: el perihelio no cambia.", "warning", "level3:venus-missed");
     }
@@ -277,8 +310,8 @@ export class Level3 extends Level {
     }
   }
 
-  private dv_m_s_left(): number {
-    return this.param("delta_v_budget_m_s") - this.dv_m_s;
+  private deltaVLeft(): number {
+    return this.param("delta_v_budget_m_s") - this.deltaVUsed;
   }
 
   private q_au(): number {
@@ -338,7 +371,12 @@ export class Level3 extends Level {
 
     if (this.stirlingFailAt !== null && !this.stirlingFailed && this.t >= this.stirlingFailAt) {
       this.stirlingFailed = true;
-      this.info("Falla del convertidor Stirling: sin herencia de vuelo, se detuvo el pistón.", "failure", "level3:stirling-failed", sourceOf(paper, "stirling_system_efficiency"));
+      this.info(
+        "Falla del convertidor Stirling: sin herencia de vuelo, se detuvo el pistón.",
+        "failure",
+        "level3:stirling-failed",
+        sourceOf(paper, "stirling_system_efficiency"),
+      );
     }
 
     // Matriz principal (ec. 1 del paper)
@@ -350,13 +388,24 @@ export class Level3 extends Level {
         I * cosTilt,
         this.param("main_array_emittance_total"),
       );
-      s.main_array_temperature_c = round(toCelsius(tK), 1);
+      s.main_array_temperature_c = toCelsius(tK);
       if (s.main_array_temperature_c > value(paper, "cell_degradation_c")) {
         this.mainArrayLost = true;
-        this.info("Matriz principal destruida por calor: superó ~350 °C.", "failure", "level3:main-lost", sourceOf(paper, "cell_degradation_c"));
+        this.info(
+          "Matriz principal destruida por calor: superó ~350 °C.",
+          "failure",
+          "level3:main-lost",
+          sourceOf(paper, "cell_degradation_c"),
+        );
       } else {
         if (s.main_array_temperature_c > value(paper, "main_array_temp_limit_c")) {
-          this.warnOnce("main-hot", `Matriz principal a ${Math.round(s.main_array_temperature_c)} °C: inclínala o pliégala.`, 3600, "level3:main-hot", sourceOf(paper, "main_array_temp_limit_c"));
+          this.warnOnce(
+            "main-hot",
+            `Matriz principal a ${Math.round(s.main_array_temperature_c)} °C: inclínala o pliégala.`,
+            3600,
+            "level3:main-hot",
+            sourceOf(paper, "main_array_temp_limit_c"),
+          );
         }
         mainPower = this.param("main_array_efficiency") * I * this.param("main_array_area_m2") * cosTilt;
       }
@@ -384,38 +433,62 @@ export class Level3 extends Level {
     const tRad = radiatorTemperature(heat, this.param("radiator_area_m2"), this.param("radiator_emissivity"));
     const tau = this.param("thermal_time_constant_s");
     const radTarget = Math.max(toCelsius(tRad), -40);
-    s.radiator_temperature_c = round(relax(s.radiator_temperature_c ?? radTarget, radTarget, dt, tau), 1);
-    const cellTarget = s.radiator_temperature_c + value(paper, "coolant_delta_t_c");
-    s.cell_temperature_c = round(relax(s.cell_temperature_c ?? cellTarget, cellTarget, dt, tau), 1);
+    s.radiator_temperature_c = relax(s.radiator_temperature_c ?? radTarget, radTarget, dt, tau);
+    // La celda sigue al equilibrio del lazo, no al radiador ya relajado: así el resultado no depende del paso.
+    const cellTarget = radTarget + value(paper, "coolant_delta_t_c");
+    s.cell_temperature_c = relax(s.cell_temperature_c ?? cellTarget, cellTarget, dt, tau);
 
-    const limit = energy === "stirling" ? value(paper, "stirling_cold_end_limit_c") : value(paper, "cell_design_limit_c");
+    const limit =
+      energy === "stirling" ? value(paper, "stirling_cold_end_limit_c") : value(paper, "cell_design_limit_c");
     const degrade = value(paper, "cell_degradation_c");
     this.maxCell = Math.max(this.maxCell, s.cell_temperature_c);
     if (s.cell_temperature_c > degrade) {
       this.secondsDegrading += dt;
       this.cellEfficiency *= Math.exp(-dt / 1800);
-      this.warnOnce("cell-degrade", `Celdas a ${Math.round(s.cell_temperature_c)} °C: degradación irreversible.`, 1800, "level3:cell-degrading", sourceOf(paper, "cell_degradation_c"));
+      this.warnOnce(
+        "cell-degrade",
+        `Celdas a ${Math.round(s.cell_temperature_c)} °C: degradación irreversible.`,
+        1800,
+        "level3:cell-degrading",
+        sourceOf(paper, "cell_degradation_c"),
+      );
     } else if (s.cell_temperature_c > limit) {
       this.secondsOverCellLimit += dt;
-      this.warnOnce("cell-hot", `Celdas a ${Math.round(s.cell_temperature_c)} °C, límite de diseño ${limit} °C: retrae la matriz.`, 1800, "level3:cell-hot", sourceOf(paper, "cell_design_limit_c"));
+      this.warnOnce(
+        "cell-hot",
+        `Celdas a ${Math.round(s.cell_temperature_c)} °C, límite de diseño ${limit} °C: retrae la matriz.`,
+        1800,
+        "level3:cell-hot",
+        sourceOf(paper, "cell_design_limit_c"),
+      );
     }
 
     // Balance eléctrico y batería
     const load = this.load();
     s.power_load_w = load;
-    s.resources.power_generated_w = round(power, 1);
+    s.resources.power_generated_w = power;
     s.resources.power_consumed_w = load;
     this.minPower = Math.min(this.minPower, power);
     const cap = s.battery_capacity_wh ?? 0;
-    s.battery_wh = round(clamp((s.battery_wh ?? 0) + ((power - load) * dt) / 3600, 0, cap), 2);
+    s.battery_wh = clamp((s.battery_wh ?? 0) + ((power - load) * dt) / 3600, 0, cap);
     if (power < value(paper, "min_power_w")) {
-      this.warnOnce("low-power", `Potencia ${Math.round(power)} W, por debajo de los ${value(paper, "min_power_w")} W requeridos.`, 1800, "level3:low-power", sourceOf(paper, "min_power_w"));
+      this.warnOnce(
+        "low-power",
+        `Potencia ${Math.round(power)} W, por debajo de los ${value(paper, "min_power_w")} W requeridos.`,
+        1800,
+        "level3:low-power",
+        sourceOf(paper, "min_power_w"),
+      );
     }
     if ((s.battery_wh ?? 0) <= 0 && power < load) {
-      if (this.brownout_s === 0) this.info("Batería agotada: se apagan la defensa y la ciencia.", "failure", "level3:brownout");
+      if (this.brownout_s === 0)
+        this.info("Batería agotada: se apagan la defensa y la ciencia.", "failure", "level3:brownout");
       this.brownout_s += dt;
       if (this.brownout_s >= this.param("power_loss_limit_s")) {
-        return this.fail("Pérdida de potencia: la nave quedó sin energía en el encuentro.", "level3:power-lost");
+        return this.fail(
+          "Pérdida de potencia: la nave quedó sin energía en el encuentro.",
+          "level3:power-lost",
+        );
       }
     } else {
       this.brownout_s = 0;
@@ -432,9 +505,12 @@ export class Level3 extends Level {
     if (this.chosen("repair") && (s.nanobot_reserve_pct ?? 0) > 0 && hull < 100 && this.brownout_s === 0) {
       const fix = Math.min(100 - hull, this.param("nanobot_repair_pct_s") * dt);
       hull += fix;
-      s.nanobot_reserve_pct = round(Math.max(0, (s.nanobot_reserve_pct ?? 0) - this.param("nanobot_reserve_pct_s") * dt), 2);
+      s.nanobot_reserve_pct = Math.max(
+        0,
+        (s.nanobot_reserve_pct ?? 0) - this.param("nanobot_reserve_pct_s") * dt,
+      );
     }
-    s.hull_durability_pct = round(hull, 2);
+    s.hull_durability_pct = hull;
     if (hull <= 0) return this.fail("El casco cedió: la nave quedó expuesta al Sol.", "level3:hull-lost");
 
     // Ciencia y comunicaciones
@@ -446,7 +522,13 @@ export class Level3 extends Level {
       const got = Math.max(0, Math.min(room, rate * dt));
       s.resources.data_stored_mb += got;
       this.dataCollected += got;
-      if (room <= 0) this.warnOnce("storage-full", "Memoria llena: la ciencia se detiene hasta bajar datos.", 7200, "level3:storage-full");
+      if (room <= 0)
+        this.warnOnce(
+          "storage-full",
+          "Memoria llena: la ciencia se detiene hasta bajar datos.",
+          7200,
+          "level3:storage-full",
+        );
     }
     if (s.attitude === "antenna-to-earth") {
       s.resources.downlink_rate_kbps = this.param("downlink_kbps");
@@ -456,11 +538,14 @@ export class Level3 extends Level {
     } else {
       s.resources.downlink_rate_kbps = 0;
     }
-    s.resources.data_stored_mb = round(s.resources.data_stored_mb, 3);
-    s.data_downlinked_mb = round(this.dataDownlinked, 2);
+    s.data_downlinked_mb = this.dataDownlinked;
 
     // CME
-    if (this.cmeAt !== null && this.t >= this.cmeAt && !this.state.events.some((e) => e.trigger === "level3:cme")) {
+    if (
+      this.cmeAt !== null &&
+      this.t >= this.cmeAt &&
+      !this.state.events.some((e) => e.trigger === "level3:cme")
+    ) {
       this.openCme();
     }
 
@@ -476,13 +561,33 @@ export class Level3 extends Level {
   private openCme(): void {
     const choices: EventChoice[] = [];
     if (this.chosen("defense")) {
-      choices.push({ id: "hts", label: "Sobrecargar el campo HTS", detail: `Casco protegido; se pierde el ${this.param("cme_hts_data_loss") * 100} % de los datos guardados.`, origin: "theoretical" });
+      choices.push({
+        id: "hts",
+        label: "Sobrecargar el campo HTS",
+        detail: `Casco protegido; se pierde el ${this.param("cme_hts_data_loss") * 100} % de los datos guardados.`,
+        origin: "theoretical",
+      });
     }
     if (this.chosen("repair")) {
-      choices.push({ id: "nanobots", label: "Inyectar nanobots", detail: `Repara el daño; gasta el ${this.param("cme_nanobot_reserve_cost_pct")} % de la reserva.`, origin: "theoretical" });
+      choices.push({
+        id: "nanobots",
+        label: "Inyectar nanobots",
+        detail: `Repara el daño; gasta el ${this.param("cme_nanobot_reserve_cost_pct")} % de la reserva.`,
+        origin: "theoretical",
+      });
     }
-    choices.push({ id: "assistant", label: "Delegar al asistente de misión", detail: `${this.param("cme_assistant_success") * 100} % de éxito.`, origin: "theoretical" });
-    choices.push({ id: "safe-mode", label: "Modo seguro", detail: "Escudo al Sol e instrumentos apagados 6 h. Daño menor.", origin: "real" });
+    choices.push({
+      id: "assistant",
+      label: "Delegar al asistente de misión",
+      detail: `${this.param("cme_assistant_success") * 100} % de éxito.`,
+      origin: "theoretical",
+    });
+    choices.push({
+      id: "safe-mode",
+      label: "Modo seguro",
+      detail: "Escudo al Sol e instrumentos apagados 6 h. Daño menor.",
+      origin: "real",
+    });
     this.emit("crisis", "Eyección de masa coronal detectada. Impacto en 2 h.", {
       trigger: "level3:cme",
       source: "NASA, Parker Solar Probe: paso a través de eyecciones de masa coronal",
@@ -497,10 +602,13 @@ export class Level3 extends Level {
     let damage = full;
     if (choice === "hts" && this.brownout_s === 0) {
       damage = 0;
-      s.resources.data_stored_mb = round(s.resources.data_stored_mb * (1 - this.param("cme_hts_data_loss")), 3);
+      s.resources.data_stored_mb *= 1 - this.param("cme_hts_data_loss");
     } else if (choice === "nanobots") {
       damage = 5;
-      s.nanobot_reserve_pct = Math.max(0, (s.nanobot_reserve_pct ?? 0) - this.param("cme_nanobot_reserve_cost_pct"));
+      s.nanobot_reserve_pct = Math.max(
+        0,
+        (s.nanobot_reserve_pct ?? 0) - this.param("cme_nanobot_reserve_cost_pct"),
+      );
     } else if (choice === "assistant") {
       damage = this.rng() < this.param("cme_assistant_success") ? 5 : full;
     } else if (choice === "safe-mode") {
@@ -510,7 +618,7 @@ export class Level3 extends Level {
       this.safeModeUntil = this.t + this.param("cme_safe_mode_duration_s");
     }
     this.cmeOutcome = choice;
-    s.hull_durability_pct = round((s.hull_durability_pct ?? 100) - damage, 2);
+    s.hull_durability_pct = (s.hull_durability_pct ?? 100) - damage;
     this.info(
       choice === "timeout"
         ? `La CME golpeó sin respuesta: casco −${damage} %.`
@@ -530,8 +638,18 @@ export class Level3 extends Level {
         trigger: "level3:ejection",
         deadline_s: this.t + this.param("ejection_window_s"),
         choices: [
-          { id: "eject", label: "Eyectar módulo", detail: "La cápsula vuelve con las muestras.", origin: "theoretical" },
-          { id: "hold", label: "Conservar el módulo", detail: "La cápsula se queda a bordo.", origin: "theoretical" },
+          {
+            id: "eject",
+            label: "Eyectar módulo",
+            detail: "La cápsula vuelve con las muestras.",
+            origin: "theoretical",
+          },
+          {
+            id: "hold",
+            label: "Conservar el módulo",
+            detail: "La cápsula se queda a bordo.",
+            origin: "theoretical",
+          },
         ],
       });
     } else {
@@ -559,7 +677,10 @@ export class Level3 extends Level {
   private updateHealth(): void {
     const s = this.state;
     if (this.failureReason) return;
-    const limit = this.energy() === "stirling" ? value(paper, "stirling_cold_end_limit_c") : value(paper, "cell_design_limit_c");
+    const limit =
+      this.energy() === "stirling"
+        ? value(paper, "stirling_cold_end_limit_c")
+        : value(paper, "cell_design_limit_c");
     const cell = s.cell_temperature_c ?? 0;
     const hull = s.hull_durability_pct ?? 100;
     const power = s.resources.power_generated_w;
@@ -584,37 +705,89 @@ export class Level3 extends Level {
           : "failure";
 
     const causes: MissionReport["causes"] = [];
-    if (this.failureReason) causes.push({ text: this.failureReason, segment: "space", origin: "theoretical" });
+    if (this.failureReason)
+      causes.push({ text: this.failureReason, segment: "space", origin: "theoretical" });
     if (this.encounterStart === 0 && !this.failureReason) {
-      causes.push({ text: "La misión no llegó al encuentro solar.", segment: "launch", origin: "theoretical" });
+      causes.push({
+        text: "La misión no llegó al encuentro solar.",
+        segment: "launch",
+        origin: "theoretical",
+      });
     }
     if (this.encounterStart > 0) {
       causes.push(
         reachedTarget
-          ? { text: `Perihelio de ${target} R☉ alcanzado, como en el diseño de Solar Probe+.`, source: sourceOf(paper, "perihelion_rsun"), segment: "space", origin: "real" }
-          : { text: `El perihelio quedó en ${s.perihelion_rsun} R☉: faltaron sobrevuelos de Venus para bajar a ${target} R☉.`, source: sourceOf(paper, "venus_flybys"), segment: "space", origin: "real" },
+          ? {
+              text: `Perihelio de ${target} R☉ alcanzado, como en el diseño de Solar Probe+.`,
+              source: sourceOf(paper, "perihelion_rsun"),
+              segment: "space",
+              origin: "real",
+            }
+          : {
+              text: `El perihelio quedó en ${s.perihelion_rsun} R☉: faltaron sobrevuelos de Venus para bajar a ${target} R☉.`,
+              source: sourceOf(paper, "venus_flybys"),
+              segment: "space",
+              origin: "real",
+            },
       );
       if (this.secondsDegrading > 0) {
-        causes.push({ text: `Las celdas pasaron ~350 °C durante ${Math.round(this.secondsDegrading / 60)} min: degradación irreversible.`, source: sourceOf(paper, "cell_degradation_c"), segment: "space", origin: "real" });
+        causes.push({
+          text: `Las celdas pasaron ~350 °C durante ${Math.round(this.secondsDegrading / 60)} min: degradación irreversible.`,
+          source: sourceOf(paper, "cell_degradation_c"),
+          segment: "space",
+          origin: "real",
+        });
       } else if (this.secondsOverCellLimit > 0) {
-        causes.push({ text: `Las celdas superaron el límite de diseño durante ${Math.round(this.secondsOverCellLimit / 60)} min.`, source: sourceOf(paper, "cell_design_limit_c"), segment: "space", origin: "real" });
+        causes.push({
+          text: `Las celdas superaron el límite de diseño durante ${Math.round(this.secondsOverCellLimit / 60)} min.`,
+          source: sourceOf(paper, "cell_design_limit_c"),
+          segment: "space",
+          origin: "real",
+        });
       } else {
-        causes.push({ text: "Las celdas se mantuvieron bajo el límite de diseño todo el encuentro.", source: sourceOf(paper, "cell_design_limit_c"), segment: "space", origin: "real" });
+        causes.push({
+          text: "Las celdas se mantuvieron bajo el límite de diseño todo el encuentro.",
+          source: sourceOf(paper, "cell_design_limit_c"),
+          segment: "space",
+          origin: "real",
+        });
       }
       if (this.minPower < value(paper, "min_power_w")) {
-        causes.push({ text: `La potencia bajó a ${Math.round(this.minPower)} W, por debajo de los ${value(paper, "min_power_w")} W requeridos.`, source: sourceOf(paper, "min_power_w"), segment: "space", origin: "real" });
+        causes.push({
+          text: `La potencia bajó a ${Math.round(this.minPower)} W, por debajo de los ${value(paper, "min_power_w")} W requeridos.`,
+          source: sourceOf(paper, "min_power_w"),
+          segment: "space",
+          origin: "real",
+        });
       }
       if (this.mainArrayLost) {
-        causes.push({ text: "La matriz principal no se plegó a tiempo y se destruyó.", source: sourceOf(paper, "main_array_limit_au"), segment: "space", origin: "real" });
+        causes.push({
+          text: "La matriz principal no se plegó a tiempo y se destruyó.",
+          source: sourceOf(paper, "main_array_limit_au"),
+          segment: "space",
+          origin: "real",
+        });
       }
       if (this.stirlingFailed) {
-        causes.push({ text: "El convertidor Stirling falló: el paper lo descarta por falta de herencia de vuelo.", source: sourceOf(paper, "stirling_system_efficiency"), segment: "space", origin: "real" });
+        causes.push({
+          text: "El convertidor Stirling falló: el paper lo descarta por falta de herencia de vuelo.",
+          source: sourceOf(paper, "stirling_system_efficiency"),
+          segment: "space",
+          origin: "real",
+        });
       }
       if (this.cmeOutcome) {
-        causes.push({ text: `Respuesta a la CME: ${this.cmeOutcome}.`, segment: "ground", origin: "theoretical" });
+        causes.push({
+          text: `Respuesta a la CME: ${this.cmeOutcome}.`,
+          segment: "ground",
+          origin: "theoretical",
+        });
       }
       causes.push({
-        text: data >= goal ? `Ciencia: ${Math.round(data)} MB reunidos, sobre la meta de ${goal} MB.` : `Ciencia: ${Math.round(data)} MB de ${goal} MB.`,
+        text:
+          data >= goal
+            ? `Ciencia: ${Math.round(data)} MB reunidos, sobre la meta de ${goal} MB.`
+            : `Ciencia: ${Math.round(data)} MB de ${goal} MB.`,
         segment: "user",
         origin: "theoretical",
       });
@@ -622,9 +795,14 @@ export class Level3 extends Level {
 
     const advice: string[] = [];
     if (!reachedTarget) advice.push("Ejecuta las tres ventanas de Venus: cada sobrevuelo baja el perihelio.");
-    if (this.secondsOverCellLimit > 0 || this.secondsDegrading > 0) advice.push("Retrae la matriz secundaria al acercarte: en perihelio solo ~34 cm² iluminados bastan (paper, p. 7-8).");
-    if (this.minPower < value(paper, "min_power_w")) advice.push("No retraigas de más: la potencia debe quedar sobre 482 W.");
-    if (this.mainArrayLost) advice.push("Pliega la matriz principal antes de ~0.13 AU o inclínala hasta 74°.");
+    if (this.secondsOverCellLimit > 0 || this.secondsDegrading > 0)
+      advice.push(
+        "Retrae la matriz secundaria al acercarte: en perihelio solo ~34 cm² iluminados bastan (paper, p. 7-8).",
+      );
+    if (this.minPower < value(paper, "min_power_w"))
+      advice.push("No retraigas de más: la potencia debe quedar sobre 482 W.");
+    if (this.mainArrayLost)
+      advice.push("Pliega la matriz principal antes de ~0.13 AU o inclínala hasta 74°.");
     if (data < goal) advice.push("Baja datos lejos del Sol, cuando girar la antena cuesta poco calor.");
 
     const score = Math.round(

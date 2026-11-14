@@ -1,6 +1,13 @@
 import type { MissionReport, PlayerAction, SimState } from "@ikaros/contracts";
 import { C, missions, sourceOf, value } from "../data";
-import { hohmannDeltaV, hohmannTarget, hohmannTime, propellantFor, rocketDeltaV } from "../physics";
+import {
+  HOHMANN_MAX_RAISE,
+  hohmannDeltaV,
+  hohmannTarget,
+  hohmannTime,
+  propellantFor,
+  rocketDeltaV,
+} from "../physics";
 import { Level, round } from "./base";
 
 interface Transfer {
@@ -9,6 +16,8 @@ interface Transfer {
   start_s: number;
   end_s: number;
 }
+
+const MIN_ALTITUDE_KM = 150;
 
 const TASKS = [
   { id: "panel", label: "panel solar", needs: ["panel", "toolkit"] },
@@ -24,6 +33,7 @@ export class Level1 extends Level {
   private dataDownlinked = 0;
   private burns = 0;
   private failureReason: string | null = null;
+  private launchedAt = 0;
 
   constructor(seed: number) {
     super("level1-repair", seed);
@@ -109,6 +119,7 @@ export class Level1 extends Level {
       return;
     }
     this.state.phase = "transfer";
+    this.launchedAt = this.t;
     this.info(
       `Separación del vehículo de servicio. Delta-V disponible: ${round(this.deltaVLeft())} m/s.`,
       "info",
@@ -129,15 +140,20 @@ export class Level1 extends Level {
   private burn(dv_m_s: number): void {
     if (this.state.phase !== "transfer" || this.transfer || this.docked) return;
     if (!Number.isFinite(dv_m_s) || dv_m_s === 0) return;
-    const available = this.deltaVLeft();
-    const dv = Math.sign(dv_m_s) * Math.min(Math.abs(dv_m_s), available);
+    const r1 = C.earthRadius + (this.state.altitude_km ?? 0);
+    // Límites de la maniobra: no bajar de 150 km (atmósfera) ni subir más allá del rango de hohmannTarget.
+    const bound = dv_m_s > 0 ? r1 * HOHMANN_MAX_RAISE : Math.min(r1, C.earthRadius + MIN_ALTITUDE_KM);
+    const reachable = hohmannDeltaV(C.muEarth, r1, bound) * 1000;
+    const dv = Math.sign(dv_m_s) * Math.min(Math.abs(dv_m_s), this.deltaVLeft(), reachable);
     if (Math.abs(dv) < 1e-6) {
-      this.info("Sin combustible para la maniobra.", "warning", "level1:no-fuel");
+      if (this.deltaVLeft() < 1e-6)
+        this.info("Sin combustible para la maniobra.", "warning", "level1:no-fuel");
+      else
+        this.info("Maniobra fuera de rango: la órbita no puede bajar más.", "warning", "level1:out-of-range");
       return;
     }
     const isp = this.param("isp_s");
     this.fuel_kg = Math.max(0, this.fuel_kg - propellantFor(isp, this.totalMass(), dv));
-    const r1 = C.earthRadius + (this.state.altitude_km ?? 0);
     const r2 = hohmannTarget(C.muEarth, r1, dv / 1000);
     this.transfer = {
       from_km: r1 - C.earthRadius,
@@ -171,10 +187,10 @@ export class Level1 extends Level {
     if (this.transfer) {
       const tr = this.transfer;
       const f = Math.min(1, (this.t - tr.start_s) / (tr.end_s - tr.start_s));
-      s.altitude_km = round(tr.from_km + (tr.to_km - tr.from_km) * (0.5 - Math.cos(Math.PI * f) / 2), 3);
+      s.altitude_km = tr.from_km + (tr.to_km - tr.from_km) * (0.5 - Math.cos(Math.PI * f) / 2);
       if (f >= 1) {
         this.transfer = null;
-        s.altitude_km = round(tr.to_km, 3);
+        s.altitude_km = tr.to_km;
         this.checkDocking();
       }
     }
@@ -188,13 +204,13 @@ export class Level1 extends Level {
       const sent = Math.min(s.resources.data_stored_mb, (this.param("downlink_kbps") / 8000) * dt);
       s.resources.data_stored_mb -= sent;
       this.dataDownlinked += sent;
-      s.data_downlinked_mb = round(this.dataDownlinked, 2);
+      s.data_downlinked_mb = this.dataDownlinked;
     }
 
     if (s.phase === "transfer" && !this.transfer && this.deltaVLeft() < 0.05) {
       this.fail("Combustible agotado sin alcanzar el satélite.", "level1:fuel-out");
     }
-    if (this.t >= this.param("time_limit_s") && !this.finished) {
+    if (this.t - this.launchedAt >= this.param("time_limit_s") && !this.finished) {
       this.fail("Se acabó el tiempo de misión.", "level1:timeout");
     }
     this.updateHealth();
@@ -207,7 +223,10 @@ export class Level1 extends Level {
       this.docked = true;
       s.phase = "repair";
       this.info("Acople confirmado. Comienzan las reparaciones.", "info", "level1:docked");
-      if (!s.comm_window_open) {
+      if (!TASKS.some((task) => task.needs.every((slot) => this.chosen(slot)))) {
+        this.info("Acoplado, pero sin el equipo para ninguna reparación.", "warning", "level1:complete");
+        this.finish();
+      } else if (!s.comm_window_open) {
         this.info("Esperando la próxima ventana de comunicaciones.", "info", "level1:wait-window");
       }
     } else {
@@ -232,7 +251,7 @@ export class Level1 extends Level {
       this.info(`Reparación del ${pending.label} completa.`, "info", `level1:fixed-${pending.id}`);
     }
     const total = TASKS.reduce((m, task) => m + (this.taskProgress[task.id] ?? 0), 0) / TASKS.length;
-    this.state.repair_progress_pct = round(total, 1);
+    this.state.repair_progress_pct = total;
     const allPossibleDone = tasks.every((task) => (this.taskProgress[task.id] ?? 0) >= 100);
     if (allPossibleDone) {
       this.info(
@@ -255,8 +274,9 @@ export class Level1 extends Level {
 
   private updateHealth(): void {
     if (this.failureReason) return;
-    const dvShort = this.state.phase === "transfer" && !this.transfer && this.deltaVLeft() < this.requiredDeltaV();
-    const late = this.t > this.param("time_limit_s") * 0.8;
+    const dvShort =
+      this.state.phase === "transfer" && !this.transfer && this.deltaVLeft() < this.requiredDeltaV();
+    const late = this.t - this.launchedAt > this.param("time_limit_s") * 0.8;
     this.state.health = dvShort || late ? "warning" : "nominal";
   }
 
@@ -266,7 +286,8 @@ export class Level1 extends Level {
     const outcome: MissionReport["outcome"] =
       done.length === TASKS.length ? "success" : done.length > 0 ? "partial" : "failure";
     const causes: MissionReport["causes"] = [];
-    if (this.failureReason) causes.push({ text: this.failureReason, segment: "space", origin: "theoretical" });
+    if (this.failureReason)
+      causes.push({ text: this.failureReason, segment: "space", origin: "theoretical" });
     if (!this.docked) {
       causes.push({
         text: "No se alcanzó la altitud del satélite. Una transferencia de Hohmann bien calculada usa el mínimo delta-V.",
@@ -302,10 +323,13 @@ export class Level1 extends Level {
       ) * 1000;
     const efficiency = this.docked ? Math.min(1, ideal / Math.max(dvUsed, 1e-9)) : 0;
     const score = Math.round(
-      done.length * 3000 + efficiency * 2000 + (this.chosen("camera") ? Math.min(1000, this.dataDownlinked) : 0),
+      done.length * 3000 +
+        efficiency * 2000 +
+        (this.chosen("camera") ? Math.min(1000, this.dataDownlinked) : 0),
     );
     const advice: string[] = [];
-    if (efficiency < 0.9 && this.docked) advice.push("Calcula el delta-V de Hohmann antes de encender: menos encendidos, menos combustible.");
+    if (efficiency < 0.9 && this.docked)
+      advice.push("Calcula el delta-V de Hohmann antes de encender: menos encendidos, menos combustible.");
     if (missingTools.length) advice.push("Revisa qué herramienta pide cada tarea antes de llenar la bodega.");
     if (!this.docked) advice.push("Sube en una sola transferencia y corrige con encendidos pequeños.");
     return {

@@ -17,6 +17,8 @@ function createLevel(id: ScenarioId, seed: number): Level {
       return new Level2(seed);
     case "level3-ikaros":
       return new Level3(seed);
+    default:
+      throw new Error(`Escenario desconocido: ${String(id)}`);
   }
 }
 

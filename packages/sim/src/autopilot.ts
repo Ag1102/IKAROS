@@ -11,7 +11,8 @@ const p3 = (k: string) => def3.params[k]!.value;
 
 export function pickAll(sim: Simulation, picks: Record<string, string>): SimState {
   let s!: SimState;
-  for (const [slot, id] of Object.entries(picks)) s = sim.act({ type: "select-component", slot, componentId: id });
+  for (const [slot, id] of Object.entries(picks))
+    s = sim.act({ type: "select-component", slot, componentId: id });
   return s;
 }
 
@@ -26,8 +27,10 @@ export function idealRetraction(s: SimState, load_w: number, margin = 0.9): numb
   const I = physics.solarIntensity(r);
   const eta = paperJson.cell_efficiency.value;
   const tRad = physics.toKelvin(paperJson.radiator_temp_c.value);
-  const exposed = s.attitude === "antenna-to-earth" ? I * p3("radiator_area_m2") * p3("radiator_sun_exposure") : 0;
-  const qMax = physics.radiatorCapacity(p3("radiator_area_m2"), p3("radiator_emissivity"), tRad) * margin - exposed;
+  const exposed =
+    s.attitude === "antenna-to-earth" ? I * p3("radiator_area_m2") * p3("radiator_sun_exposure") : 0;
+  const qMax =
+    physics.radiatorCapacity(p3("radiator_area_m2"), p3("radiator_emissivity"), tRad) * margin - exposed;
   const areaHeat = qMax / ((1 - eta) * I);
   const areaPower = (load_w * 1.05) / (eta * I);
   const area_m2 = Math.min(areaHeat, Math.max(areaPower, 0));
@@ -68,7 +71,10 @@ export function playLevel3(opts: PilotOptions = {}) {
     if (s.phase === "encounter") {
       if (opts.stow !== false && !s.main_array_stowed) s = sim.act({ type: "stow-main-array" });
       if (opts.retract !== false) {
-        s = sim.act({ type: "retract-array", fraction: idealRetraction(s, Math.max(s.power_load_w ?? 0, paperJson.min_power_w.value)) });
+        s = sim.act({
+          type: "retract-array",
+          fraction: idealRetraction(s, Math.max(s.power_load_w ?? 0, paperJson.min_power_w.value)),
+        });
       }
       if (opts.cme) s = resolveOpen(sim, s, "level3:cme", opts.cme);
       if (opts.downlink) {
@@ -109,7 +115,12 @@ export function playLevel1(
         const dv =
           opts.aim_m_s ??
           Math.sign(diff) *
-            physics.hohmannDeltaV(constants.mu_earth_km3_s2.value, r(s.altitude_km ?? 0), r(s.target_altitude_km ?? 0)) * 1000;
+            physics.hohmannDeltaV(
+              constants.mu_earth_km3_s2.value,
+              r(s.altitude_km ?? 0),
+              r(s.target_altitude_km ?? 0),
+            ) *
+            1000;
         s = sim.act({ type: "burn", delta_v_m_s: dv });
       }
     }

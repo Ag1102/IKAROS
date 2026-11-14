@@ -6,7 +6,9 @@ import { createSimulation } from "../packages/sim/src/index";
 import { pickAll, playLevel1, playLevel3, REAL_CONFIG, resolveOpen } from "../packages/sim/src/autopilot";
 
 const triggers = new Set(
-  (JSON.parse(readFileSync(join(__dirname, "../content/assistant.json"), "utf8")) as ContentEntry[]).map((e) => e.trigger),
+  (JSON.parse(readFileSync(join(__dirname, "../content/assistant.json"), "utf8")) as ContentEntry[]).map(
+    (e) => e.trigger,
+  ),
 );
 
 describe("nivel 1: servicio en órbita", () => {
@@ -33,7 +35,12 @@ describe("nivel 1: servicio en órbita", () => {
   it("bloquea el despegue con sobrepeso", () => {
     const sim = createSimulation();
     sim.load("level1-repair", 1);
-    pickAll(sim, { panel: "panel-spare", antenna: "antenna-spare", toolkit: "toolkit-std", camera: "camera-insp" });
+    pickAll(sim, {
+      panel: "panel-spare",
+      antenna: "antenna-spare",
+      toolkit: "toolkit-std",
+      camera: "camera-insp",
+    });
     const s = sim.act({ type: "launch" });
     expect(s.phase).toBe("hangar");
     expect(s.events.at(-1)?.trigger).toBe("level1:overweight");
@@ -42,7 +49,9 @@ describe("nivel 1: servicio en órbita", () => {
   it("más carga, menos delta-V (Tsiolkovsky)", () => {
     const sim = createSimulation();
     const empty = sim.load("level1-repair", 1).delta_v_remaining_m_s ?? 0;
-    const loaded = sim.act({ type: "select-component", slot: "panel", componentId: "panel-spare" }).delta_v_remaining_m_s ?? 0;
+    const loaded =
+      sim.act({ type: "select-component", slot: "panel", componentId: "panel-spare" })
+        .delta_v_remaining_m_s ?? 0;
     expect(loaded).toBeLessThan(empty);
   });
 });
@@ -165,7 +174,13 @@ describe("nivel 2: observación LEO", () => {
 
 describe("contenido conectado con el motor", () => {
   it("los disparadores principales tienen texto del asistente", () => {
-    for (const t of ["level1:start", "level1:docked", "level3:encounter-start", "level3:cme", "level3:venus-window"]) {
+    for (const t of [
+      "level1:start",
+      "level1:docked",
+      "level3:encounter-start",
+      "level3:cme",
+      "level3:venus-window",
+    ]) {
       expect(triggers.has(t), t).toBe(true);
     }
   });
