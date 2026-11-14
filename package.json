@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "test": "vitest run",
+    "test": "vitest run && npm run test -w @ikaros/web",
     "typecheck": "tsc -b",
     "telemetry": "tsx packages/sim/src/cli.ts",
     "format": "prettier --write packages tests vitest.config.ts",

@@ -1,9 +1,9 @@
-# Reemplazar @persona-a y @persona-b por los usuarios de GitHub reales.
-/packages/sim/        @persona-a
-/packages/sim-mock/   @persona-a
-/data/                @persona-a
-/content/             @persona-a
-/package.json         @persona-a
-/tsconfig*.json       @persona-a
-/apps/web/            @persona-b
-/packages/contracts/  @persona-a @persona-b
+# Persona A: Camilo Cadena. Persona B: Ricardo Díaz.
+/packages/sim/        @arrietaclab
+/packages/sim-mock/   @arrietaclab
+/data/                @arrietaclab
+/content/             @arrietaclab
+/package.json         @arrietaclab
+/tsconfig*.json       @arrietaclab
+/apps/web/            @rdiazclab
+/packages/contracts/  @arrietaclab @rdiazclab

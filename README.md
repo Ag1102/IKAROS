@@ -9,20 +9,23 @@ Lo marcado como ⚗ es teórico y está avisado en el juego.
 
 | Carpeta | Contenido | Dueño |
 |---|---|---|
-| `apps/web` | Cliente: escena 3D, interfaz, niveles | Persona B |
+| `apps/web` | Cliente: escena 3D, interfaz, niveles | Persona B (Ricardo Díaz) |
 | `packages/contracts` | Tipos compartidos (el contrato) | Ambas |
-| `packages/sim` | Motor de simulación | Persona A |
-| `packages/sim-mock` | Simulación falsa para avanzar en paralelo | Persona A |
-| `data/` | Datos con fuente y escenarios | Persona A |
-| `content/` | Textos del asistente y glosario | Persona A |
-| `docs/` | Plan, contexto, diseño de la interfaz | Ambas |
-
-Reglas de trabajo: `docs/PLAN-2-PERSONAS.md`. Pedidos entre personas: `NOTAS.md`.
+| `packages/sim` | Motor de simulación | Persona A (Camilo Cadena) |
+| `packages/sim-mock` | Simulación falsa para avanzar en paralelo | Persona A (Camilo Cadena) |
+| `data/` | Datos con fuente y escenarios | Persona A (Camilo Cadena) |
+| `content/` | Textos del asistente y glosario | Persona A (Camilo Cadena) |
 
 ## Puesta en marcha
 
 ```bash
 npm install
+npm run dev -w @ikaros/web
+```
+
+Pruebas, lint y build del cliente: ver `apps/web/README.md`. Motor, datos y contenido:
+
+```bash
 npm run typecheck
 npm test
 npm run telemetry -- level3-ikaros 7
@@ -52,6 +55,7 @@ const report = sim.report();
 Fórmulas: Hohmann y vis-viva, Tsiolkovsky, Kepler, ec. 1 y 2 de Landis et al. (AIAA 2008-5712).
 Las pruebas (`tests/`) comprueban los casos del paper: 510 × AM0 ≈ 700 kW/m², ~34 cm² dan ≥ 482 W,
 ~10 h dentro de 10 R☉, matriz principal a 74° bajo 180 °C.
+
 
 ## Git
 
