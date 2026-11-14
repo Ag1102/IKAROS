@@ -78,6 +78,8 @@ export interface SimState {
   radiators_shaded?: boolean;
   power_load_w?: number;
   nanobot_reserve_pct?: number;
+  /** ⚗ Estado de los sistemas teóricos (true = encendido). */
+  systems?: Partial<Record<IkarosSystem, boolean>>;
 }
 
 export interface EventChoice {
@@ -115,7 +117,12 @@ export type PlayerAction =
   /** Inclinación de la matriz principal respecto al Sol, en grados. */
   | { type: "tilt-array"; deg: number }
   | { type: "stow-main-array" }
-  | { type: "set-attitude"; attitude: Attitude };
+  | { type: "set-attitude"; attitude: Attitude }
+  /** ⚗ Enciende o apaga un sistema teórico del nivel 3 (reactor o campo HTS). */
+  | { type: "set-system"; system: IkarosSystem; on: boolean };
+
+/** ⚗ Sistemas teóricos del nivel 3 que el jugador mantiene en marcha. */
+export type IkarosSystem = "reactor" | "hts";
 
 export interface Simulation {
   /** Carga un escenario definido en data/scenarios/. */
