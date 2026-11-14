@@ -1,6 +1,9 @@
 import { Suspense, useMemo, useRef, type MutableRefObject } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Stars } from "@react-three/drei";
+import { Sky } from "../../scene/space/Sky";
+import { Bloom } from "../../scene/space/Bloom";
+import { DistantSun } from "../../scene/space/DistantSun";
 import * as THREE from "three";
 import type { SimState } from "@ikaros/contracts";
 import { Earth } from "../../scene/Earth";
@@ -15,18 +18,24 @@ const HOME = new THREE.Vector3(0, 0, 0);
 const OVERVIEW = new THREE.Vector3(16, 10, 20);
 const SUN_DISTANCE = 60;
 
-function SunLight({ latest, inclination }: { latest: MutableRefObject<SimState>; inclination: number }) {
-  const light = useRef<THREE.DirectionalLight>(null);
-  useFrame(() => {
-    const { sunAngle } = orbitGeometry(latest.current);
-    const p = planeToScene(
+/** Dirección del Sol en la escena según el ángulo que da la geometría de la órbita. */
+function sunDirection(latest: MutableRefObject<SimState>, inclination: number) {
+  const { sunAngle } = orbitGeometry(latest.current);
+  return new THREE.Vector3(
+    ...planeToScene(
       Math.cos(sunAngle) * SUN_DISTANCE * SCENE_UNIT_KM,
       Math.sin(sunAngle) * SUN_DISTANCE * SCENE_UNIT_KM,
       inclination,
-    );
-    light.current?.position.set(...p);
+    ),
+  );
+}
+
+function SunLight({ latest, inclination }: { latest: MutableRefObject<SimState>; inclination: number }) {
+  const light = useRef<THREE.DirectionalLight>(null);
+  useFrame(() => {
+    light.current?.position.copy(sunDirection(latest, inclination));
   });
-  return <directionalLight ref={light} intensity={2.4} />;
+  return <directionalLight ref={light} intensity={3} />;
 }
 
 /** Línea de enlace con la estación terrena mientras el motor indica pase abierto. */
@@ -73,12 +82,17 @@ export function ObservacionTierraScene({
   };
   return (
     <Canvas camera={{ position: [16, 10, 20], fov: 40, near: 0.001, far: 400 }} dpr={[1, 2]}>
-      <color attach="background" args={["#070b0e"]} />
-      <ambientLight intensity={0.25} />
+      <color attach="background" args={["#020407"]} />
+      <ambientLight intensity={0.06} />
+      <hemisphereLight args={["#9fc4ff", "#000000", 0.08]} />
       <SunLight latest={latest} inclination={inclination_deg} />
-      <Stars radius={120} depth={30} count={1800} factor={3} saturation={0} fade={false} />
       <Suspense fallback={null}>
-        <Earth radius={C.earthRadius / SCENE_UNIT_KM} />
+        <Sky radius={350} />
+      </Suspense>
+      <Stars radius={120} depth={30} count={1200} factor={2.5} saturation={0} fade={false} />
+      <DistantSun direction={() => sunDirection(latest, inclination_deg)} distance={300} />
+      <Suspense fallback={null}>
+        <Earth radius={C.earthRadius / SCENE_UNIT_KM} sun={() => sunDirection(latest, inclination_deg)} />
       </Suspense>
       <OrbitRing
         inclination_deg={inclination_deg}
@@ -86,7 +100,9 @@ export function ObservacionTierraScene({
         color="#e0a030"
         opacity={0.7}
       />
-      <SmallSat pos={planePos} inclination_deg={inclination_deg} selected={latest.current.selected} />
+      <Suspense fallback={null}>
+        <SmallSat pos={planePos} inclination_deg={inclination_deg} />
+      </Suspense>
       <DownlinkBeam getPos={scenePos} latest={latest} />
       <FollowControls
         follow={follow}
@@ -102,6 +118,7 @@ export function ObservacionTierraScene({
             .add(new THREE.Vector3(0, 1.5, 0))
         }
       />
+      <Bloom strength={0.6} threshold={0.95} />
     </Canvas>
   );
 }
@@ -116,11 +133,12 @@ export function OrbitPreview2({
 }) {
   return (
     <Canvas camera={{ position: [14, 9, 17], fov: 40, near: 0.01, far: 200 }} dpr={[1, 2]}>
-      <color attach="background" args={["#070b0e"]} />
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[30, 12, 18]} intensity={2} />
+      <color attach="background" args={["#020407"]} />
+      <ambientLight intensity={0.15} />
+      <directionalLight position={[30, 12, 18]} intensity={2.6} />
       <Suspense fallback={null}>
-        <Earth radius={C.earthRadius / SCENE_UNIT_KM} />
+        <Sky radius={150} />
+        <Earth radius={C.earthRadius / SCENE_UNIT_KM} sun={new THREE.Vector3(30, 12, 18)} />
       </Suspense>
       <OrbitRing inclination_deg={inclination_deg} altitude={() => altitude_km} color="#e0a030" opacity={0.9} />
     </Canvas>

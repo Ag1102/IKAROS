@@ -1,12 +1,12 @@
 import { memo, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Canvas, useFrame, useLoader, useThree, type ThreeEvent } from "@react-three/fiber";
+import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
 import { Html, Stars, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
-import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
-import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
-import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
-import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
-import { Sun } from "./Sun";
+import { Sun } from "../scene/space/Sun";
+import { Bloom } from "../scene/space/Bloom";
+import { Sky } from "../scene/space/Sky";
+import { Earth as EarthGlobe } from "../scene/Earth";
+import { MODELS } from "../ships/models";
 import { LEVELS, type MenuLevel } from "./levels";
 
 type LevelN = MenuLevel["n"];
@@ -27,27 +27,6 @@ const SHOTS: Record<LevelN, { pos: THREE.Vector3; look: THREE.Vector3 }> = {
   },
   3: { pos: new THREE.Vector3(-4.5, 2.2, 15.5), look: new THREE.Vector3(-4.6, 0, 0) },
 };
-
-// ---------- Postproceso ----------
-
-/** Bloom con los pases de three.js: el Sol y el plasma brillan más allá de 1.0 y se derraman. */
-function Bloom() {
-  const { gl, scene, camera, size } = useThree();
-  const composer = useMemo(() => {
-    const c = new EffectComposer(gl);
-    c.addPass(new RenderPass(scene, camera));
-    c.addPass(new UnrealBloomPass(new THREE.Vector2(256, 256), 0.75, 0.55, 0.92));
-    c.addPass(new OutputPass());
-    return c;
-  }, [gl, scene, camera]);
-  useEffect(() => {
-    composer.setPixelRatio(gl.getPixelRatio());
-    composer.setSize(size.width, size.height);
-  }, [composer, gl, size]);
-  useEffect(() => () => composer.dispose(), [composer]);
-  useFrame((_, delta) => composer.render(delta), 1);
-  return null;
-}
 
 // ---------- Cámara ----------
 
@@ -85,50 +64,12 @@ function useNormalizedModel(url: string, size: number) {
   }, [scene, size]);
 }
 
-const atmosphereMaterial = () =>
-  new THREE.ShaderMaterial({
-    vertexShader: /* glsl */ `
-      varying vec3 vNormal;
-      varying vec3 vView;
-      void main() {
-        vNormal = normalize(normalMatrix * normal);
-        vec4 mv = modelViewMatrix * vec4(position, 1.0);
-        vView = normalize(-mv.xyz);
-        gl_Position = projectionMatrix * mv;
-      }`,
-    fragmentShader: /* glsl */ `
-      varying vec3 vNormal;
-      varying vec3 vView;
-      void main() {
-        float rim = pow(1.0 - abs(dot(vNormal, vView)), 4.5);
-        gl_FragColor = vec4(vec3(0.3, 0.65, 1.0) * rim * 0.9, rim * 0.8);
-      }`,
-    transparent: true,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-    side: THREE.BackSide,
-  });
-
 function Earth({ motion }: { motion: number }) {
-  const map = useLoader(THREE.TextureLoader, "/textures/earth.jpg");
-  const body = useRef<THREE.Mesh>(null);
-  const atmosphere = useMemo(atmosphereMaterial, []);
-  useEffect(() => {
-    map.colorSpace = THREE.SRGBColorSpace;
-    map.anisotropy = 8;
-  }, [map]);
-  useFrame((_, delta) => {
-    if (body.current) body.current.rotation.y += delta * 0.05 * motion;
-  });
+  // El Sol está en el origen: la luz llega desde -EARTH.
+  const sun = useMemo(() => EARTH.clone().negate(), []);
   return (
     <group position={EARTH} rotation={[0, 0, 0.41]}>
-      <mesh ref={body}>
-        <sphereGeometry args={[EARTH_RADIUS, 96, 96]} />
-        <meshStandardMaterial map={map} roughness={0.85} metalness={0} />
-      </mesh>
-      <mesh material={atmosphere} scale={1.04}>
-        <sphereGeometry args={[EARTH_RADIUS, 64, 64]} />
-      </mesh>
+      <EarthGlobe radius={EARTH_RADIUS} sun={sun} spin={0.05 * motion} />
     </group>
   );
 }
@@ -291,11 +232,15 @@ function MissionNode({
 }
 
 function Hubble() {
-  return <primitive object={useNormalizedModel("/models/hubble.glb", 0.42)} />;
+  return <primitive object={useNormalizedModel(MODELS.hubble.url, 0.42)} />;
+}
+
+function Landsat() {
+  return <primitive object={useNormalizedModel(MODELS.landsat.url, 0.36)} />;
 }
 
 function Probe() {
-  const model = useNormalizedModel("/models/parker-solar-probe.glb", 0.55);
+  const model = useNormalizedModel(MODELS.parker.url, 0.55);
   const ref = useRef<THREE.Group>(null);
   // El escudo térmico mira siempre al Sol, que está en el origen.
   useFrame(() => ref.current?.lookAt(0, 0, 0));
@@ -334,7 +279,10 @@ function Scene({
       <color attach="background" args={["#020407"]} />
       <ambientLight intensity={0.04} />
       <pointLight position={[0, 0, 0]} intensity={220} decay={2} color="#fff1dc" />
-      <Stars radius={140} depth={60} count={6000} factor={4} saturation={0} fade speed={0.4 * motion} />
+      <Suspense fallback={null}>
+        <Sky radius={300} />
+      </Suspense>
+      <Stars radius={140} depth={60} count={2500} factor={3} saturation={0} fade speed={0.4 * motion} />
       <CameraRig selected={selected} motion={motion} />
 
       <MissionNode level={level(3)} reticle={3.7} labelOffset={[0, -4.3, 0]} {...common}>
@@ -359,10 +307,9 @@ function Scene({
         </Orbiter>
         <Orbiter radius={1.85} tilt={[Math.PI / 2 - 0.15, 0.3, 0]} period={30} phase={1.4} motion={motion}>
           <MissionNode level={level(2)} reticle={0.32} labelOffset={[0, -0.25, 0]} {...common}>
-            <mesh>
-              <boxGeometry args={[0.12, 0.12, 0.2]} />
-              <meshStandardMaterial color="#8a9aa3" metalness={0.6} roughness={0.4} />
-            </mesh>
+            <Suspense fallback={null}>
+              <Landsat />
+            </Suspense>
           </MissionNode>
         </Orbiter>
       </group>

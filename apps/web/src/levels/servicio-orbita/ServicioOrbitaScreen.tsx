@@ -78,7 +78,7 @@ export function ServicioOrbitaScreen({ onExit }: { onExit: () => void }) {
   return (
     <div className={hideUi ? "shell hide-ui" : "shell"}>
       <div className="viewport">
-        <Scene latest={latest} docked={docked} previewAltitude={preview} follow={follow} selected={state.selected} />
+        <Scene latest={latest} docked={docked} previewAltitude={preview} follow={follow} />
       </div>
       <TopBar
         state={state}
