@@ -1,0 +1,219 @@
+[
+  {
+    "id": "l1-start",
+    "trigger": "level1:start",
+    "text": "El servicio en órbita no es ciencia ficción: los astronautas visitaron Hubble cinco veces entre 1993 y 2009 para repararlo y mejorarlo.",
+    "source": "NASA, misiones de servicio a Hubble",
+    "origin": "real"
+  },
+  {
+    "id": "l1-launch",
+    "trigger": "level1:launch",
+    "text": "Para subir de una órbita circular a otra con el mínimo combustible se usa la transferencia de Hohmann: un encendido para entrar en una elipse y otro para circularizar.",
+    "source": "Transferencia de Hohmann; NASA, Basics of Space Flight (JPL)",
+    "origin": "real"
+  },
+  {
+    "id": "l1-burn",
+    "trigger": "level1:burn",
+    "text": "Cada m/s cuesta propelente. La ecuación de Tsiolkovsky dice cuánto: Δv = Isp · g0 · ln(m0/mf).",
+    "source": "Ecuación de Tsiolkovsky; NASA Glenn, Beginner's Guide to Rockets",
+    "origin": "real"
+  },
+  {
+    "id": "l1-docked",
+    "trigger": "level1:docked",
+    "text": "En la misión SM4 (2009) la tripulación del Atlantis hizo cinco caminatas espaciales sobre Hubble.",
+    "source": "NASA, Hubble Servicing Mission 4 (STS-125)",
+    "origin": "real"
+  },
+  {
+    "id": "l1-aos",
+    "trigger": "level1:aos",
+    "text": "Un satélite en órbita baja pasa sobre una estación terrena unos minutos por vuelta. Fuera de esa ventana no hay enlace.",
+    "source": "NASA, CubeSat 101: Basic Concepts and Processes for First-Time CubeSat Developers",
+    "origin": "real"
+  },
+  {
+    "id": "l1-los",
+    "trigger": "level1:los",
+    "text": "Pérdida de señal (LOS): la estación quedó bajo el horizonte. El trabajo espera al próximo pase.",
+    "source": "NASA, CubeSat 101",
+    "origin": "real"
+  },
+  {
+    "id": "l1-miss",
+    "trigger": "level1:miss",
+    "text": "¿Te pasaste? Un encendido negativo baja la órbita con la misma lógica de Hohmann.",
+    "source": "Transferencia de Hohmann",
+    "origin": "real"
+  },
+  {
+    "id": "l1-overweight",
+    "trigger": "level1:overweight",
+    "text": "La masa manda: todo lo que subes hay que empujarlo. Por eso cada misión tiene un presupuesto de masa.",
+    "source": "NASA, Design and Develop Science Missions (segmento espacial)",
+    "origin": "real"
+  },
+  {
+    "id": "l1-complete",
+    "trigger": "level1:complete",
+    "text": "Misión de servicio terminada. Hubble sigue operando décadas después de su lanzamiento en 1990 gracias a esas reparaciones.",
+    "source": "NASA, Hubble Space Telescope",
+    "origin": "real"
+  },
+  {
+    "id": "l2-start",
+    "trigger": "level2:start",
+    "text": "Las misiones se diseñan por segmentos: lanzamiento, espacio, tierra y usuario. Este nivel los recorre todos.",
+    "source": "NASA, Design and Develop Science Missions",
+    "origin": "real"
+  },
+  {
+    "id": "l2-launch",
+    "trigger": "level2:launch",
+    "text": "Una órbita heliosíncrona pasa por cada latitud a la misma hora solar: ideal para comparar imágenes de distintos días.",
+    "source": "NASA Earth Observatory, Catalog of Earth Satellite Orbits",
+    "origin": "real"
+  },
+  {
+    "id": "l2-coverage",
+    "trigger": "level2:coverage",
+    "text": "La inclinación limita las latitudes que ves: con 0° solo cubres la franja ecuatorial.",
+    "source": "NASA Earth Observatory, Catalog of Earth Satellite Orbits",
+    "origin": "real"
+  },
+  {
+    "id": "l2-storage",
+    "trigger": "level2:storage-full",
+    "text": "Los datos que no caben en memoria se pierden. El enlace de bajada es tan importante como el instrumento.",
+    "source": "NASA, CubeSat 101",
+    "origin": "real"
+  },
+  {
+    "id": "l2-brownout",
+    "trigger": "level2:brownout",
+    "text": "En órbita baja, cerca de un tercio de cada vuelta puede ser eclipse: la batería sostiene la nave a la sombra de la Tierra.",
+    "source": "Geometría de eclipse en órbita circular",
+    "origin": "real"
+  },
+  {
+    "id": "l3-start",
+    "trigger": "level3:start",
+    "text": "Ikaros se basa en el diseño de energía de Solar Probe+, la misión que voló como Parker Solar Probe.",
+    "source": "Landis et al., AIAA 2008-5712; NASA, Parker Solar Probe",
+    "origin": "real"
+  },
+  {
+    "id": "l3-theory",
+    "trigger": "level3:start",
+    "text": "⚗ El reactor, el campo HTS, los nanobots y la cápsula de retorno son extensiones teóricas del juego, no datos de NASA.",
+    "source": "Equipo Ikaros",
+    "origin": "theoretical"
+  },
+  {
+    "id": "l3-launch",
+    "trigger": "level3:launch",
+    "text": "Solar Probe+ es una misión limitada por masa: necesita un C3 de lanzamiento muy alto.",
+    "source": "Landis et al., AIAA 2008-5712, p. 6",
+    "origin": "real"
+  },
+  {
+    "id": "l3-venus",
+    "trigger": "level3:venus-window",
+    "text": "Cada sobrevuelo de Venus frena la nave respecto al Sol y baja el perihelio. El diseño real usa 7; aquí son 3.",
+    "source": "Landis et al., AIAA 2008-5712, p. 2",
+    "origin": "real"
+  },
+  {
+    "id": "l3-flyby",
+    "trigger": "level3:venus-flyby",
+    "text": "Parker Solar Probe hizo su séptimo y último sobrevuelo de Venus en noviembre de 2024.",
+    "source": "NASA, Parker Solar Probe",
+    "origin": "real"
+  },
+  {
+    "id": "l3-encounter",
+    "trigger": "level3:encounter-start",
+    "text": "A 0.25 AU la luz es 16 veces la de la Tierra. La matriz principal ya no sirve y se pliega tras el escudo.",
+    "source": "Landis et al., AIAA 2008-5712, p. 4",
+    "origin": "real"
+  },
+  {
+    "id": "l3-stowed",
+    "trigger": "level3:main-stowed",
+    "text": "Desde aquí solo trabaja la matriz secundaria: celdas concentradoras de ~1 cm² con un lazo de refrigerante.",
+    "source": "Landis et al., AIAA 2008-5712, p. 6",
+    "origin": "real"
+  },
+  {
+    "id": "l3-main-hot",
+    "trigger": "level3:main-hot",
+    "text": "Inclinar la matriz reduce la luz que recibe: el paper llega a ~74° para mantenerla bajo 180 °C.",
+    "source": "Landis et al., AIAA 2008-5712, p. 4",
+    "origin": "real"
+  },
+  {
+    "id": "l3-cell-hot",
+    "trigger": "level3:cell-hot",
+    "text": "Las celdas trabajan a 120 °C. El calor que no se convierte en electricidad lo sacan radiadores a 100 °C.",
+    "source": "Landis et al., AIAA 2008-5712, p. 6-7",
+    "origin": "real"
+  },
+  {
+    "id": "l3-cell-degrading",
+    "trigger": "level3:cell-degrading",
+    "text": "Por encima de ~350 °C las celdas se degradan para siempre.",
+    "source": "Landis et al., AIAA 2008-5712, p. 3",
+    "origin": "real"
+  },
+  {
+    "id": "l3-low-power",
+    "trigger": "level3:low-power",
+    "text": "La nave necesita al menos 482 W en el encuentro. Retraer de más también es un error.",
+    "source": "Landis et al., AIAA 2008-5712, p. 4",
+    "origin": "real"
+  },
+  {
+    "id": "l3-cme",
+    "trigger": "level3:cme",
+    "text": "Parker Solar Probe atravesó eyecciones de masa coronal y midió su plasma desde dentro.",
+    "source": "NASA, Parker Solar Probe",
+    "origin": "real"
+  },
+  {
+    "id": "l3-attitude",
+    "trigger": "level3:attitude-antenna-to-earth",
+    "text": "Girar para transmitir saca a los radiadores de la sombra del escudo: cerca del Sol, el calor sube en minutos.",
+    "source": "Landis et al., AIAA 2008-5712, p. 7 (radiadores tras el escudo)",
+    "origin": "real"
+  },
+  {
+    "id": "l3-storage",
+    "trigger": "level3:storage-full",
+    "text": "Parker guarda los datos del perihelio y los baja a la Tierra cuando se aleja del Sol.",
+    "source": "NASA, Parker Solar Probe: operaciones",
+    "origin": "real"
+  },
+  {
+    "id": "l3-stirling",
+    "trigger": "level3:stirling-failed",
+    "text": "El paper descartó el Stirling por no tener herencia de vuelo, aunque su eficiencia era buena.",
+    "source": "Landis et al., AIAA 2008-5712, p. 5-6",
+    "origin": "real"
+  },
+  {
+    "id": "l3-ejection",
+    "trigger": "level3:ejection",
+    "text": "⚗ La eyección del módulo y la cápsula de retorno son ficción del juego: Parker no regresa a la Tierra.",
+    "source": "Equipo Ikaros",
+    "origin": "theoretical"
+  },
+  {
+    "id": "l3-end",
+    "trigger": "level3:encounter-end",
+    "text": "Solo ~10 h de cada pasada transcurren a menos de 10 radios solares. Ese es el núcleo de la misión.",
+    "source": "Landis et al., AIAA 2008-5712, p. 2",
+    "origin": "real"
+  }
+]

@@ -1,0 +1,62 @@
+[
+  {
+    "term": "Delta-V (Δv)",
+    "definition": "Cambio de velocidad que una nave puede producir con su propelente. Es la moneda de las maniobras.",
+    "source": "Ecuación de Tsiolkovsky; NASA Glenn, Beginner's Guide to Rockets"
+  },
+  {
+    "term": "Transferencia de Hohmann",
+    "definition": "Maniobra de dos encendidos entre dos órbitas circulares que usa el mínimo Δv.",
+    "source": "NASA JPL, Basics of Space Flight"
+  },
+  {
+    "term": "Perihelio",
+    "definition": "Punto de la órbita más cercano al Sol.",
+    "source": "NASA JPL, Basics of Space Flight"
+  },
+  {
+    "term": "R☉ (radio solar)",
+    "definition": "Unidad de distancia igual al radio del Sol, 696,000 km.",
+    "source": "Landis et al., AIAA 2008-5712, p. 2"
+  },
+  {
+    "term": "AU (unidad astronómica)",
+    "definition": "Distancia media Tierra–Sol, 149,597,870.7 km.",
+    "source": "IAU 2012, Resolución B2"
+  },
+  {
+    "term": "AM0",
+    "definition": "Intensidad de la luz solar fuera de la atmósfera a 1 AU: 1,367 W/m².",
+    "source": "Landis et al., AIAA 2008-5712, p. 1"
+  },
+  {
+    "term": "Sobrevuelo de Venus",
+    "definition": "Paso cercano por Venus que usa su gravedad para cambiar la órbita sin gastar propelente.",
+    "source": "NASA, Parker Solar Probe"
+  },
+  {
+    "term": "CME",
+    "definition": "Eyección de masa coronal: nube de plasma y campo magnético que el Sol lanza al espacio.",
+    "source": "NASA, Space Weather"
+  },
+  {
+    "term": "Radiador",
+    "definition": "Superficie que emite calor al espacio. Su capacidad crece con T⁴ (ley de Stefan-Boltzmann).",
+    "source": "Landis et al., AIAA 2008-5712, ec. 2"
+  },
+  {
+    "term": "Ventana de comunicación",
+    "definition": "Tiempo en que la nave ve una estación terrena y puede enviar datos.",
+    "source": "NASA, CubeSat 101"
+  },
+  {
+    "term": "Órbita heliosíncrona",
+    "definition": "Órbita casi polar que pasa por cada latitud a la misma hora solar.",
+    "source": "NASA Earth Observatory, Catalog of Earth Satellite Orbits"
+  },
+  {
+    "term": "⚗ Teórico",
+    "definition": "Marca de las tecnologías y cifras inventadas para el juego. No son datos de NASA.",
+    "source": "Equipo Ikaros"
+  }
+]
