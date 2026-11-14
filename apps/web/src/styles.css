@@ -713,3 +713,76 @@ button.link {
 .summary h2 + .note {
   margin-top: 0;
 }
+
+.decision {
+  border: 1px solid var(--amber);
+  padding: 8px 10px;
+  margin-bottom: 12px;
+}
+.decision-text {
+  color: var(--amber);
+}
+.choices {
+  display: grid;
+  gap: 6px;
+}
+.choice {
+  display: grid;
+  text-align: left;
+  gap: 2px;
+  padding: 6px 8px;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--line);
+  font: inherit;
+  cursor: pointer;
+}
+.choice:hover {
+  border-color: var(--amber);
+}
+.choice:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+.choice span {
+  color: var(--dim);
+  font-size: 12px;
+}
+.scale-btn.wide {
+  width: 100%;
+  margin: 4px 0 10px;
+}
+.scale.attitude {
+  margin: 6px 0;
+}
+.scale.attitude button {
+  flex: 1;
+}
+.report .sub {
+  margin: 12px 0 6px;
+  font: 600 12px var(--font-head);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.cause {
+  display: block;
+  margin-top: 2px;
+}
+.compare th,
+.compare td {
+  padding: 3px 4px;
+  font-size: 12px;
+}
+.compare thead th {
+  color: var(--dim);
+  font-weight: 600;
+}
+
+/* Paneles por encima de las etiquetas de la escena 3D. */
+.topbar,
+.side,
+.guide-wrap,
+.orbit-note {
+  z-index: 5;
+}

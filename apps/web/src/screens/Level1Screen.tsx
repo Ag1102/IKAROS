@@ -1,55 +1,82 @@
 import { useEffect, useMemo, useState } from "react";
-import type { PlayerAction } from "@ikaros/contracts";
+import type { PlayerAction, ScenarioDefinition, SimState } from "@ikaros/contracts";
+import { physics } from "@ikaros/sim";
 import { Scene } from "../scene/Scene";
-import { useLevel1 } from "../level1/useLevel1";
-import { previewBurn1 } from "../level1/game";
+import { useSimulation } from "../sim/useSimulation";
+import { C } from "../data/sources";
 import { EventLog, ResourcesPanel, TopBar } from "../ui/Panels";
-import { LevelPanel } from "../ui/LevelPanel";
+import { HangarSlots } from "../ui/HangarSlots";
+import { Assistant } from "../ui/Assistant";
+import { Report } from "../ui/Report";
 import { Overlay, type OverlayKind } from "../ui/Overlay";
+import { formatNumber } from "../ui/format";
 import { useHotkey } from "../hooks/useHotkey";
+
+const STEPS = [
+  { phase: "hangar", label: "Hangar" },
+  { phase: "transfer", label: "Transferencia" },
+  { phase: "repair", label: "Reparación" },
+  { phase: "complete", label: "Informe" },
+];
+
+/** Altitud que alcanzaría una transferencia de Hohmann con este Δv, km (física del motor). */
+function altitudeAfter(state: SimState, dv_m_s: number): number {
+  const r1 = C.earthRadius + (state.altitude_km ?? 0);
+  return physics.hohmannTarget(C.muEarth, r1, dv_m_s / 1000) - C.earthRadius;
+}
+
+/** Hay una transferencia en curso si el último encendido aún no tuvo llegada (acople o fallo). */
+function inTransfer(state: SimState): boolean {
+  for (let i = state.events.length - 1; i >= 0; i--) {
+    const t = state.events[i]?.trigger;
+    if (t === "level1:docked" || t === "level1:miss") return false;
+    if (t === "level1:burn") return true;
+  }
+  return false;
+}
+
+function Stepper({ phase }: { phase: string }) {
+  const idx = STEPS.findIndex((s) => s.phase === phase);
+  return (
+    <ol className="stepper" aria-label="Fases del nivel">
+      {STEPS.map((s, i) => (
+        <li key={s.phase} className={i < idx ? "done" : i === idx ? "now" : ""}>
+          {s.label}
+        </li>
+      ))}
+    </ol>
+  );
+}
 
 export function Level1Screen({ onExit }: { onExit: () => void }) {
   const [timeScale, setTimeScale] = useState(60);
-  const [dv1, setDv1] = useState(0);
-  const [dv2, setDv2] = useState(0);
+  const [dv, setDv] = useState(0);
   const [hideUi, setHideUi] = useState(false);
   const [overlay, setOverlay] = useState<OverlayKind>(null);
   const [follow, setFollow] = useState(false);
-  const { game, state, view, act } = useLevel1(timeScale);
+  const { state, latest, act, restart, report, def } = useSimulation("level1-repair", timeScale);
 
   useHotkey("h", () => setHideUi((v) => !v));
 
-  const preview = useMemo(() => {
-    if (view.phase === "burn1") return previewBurn1(dv1);
-    if (view.phase === "burn2") return game.previewBurn2(dv2);
-    return null;
-  }, [view.phase, dv1, dv2, game]);
-
-  // Al llegar al objetivo, la cámara se acerca sola al Hubble.
+  const docked = state.phase === "repair" || report?.metrics.docked === true;
   useEffect(() => {
-    if (view.phase === "toolkit") setFollow(true);
-  }, [view.phase]);
+    if (state.phase === "repair") setFollow(true);
+  }, [state.phase]);
 
-  const onAct = (a: PlayerAction) => {
-    if (a.type === "resolve-event" && a.eventId === "restart") {
-      setDv1(0);
-      setDv2(0);
-      setFollow(false);
-    }
-    act(a);
+  const transferring = inTransfer(state);
+  const canBurn = state.phase === "transfer" && !transferring;
+  const preview = useMemo(() => (canBurn && dv !== 0 ? altitudeAfter(state, dv) : null), [canBurn, dv, state]);
+
+  const onRestart = () => {
+    setDv(0);
+    setFollow(false);
+    restart();
   };
 
   return (
     <div className={hideUi ? "shell hide-ui" : "shell"}>
       <div className="viewport">
-        <Scene
-          game={game}
-          phase={view.phase}
-          servicer={view.servicer}
-          preview={preview}
-          follow={follow}
-          docked={view.docked}
-        />
+        <Scene latest={latest} docked={docked} previewAltitude={preview} follow={follow} />
       </div>
       <TopBar
         state={state}
@@ -61,9 +88,10 @@ export function Level1Screen({ onExit }: { onExit: () => void }) {
         onGlossary={() => setOverlay("glossary")}
         onCredits={() => setOverlay("credits")}
         onExit={onExit}
+        subtitle={def.title}
       />
       <aside className="side">
-        <ResourcesPanel state={state} fuel_kg={view.propellant_kg} dv_ms={view.dvLeft_ms} />
+        <ResourcesPanel state={state} />
         <EventLog events={state.events} />
       </aside>
       <footer className="orbit-note">
@@ -71,18 +99,158 @@ export function Level1Screen({ onExit }: { onExit: () => void }) {
         derecho: desplazar · H: paneles
       </footer>
       <aside className="guide-wrap">
-        <LevelPanel
-          view={view}
-          report={game.report()}
-          dv1={dv1}
-          dv2={dv2}
-          setDv1={setDv1}
-          setDv2={setDv2}
-          preview={preview}
-          act={onAct}
-        />
+        <section className="panel guide" aria-labelledby="guide-h">
+          <h2 id="guide-h">Guía de misión</h2>
+          <Stepper phase={state.phase} />
+          {state.phase === "hangar" && <HangarStep def={def} state={state} act={act} />}
+          {state.phase === "transfer" && (
+            <TransferStep
+              state={state}
+              dv={dv}
+              setDv={setDv}
+              preview={preview}
+              transferring={transferring}
+              onBurn={() => {
+                act({ type: "burn", delta_v_m_s: dv });
+                setDv(0);
+              }}
+            />
+          )}
+          {state.phase === "repair" && <RepairStep state={state} />}
+          {report && <Report report={report} onRestart={onRestart} />}
+          <Assistant events={state.events} />
+        </section>
       </aside>
       <Overlay kind={overlay} onClose={() => setOverlay(null)} />
     </div>
+  );
+}
+
+function HangarStep({ def, state, act }: { def: ScenarioDefinition; state: SimState; act: (a: PlayerAction) => void }) {
+  const cargo = def.components.filter((c) => state.selected?.[c.slot] === c.id).reduce((m, c) => m + c.mass_kg, 0);
+  const cap = state.mass_capacity_kg ?? 0;
+  return (
+    <>
+      {def.briefing.map((b) => (
+        <p key={b}>{b}</p>
+      ))}
+      <ul className="causes">
+        {def.objectives.map((o) => (
+          <li key={o}>{o}</li>
+        ))}
+      </ul>
+      <p className="stage">Etapa de diseño: estudio de compromisos (CML 3).</p>
+      <HangarSlots def={def} state={state} act={act} />
+      <table className="mini">
+        <tbody>
+          <tr className={cargo > cap ? "neg" : ""}>
+            <th>Carga</th>
+            <td className="num">
+              {formatNumber(cargo)} / {formatNumber(cap)} kg
+            </td>
+          </tr>
+          <tr>
+            <th>Δv disponible</th>
+            <td className="num">{formatNumber(state.delta_v_remaining_m_s ?? 0, 1)} m/s</td>
+          </tr>
+        </tbody>
+      </table>
+      <button className="primary" onClick={() => act({ type: "launch" })}>
+        Lanzar
+      </button>
+    </>
+  );
+}
+
+function TransferStep({
+  state,
+  dv,
+  setDv,
+  preview,
+  transferring,
+  onBurn,
+}: {
+  state: SimState;
+  dv: number;
+  setDv: (v: number) => void;
+  preview: number | null;
+  transferring: boolean;
+  onBurn: () => void;
+}) {
+  const alt = state.altitude_km ?? 0;
+  const target = state.target_altitude_km ?? 0;
+  const max = Math.max(1, Math.min(80, state.delta_v_remaining_m_s ?? 0));
+  return (
+    <>
+      <table className="mini">
+        <tbody>
+          <tr>
+            <th>Altitud actual</th>
+            <td className="num">{formatNumber(alt, 1)} km</td>
+          </tr>
+          <tr>
+            <th>Altitud del satélite</th>
+            <td className="num">{formatNumber(target, 1)} km</td>
+          </tr>
+          <tr>
+            <th>Diferencia</th>
+            <td className="num">{formatNumber(target - alt, 1)} km</td>
+          </tr>
+        </tbody>
+      </table>
+      {transferring ? (
+        <p className="note">Transferencia en curso. Puedes acelerar el tiempo hasta la llegada.</p>
+      ) : (
+        <div className="burn">
+          <label htmlFor="dv">
+            Δv del encendido <span className="num">{formatNumber(dv, 1)} m/s</span>
+          </label>
+          <input
+            id="dv"
+            type="range"
+            min={-20}
+            max={max}
+            step={0.1}
+            value={dv}
+            onChange={(e) => setDv(Number(e.target.value))}
+          />
+          <p className="note">
+            Altitud tras la transferencia:{" "}
+            <span className="num">{preview === null ? "—" : `${formatNumber(preview, 1)} km`}</span> (línea punteada).
+            Hay que quedar a ±2 km del satélite.
+          </p>
+          <button className="primary" disabled={dv === 0} onClick={onBurn}>
+            Encender
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
+function RepairStep({ state }: { state: SimState }) {
+  const progress = state.repair_progress_pct ?? 0;
+  return (
+    <>
+      <p>
+        Acoplado.{" "}
+        {state.comm_window_open
+          ? "Estación terrena a la vista: se repara."
+          : "Sin enlace: la reparación espera al siguiente pase."}
+      </p>
+      <div
+        className="bar"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(progress)}
+      >
+        <div style={{ width: `${progress}%` }} />
+      </div>
+      <p className="note">
+        Progreso <span className="num">{formatNumber(progress, 0)} %</span> · datos enviados{" "}
+        <span className="num">{formatNumber(state.data_downlinked_mb ?? 0, 1)} MB</span>
+      </p>
+    </>
   );
 }

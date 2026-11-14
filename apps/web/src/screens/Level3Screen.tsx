@@ -1,121 +1,79 @@
-import { useState } from "react";
-import type { SimState } from "@ikaros/contracts";
-import { Hangar } from "../level3/Hangar";
-import { BUDGET_USD_M, checkDesign, type Design } from "../level3/catalog";
-import { AU_KM } from "../sim/kepler";
-import { CELL_LIMIT_C, Encounter, RSUN_KM, type EncounterConfig } from "../level3/encounter";
-import { MISSION_EPOCH_DAY, trajectoryById } from "../level3/trajectory";
-import { Level3Scene } from "../level3/Level3Scene";
-import { EventLog, ResourcesPanel, TopBar } from "../ui/Panels";
-import { Overlay, type OverlayKind } from "../ui/Overlay";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { PlayerAction, ScenarioDefinition, SimState } from "@ikaros/contracts";
+import { useSimulation } from "../sim/useSimulation";
+import { Level3Scene, OrbitPreview, probeOrbit } from "../level3/Level3Scene";
+import { EventLog, ResourcesPanel, TopBar, type TimeScale } from "../ui/Panels";
+import { HangarSlots } from "../ui/HangarSlots";
+import { Decisions, openDecisions } from "../ui/Decisions";
+import { Report } from "../ui/Report";
 import { Assistant } from "../ui/Assistant";
+import { Overlay, type OverlayKind } from "../ui/Overlay";
 import { formatNumber } from "../ui/format";
-import { useGameLoop } from "../hooks/useGameLoop";
+import { PAPER } from "../data/sources";
 import { useHotkey } from "../hooks/useHotkey";
 
-const INITIAL: Design = { parts: ["shield-flat", "pv-primary", "pv-secondary"], launcher: "l-m", trajectory: "v7" };
+const SCALES: TimeScale[] = [
+  { value: 0, label: "Pausa" },
+  { value: 600, label: "10 min/s" },
+  { value: 3600, label: "1 h/s" },
+  { value: 86_400, label: "1 d/s" },
+  { value: 604_800, label: "1 sem/s" },
+];
+/** Velocidad máxima durante el encuentro: lo interesante pasa en unas horas cerca del perihelio. */
+const ENCOUNTER_MAX_SCALE = 3600;
 
-function toConfig(d: Design): EncounterConfig {
-  const has = (id: string) => d.parts.includes(id);
-  return {
-    hasSecondary: has("pv-secondary"),
-    hasReactor: has("reactor"),
-    hasStirling: has("stirling"),
-    liquidShield: has("shield-liquid"),
-    hasHts: has("hts"),
-    hasNano: has("nano"),
-    hasCapsule: has("capsule"),
-    extraUse_w: checkDesign(d).uses_w,
-    perihelion_au: trajectoryById(d.trajectory).perihelion_au,
-    aphelion_au: trajectoryById(d.trajectory).aphelion_au,
-  };
-}
+const param = (def: ScenarioDefinition, key: string) => def.params[key]?.value ?? 0;
+const flybysOf = (def: ScenarioDefinition) =>
+  Object.keys(def.params).filter((k) => /^perihelion_after_flyby_\d+_rsun$/.test(k)).length;
 
 export function Level3Screen({ onExit }: { onExit: () => void }) {
-  const [design, setDesign] = useState<Design>(INITIAL);
-  const [enc, setEnc] = useState<Encounter | null>(null);
-  const [overlay, setOverlay] = useState<OverlayKind>(null);
-
-  return (
-    <>
-      {enc ? (
-        <EncounterView enc={enc} design={design} onBack={() => setEnc(null)} onExit={onExit} onOverlay={setOverlay} />
-      ) : (
-        <Hangar
-          design={design}
-          onChange={setDesign}
-          onExit={onExit}
-          onCredits={() => setOverlay("credits")}
-          onGlossary={() => setOverlay("glossary")}
-          onLaunch={() => setEnc(new Encounter(toConfig(design)))}
-        />
-      )}
-      <Overlay kind={overlay} onClose={() => setOverlay(null)} />
-    </>
-  );
-}
-
-function EncounterView({
-  enc,
-  design,
-  onBack,
-  onExit,
-  onOverlay,
-}: {
-  enc: Encounter;
-  design: Design;
-  onBack: () => void;
-  onExit: () => void;
-  onOverlay: (k: OverlayKind) => void;
-}) {
-  const [, setFrame] = useState(0);
-  const [timeScale, setTimeScale] = useState(3600);
-  const [exposed, setExposed] = useState(100);
+  const [timeScale, setTimeScale] = useState(86_400);
   const [hideUi, setHideUi] = useState(false);
-  const [follow, setFollow] = useState(true);
-
-  useGameLoop(
-    (dt) => enc.step(dt),
-    () => setFrame((n) => n + 1),
-    timeScale,
+  const [overlay, setOverlay] = useState<OverlayKind>(null);
+  const [follow, setFollow] = useState(false);
+  const { state, latest, act, restart, report, def } = useSimulation("level3-ikaros", timeScale, (s) =>
+    s.phase === "encounter" ? ENCOUNTER_MAX_SCALE : Infinity,
   );
+
   useHotkey("h", () => setHideUi((v) => !v));
 
-  const check = checkDesign(design);
-  // Se arma en cada render para que los paneles reflejen los cambios también en pausa.
-  const state: SimState = {
-    scenario: "level3-ikaros",
-    resources: {
-      mass_kg: check.mass_kg,
-      power_generated_w: enc.powerW,
-      power_consumed_w: enc.requiredW,
-      budget_usd_m: BUDGET_USD_M - check.cost_usd_m,
-      data_stored_mb: 0,
-      downlink_rate_kbps: 0,
-      mission_elapsed_s: enc.t,
-    },
-    health:
-      enc.outcome === "failure" || enc.damage >= 100
-        ? "critical"
-        : enc.cellTemp_c > CELL_LIMIT_C || enc.powerW < enc.requiredW
-          ? "warning"
-          : "nominal",
-    phase: enc.phase,
-    events: enc.events,
+  // Una decisión nueva pausa el tiempo: sus plazos son de días y a 1 semana/s pasarían sin verse.
+  const openCount = openDecisions(state.events).length;
+  const prevOpen = useRef(openCount);
+  useEffect(() => {
+    if (openCount > prevOpen.current) setTimeScale(0);
+    prevOpen.current = openCount;
+  }, [openCount]);
+
+  // Al entrar al encuentro se limita la velocidad para poder gestionar la matriz.
+  useEffect(() => {
+    if (state.phase === "encounter") setTimeScale((v) => Math.min(v, ENCOUNTER_MAX_SCALE));
+  }, [state.phase]);
+
+  const onRestart = () => {
+    setTimeScale(86_400);
+    setFollow(false);
+    restart();
   };
 
-  const reference = Math.min(100, (16 / enc.suns) * 100);
-  const done = enc.outcome !== null;
-  const lowPct = (enc.belowMin_s / enc.durationS) * 100;
-  const traj = trajectoryById(design.trajectory);
-  const periRsun = (traj.perihelion_au * AU_KM) / RSUN_KM;
-  // Día (desde J2000) del perihelio, solo para situar los planetas en la escena.
-  const encounterDay = MISSION_EPOCH_DAY + traj.duration_yr * 365.25;
+  if (state.phase === "hangar") {
+    return (
+      <>
+        <HangarPage def={def} state={state} act={act} onExit={onExit} onOverlay={setOverlay} />
+        <Overlay kind={overlay} onClose={() => setOverlay(null)} />
+      </>
+    );
+  }
 
   return (
     <div className={hideUi ? "shell hide-ui" : "shell"}>
       <div className="viewport">
-        <Level3Scene enc={enc} follow={follow} encounterDay={encounterDay} />
+        <Level3Scene
+          latest={latest}
+          follow={follow}
+          aphelion_au={param(def, "aphelion_au")}
+          perihelion_rsun={state.perihelion_rsun ?? param(def, "perihelion_start_rsun")}
+        />
       </div>
       <TopBar
         state={state}
@@ -124,11 +82,12 @@ function EncounterView({
         onTogglePanels={() => setHideUi((v) => !v)}
         follow={follow}
         onFollow={() => setFollow((v) => !v)}
-        onGlossary={() => onOverlay("glossary")}
-        onCredits={() => onOverlay("credits")}
+        onGlossary={() => setOverlay("glossary")}
+        onCredits={() => setOverlay("credits")}
         onExit={onExit}
-        subtitle="Nivel 3 · Encuentro solar"
-        scales={[0, 600, 3600, 21600]}
+        subtitle={def.title}
+        scales={SCALES}
+        maxScale={state.phase === "encounter" ? ENCOUNTER_MAX_SCALE : Infinity}
       />
       <aside className="side">
         <ResourcesPanel state={state} />
@@ -140,115 +99,272 @@ function EncounterView({
       </footer>
       <aside className="guide-wrap">
         <section className="panel guide" aria-labelledby="enc-h">
-          <h2 id="enc-h">Encuentro solar</h2>
-          <p className="note">⚗ Simulación de prueba: la física definitiva la aporta el motor de simulación.</p>
-          <table className="mini">
-            <tbody>
-              <tr>
-                <th>Distancia al Sol</th>
-                <td className="num">
-                  {formatNumber(enc.distanceRsun, 1)} R☉ · {formatNumber(enc.distanceAU, 3)} AU
-                </td>
-              </tr>
-              <tr>
-                <th>Intensidad solar</th>
-                <td className="num">{formatNumber(enc.suns)} × AM0</td>
-              </tr>
-              <tr className={enc.cellTemp_c > CELL_LIMIT_C ? "neg" : ""}>
-                <th>Temperatura de celdas</th>
-                <td className="num">
-                  {enc.cfg.hasSecondary ? `${formatNumber(enc.cellTemp_c)} °C / ${CELL_LIMIT_C}` : "—"}
-                </td>
-              </tr>
-              <tr>
-                <th>Daño de celdas</th>
-                <td className="num">{formatNumber(enc.damage, 1)} %</td>
-              </tr>
-              <tr className={enc.powerW < enc.requiredW ? "neg" : ""}>
-                <th>Potencia</th>
-                <td className="num">
-                  {formatNumber(enc.powerW)} / {formatNumber(enc.requiredW)} W
-                </td>
-              </tr>
-              <tr>
-                <th>Perihelio previsto</th>
-                <td className="num">
-                  {formatNumber(periRsun, 1)} R☉ · {traj.flybys} sobrevuelos de Venus
-                </td>
-              </tr>
-            </tbody>
-          </table>
-
-          {!done && (
-            <div className="burn">
-              <label htmlFor="exp">
-                Matriz secundaria expuesta <span className="num">{formatNumber(exposed, 1)} %</span>
-              </label>
-              <input
-                id="exp"
-                type="range"
-                min={0}
-                max={100}
-                step={0.5}
-                value={exposed}
-                disabled={!enc.cfg.hasSecondary}
-                onChange={(e) => {
-                  const v = Number(e.target.value);
-                  setExposed(v);
-                  enc.setExposed(v / 100);
-                }}
-              />
-              <p className="note">
-                Referencia del paper: la matriz se retrae para mantener casi constante la carga térmica. Con la
-                intensidad actual, exposición ≈ 16 / intensidad ={" "}
-                <span className="num">{formatNumber(reference, 1)} %</span>.
-              </p>
-              <Assistant trigger="l3:encounter" />
-            </div>
-          )}
-
-          {done && (
+          <h2 id="enc-h">Misión</h2>
+          <Decisions events={state.events} now_s={state.resources.mission_elapsed_s} act={act} />
+          {report ? (
+            <Report report={report} onRestart={onRestart} />
+          ) : (
             <>
-              <p className={enc.outcome === "failure" ? "neg-text" : "ok-text"}>
-                {enc.outcome === "success"
-                  ? "MISIÓN CUMPLIDA"
-                  : enc.outcome === "partial"
-                    ? "MISIÓN PARCIAL"
-                    : "MISIÓN FALLIDA"}{" "}
-                · Puntuación <span className="num">{formatNumber(enc.score)}</span>
-              </p>
-              <ul className="segments" aria-label="Informe por segmentos de misión">
-                <li>
-                  <b>Lanzamiento</b>
-                  Masa {formatNumber(check.mass_kg)} kg de {formatNumber(check.capacity_kg)} kg; costo{" "}
-                  {formatNumber(check.cost_usd_m)} M USD de {formatNumber(BUDGET_USD_M)} M USD.
-                </li>
-                <li>
-                  <b>Espacio</b>
-                  {enc.cfg.hasSecondary
-                    ? `Temperatura máxima de celdas ${formatNumber(enc.maxTemp_c)} °C (límite ${CELL_LIMIT_C} °C); daño ${formatNumber(enc.damage, 1)} %; `
-                    : "Sin matriz solar en servicio; "}
-                  {formatNumber(lowPct, 1)} % del tiempo con potencia insuficiente.
-                </li>
-                <li>
-                  <b>Tierra</b>
-                  Comunicaciones durante el encuentro: no modeladas en este prototipo.
-                </li>
-                <li>
-                  <b>Usuario</b>
-                  {enc.outcome === "failure"
-                    ? "La sonda no completó el encuentro."
-                    : `La sonda llegó a ${formatNumber(periRsun, 1)} R☉ y volvió a salir${enc.cfg.hasCapsule ? ", con muestras de la corona (⚗)" : ""}.`}
-                </li>
-              </ul>
-              <Assistant trigger="l3:result" />
-              <button className="primary" onClick={onBack}>
-                Volver al hangar
-              </button>
+              <Status state={state} />
+              {(state.phase === "encounter" || state.phase === "exit" || state.phase === "cruise") && (
+                <Controls def={def} state={state} act={act} />
+              )}
             </>
           )}
+          <Assistant events={state.events} />
         </section>
       </aside>
+      <Overlay kind={overlay} onClose={() => setOverlay(null)} />
+    </div>
+  );
+}
+
+function HangarPage({
+  def,
+  state,
+  act,
+  onExit,
+  onOverlay,
+}: {
+  def: ScenarioDefinition;
+  state: SimState;
+  act: (a: PlayerAction) => void;
+  onExit: () => void;
+  onOverlay: (k: OverlayKind) => void;
+}) {
+  // Los motivos de bloqueo los da el motor como eventos; se muestran los del último intento.
+  const [attemptFrom, setAttemptFrom] = useState<number | null>(null);
+  const blocked =
+    attemptFrom === null ? [] : state.events.slice(attemptFrom).filter((e) => e.trigger === "level3:launch-blocked");
+
+  const aphelion = param(def, "aphelion_au");
+  const start = useMemo(() => probeOrbit(param(def, "perihelion_start_rsun"), aphelion), [def, aphelion]);
+  const final = useMemo(
+    () => probeOrbit(param(def, `perihelion_after_flyby_${flybysOf(def)}_rsun`), aphelion),
+    [def, aphelion],
+  );
+  const flybys = flybysOf(def);
+  const mass = state.resources.mass_kg;
+  const cap = state.mass_capacity_kg ?? 0;
+  const budget = state.budget_remaining_usd_m ?? 0;
+
+  return (
+    <div className="hangar">
+      <header className="topbar">
+        <div className="brand">
+          <span className="brand-name">IKAROS</span>
+          <span className="brand-sub">{def.title} · Hangar</span>
+        </div>
+        <div />
+        <div />
+        <div />
+        <div className="scale">
+          <button onClick={() => onOverlay("glossary")}>Glosario</button>
+          <button onClick={() => onOverlay("credits")}>Créditos</button>
+          <button onClick={onExit}>Menú</button>
+        </div>
+      </header>
+
+      <main className="hangar-body">
+        <section className="panel">
+          <h2>Diseño de la nave</h2>
+          <p className="stage">
+            Etapa de diseño: estudio de compromisos (CML 3). Al lanzar, el diseño queda fijo (CML 4).
+          </p>
+          {def.briefing.map((b) => (
+            <p key={b}>{b}</p>
+          ))}
+          <HangarSlots def={def} state={state} act={act} />
+        </section>
+
+        <section className="panel summary">
+          <h2>Trayectoria</h2>
+          <p className="note">
+            Tras el lanzamiento, Venus abre {flybys} ventanas de sobrevuelo. Cada una baja el perihelio si se ejecuta la
+            maniobra de corrección: de {formatNumber(param(def, "perihelion_start_rsun"), 1)} R☉ a{" "}
+            {formatNumber(param(def, `perihelion_after_flyby_${flybys}_rsun`), 1)} R☉. Afelio{" "}
+            {formatNumber(aphelion, 3)} AU, cerca de la órbita de Venus.
+          </p>
+          <div className="orbit-preview" aria-label="Órbita inicial y final prevista">
+            <OrbitPreview start={start} final={final} />
+            <span className="preview-note">
+              Gris: primera órbita · Blanca: órbita final. Distancias y Sol a escala real.
+            </span>
+          </div>
+
+          <h2>Lanzamiento</h2>
+          <div className="meter">
+            <span>Masa</span>
+            <span className="num">
+              {formatNumber(mass)} / {formatNumber(cap)} kg
+            </span>
+            <div className="bar">
+              <div className={mass > cap ? "over" : ""} style={{ width: `${Math.min(100, (mass / cap) * 100)}%` }} />
+            </div>
+          </div>
+          <div className="meter">
+            <span>Presupuesto restante</span>
+            <span className={budget < 0 ? "num neg-text" : "num"}>{formatNumber(budget)} M USD</span>
+          </div>
+          <div className="meter">
+            <span>Consumo eléctrico</span>
+            <span className="num">{formatNumber(state.power_load_w ?? 0)} W</span>
+          </div>
+          {blocked.length > 0 && (
+            <ul className="problems">
+              {blocked.map((e) => (
+                <li key={e.id}>{e.text.replace(/^Lanzamiento bloqueado: /, "")}</li>
+              ))}
+            </ul>
+          )}
+          <button
+            className="primary"
+            onClick={() => {
+              setAttemptFrom(state.events.length);
+              act({ type: "launch" });
+            }}
+          >
+            Lanzar misión
+          </button>
+          <Assistant events={state.events} max={1} />
+        </section>
+      </main>
+    </div>
+  );
+}
+
+function Row({ label, value, warn = false }: { label: string; value: string; warn?: boolean }) {
+  return (
+    <tr className={warn ? "neg" : ""}>
+      <th>{label}</th>
+      <td className="num">{value}</td>
+    </tr>
+  );
+}
+
+function Status({ state }: { state: SimState }) {
+  const s = state;
+  const enc = s.phase === "encounter" || s.phase === "exit";
+  return (
+    <table className="mini">
+      <tbody>
+        <Row
+          label="Distancia al Sol"
+          value={`${formatNumber(s.distance_to_sun_rsun ?? 0, 1)} R☉ · ${formatNumber(s.distance_to_sun_au ?? 0, 3)} AU`}
+        />
+        <Row label="Intensidad solar" value={`${formatNumber(s.solar_intensity_suns ?? 0, 1)} × AM0`} />
+        <Row label="Velocidad" value={`${formatNumber(s.speed_km_s ?? 0, 1)} km/s`} />
+        <Row
+          label="Perihelio"
+          value={`${formatNumber(s.perihelion_rsun ?? 0, 1)} R☉ · ${s.venus_flybys_done ?? 0} sobrevuelos de Venus`}
+        />
+        {enc && (
+          <>
+            <Row
+              label="Celdas"
+              value={`${formatNumber(s.cell_temperature_c ?? 0)} °C / ${PAPER.cellDesignLimit_c}`}
+              warn={(s.cell_temperature_c ?? 0) > PAPER.cellDesignLimit_c}
+            />
+            <Row label="Radiadores" value={`${formatNumber(s.radiator_temperature_c ?? 0)} °C`} />
+            {s.main_array_temperature_c !== undefined && (
+              <Row label="Matriz principal" value={`${formatNumber(s.main_array_temperature_c)} °C`} />
+            )}
+            <Row
+              label="Potencia"
+              value={`${formatNumber(s.resources.power_generated_w)} / ${formatNumber(s.power_load_w ?? 0)} W`}
+              warn={s.resources.power_generated_w < (s.power_load_w ?? 0)}
+            />
+            <Row
+              label="Casco"
+              value={`${formatNumber(s.hull_durability_pct ?? 0, 1)} %`}
+              warn={(s.hull_durability_pct ?? 100) < 60}
+            />
+            {(s.nanobot_reserve_pct ?? 0) > 0 && (
+              <Row label="Reserva de nanobots ⚗" value={`${formatNumber(s.nanobot_reserve_pct ?? 0)} %`} />
+            )}
+            <Row label="Datos enviados" value={`${formatNumber(s.data_downlinked_mb ?? 0, 1)} MB`} />
+          </>
+        )}
+      </tbody>
+    </table>
+  );
+}
+
+/** Retracción en escala logarítmica sobre el área iluminada: de toda la matriz a ~1 cm² (y 0). */
+const SLIDER_MAX = 1000;
+const DECADES = 3;
+function areaFromSlider(v: number, full: number) {
+  return v <= 0 ? 0 : full * 10 ** (DECADES * (v / SLIDER_MAX - 1));
+}
+function sliderFromArea(area: number, full: number) {
+  return area <= 0 ? 0 : Math.round(SLIDER_MAX * (1 + Math.log10(Math.max(area, 1e-9) / full) / DECADES));
+}
+
+function Controls({ def, state, act }: { def: ScenarioDefinition; state: SimState; act: (a: PlayerAction) => void }) {
+  const full = param(def, "secondary_array_area_cm2");
+  const area = state.array_illuminated_cm2 ?? full;
+  const reactor = state.selected?.energy === "fission-reactor";
+  return (
+    <div className="burn">
+      {!reactor && (
+        <>
+          <label htmlFor="ret">
+            Matriz secundaria iluminada <span className="num">{formatNumber(area, area < 10 ? 1 : 0)} cm²</span>
+          </label>
+          <input
+            id="ret"
+            type="range"
+            min={0}
+            max={SLIDER_MAX}
+            step={1}
+            value={Math.max(0, Math.min(SLIDER_MAX, sliderFromArea(area, full)))}
+            onChange={(e) => {
+              const a = areaFromSlider(Number(e.target.value), full);
+              act({ type: "retract-array", fraction: 1 - a / full });
+            }}
+          />
+          <p className="note">
+            Escala logarítmica. En el perihelio el paper deja unos {formatNumber(PAPER.perihelionIlluminated_cm2)} cm²
+            iluminados de {formatNumber(full)}.
+          </p>
+        </>
+      )}
+      {!state.main_array_stowed && (
+        <>
+          <label htmlFor="tilt">
+            Inclinación de la matriz principal <span className="num">{formatNumber(state.array_tilt_deg ?? 0)}°</span>
+          </label>
+          <input
+            id="tilt"
+            type="range"
+            min={0}
+            max={PAPER.mainArrayMaxTilt_deg}
+            step={1}
+            value={state.array_tilt_deg ?? 0}
+            onChange={(e) => act({ type: "tilt-array", deg: Number(e.target.value) })}
+          />
+          <button className="scale-btn wide" onClick={() => act({ type: "stow-main-array" })}>
+            Plegar la matriz principal tras el escudo
+          </button>
+        </>
+      )}
+      <div className="scale attitude" role="group" aria-label="Actitud">
+        <button
+          className={state.attitude === "shield-to-sun" ? "on" : ""}
+          onClick={() => act({ type: "set-attitude", attitude: "shield-to-sun" })}
+        >
+          Escudo al Sol
+        </button>
+        <button
+          className={state.attitude === "antenna-to-earth" ? "on" : ""}
+          onClick={() => act({ type: "set-attitude", attitude: "antenna-to-earth" })}
+        >
+          Antena a la Tierra
+        </button>
+      </div>
+      <p className="note">
+        Con la antena a la Tierra se envían datos, pero los radiadores salen de la sombra del escudo.
+      </p>
     </div>
   );
 }

@@ -67,3 +67,15 @@ export function ellipsePoints(o: Pick<HelioOrbit, "a" | "e" | "varpi">, n = 256)
   }
   return pts;
 }
+
+/**
+ * Anomalía verdadera (rad) en la que la órbita está a distancia r. El motor solo da la distancia;
+ * `receding` indica si la nave se aleja del Sol (después del perihelio).
+ */
+export function anomalyFromDistance(o: Pick<HelioOrbit, "a" | "e">, r: number, receding: boolean): number {
+  if (o.e < 1e-9) return 0;
+  const p = o.a * (1 - o.e * o.e);
+  const cosNu = Math.min(1, Math.max(-1, (p / r - 1) / o.e));
+  const nu = Math.acos(cosNu);
+  return receding ? nu : -nu;
+}

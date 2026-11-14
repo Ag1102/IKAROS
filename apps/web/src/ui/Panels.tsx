@@ -7,7 +7,23 @@ const HEALTH_LABEL: Record<Health, string> = {
   critical: "CRÍTICO",
 };
 
-const TIME_SCALES = [0, 1, 10, 60, 600];
+export interface TimeScale {
+  value: number;
+  label: string;
+}
+
+const TIME_SCALES: TimeScale[] = [0, 1, 10, 60, 600].map((v) => ({ value: v, label: v === 0 ? "Pausa" : `${v}×` }));
+
+const PHASE_LABEL: Record<string, string> = {
+  hangar: "Hangar",
+  transfer: "Transferencia",
+  repair: "Reparación",
+  operations: "Operación",
+  cruise: "Crucero",
+  encounter: "Encuentro",
+  exit: "Salida",
+  complete: "Informe",
+};
 
 export function TopBar({
   state,
@@ -19,8 +35,9 @@ export function TopBar({
   onCredits,
   onGlossary,
   onExit,
-  subtitle = "Nivel 1 · Servicio en órbita",
+  subtitle,
   scales = TIME_SCALES,
+  maxScale = Infinity,
 }: {
   state: SimState;
   timeScale: number;
@@ -31,8 +48,10 @@ export function TopBar({
   onCredits: () => void;
   onGlossary?: () => void;
   onExit?: () => void;
-  subtitle?: string;
-  scales?: number[];
+  subtitle: string;
+  scales?: TimeScale[];
+  /** Las velocidades por encima de este valor se desactivan. */
+  maxScale?: number;
 }) {
   return (
     <header className="topbar">
@@ -46,12 +65,17 @@ export function TopBar({
       </div>
       <div className="status">
         <span className={`badge badge-${state.health}`}>{HEALTH_LABEL[state.health]}</span>
-        <span className="phase">{state.phase}</span>
+        <span className="phase">{PHASE_LABEL[state.phase] ?? state.phase}</span>
       </div>
       <div className="scale" role="group" aria-label="Velocidad del tiempo">
-        {scales.map((v) => (
-          <button key={v} className={v === timeScale ? "on" : ""} onClick={() => onTimeScale(v)}>
-            {v === 0 ? "Pausa" : `${v}×`}
+        {scales.map((sc) => (
+          <button
+            key={sc.value}
+            className={sc.value === timeScale ? "on" : ""}
+            onClick={() => onTimeScale(sc.value)}
+            disabled={state.phase === "hangar" || state.phase === "complete" || sc.value > maxScale}
+          >
+            {sc.label}
           </button>
         ))}
       </div>
@@ -82,7 +106,7 @@ function Row({ label, value, unit }: { label: string; value: string; unit: strin
   );
 }
 
-export function ResourcesPanel({ state, fuel_kg, dv_ms }: { state: SimState; fuel_kg?: number; dv_ms?: number }) {
+export function ResourcesPanel({ state }: { state: SimState }) {
   const r = state.resources;
   const margin = r.power_generated_w - r.power_consumed_w;
   return (
@@ -98,9 +122,21 @@ export function ResourcesPanel({ state, fuel_kg, dv_ms }: { state: SimState; fue
             <td className="num">{(margin > 0 ? "+" : "") + formatNumber(margin)}</td>
             <td className="unit">W</td>
           </tr>
-          {fuel_kg !== undefined && <Row label="Combustible" value={formatNumber(fuel_kg, 1)} unit="kg" />}
-          {dv_ms !== undefined && <Row label="Δv disponible" value={formatNumber(dv_ms, 1)} unit="m/s" />}
-          <Row label="Presupuesto" value={formatNumber(r.budget_usd_m)} unit="M USD" />
+          {state.delta_v_remaining_m_s !== undefined && (
+            <Row label="Δv disponible" value={formatNumber(state.delta_v_remaining_m_s, 1)} unit="m/s" />
+          )}
+          {state.battery_wh !== undefined && (
+            <Row
+              label="Batería"
+              value={`${formatNumber(state.battery_wh)} / ${formatNumber(state.battery_capacity_wh ?? 0)}`}
+              unit="Wh"
+            />
+          )}
+          <Row
+            label="Presupuesto restante"
+            value={formatNumber(state.budget_remaining_usd_m ?? r.budget_usd_m)}
+            unit="M USD"
+          />
           <Row label="Datos almacenados" value={formatNumber(r.data_stored_mb, 1)} unit="MB" />
           <Row label="Enlace de bajada" value={formatNumber(r.downlink_rate_kbps)} unit="kbps" />
         </tbody>

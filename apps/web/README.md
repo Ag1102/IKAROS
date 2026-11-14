@@ -16,19 +16,18 @@ npm run build -w @ikaros/web        # typecheck + build de producción
 
 | Carpeta | Contenido |
 |---|---|
-| `src/screens` | Pantallas de cada nivel |
-| `src/scene` | Escena 3D del nivel 1 y controles de cámara |
-| `src/level1` | Reglas provisionales del nivel 1 |
-| `src/level3` | Hangar, simulación provisional del encuentro y escena del nivel 3 |
-| `src/ui` | Paneles, diálogos, asistente de misión y glosario |
-| `src/hooks` | Bucle de juego y atajos de teclado |
+| `src/screens` | Pantallas de cada nivel, conectadas al motor `@ikaros/sim` |
+| `src/sim` | `useSimulation` (puente con el motor), Kepler y geometría para las escenas |
+| `src/scene` | Escena 3D del nivel 1, tamaños en pantalla y controles de cámara |
+| `src/level3` | Escena del nivel 3: Sol, planetas (elementos de JPL) y órbita de la sonda |
+| `src/ui` | Paneles, hangar, decisiones, informe, asistente, glosario y diálogos |
+| `src/data` | Lectura de `data/` y `content/` |
 | `public/` | Modelos y texturas de NASA sin modificar (ver `public/CREDITS.md`) |
 
-## Pendiente de integración con Persona A
+## Reglas
 
-- Las reglas de `src/level1/game.ts` y la simulación de `src/level3/encounter.ts` son
-  provisionales: se sustituyen por `@ikaros/sim` cuando el motor implemente el contrato.
-- El catálogo de `src/level3/catalog.ts` usa masas y costos de prueba; deben venir de `data/`.
-- Los textos de `content/*.json` se cargan solos y reemplazan por `id` a los de `src/ui/facts.ts`.
-- Contrato: falta la órbita en `SimState` y acciones propias para iniciar, reiniciar y
-  arrancar la reparación (hoy usan `resolve-event`).
+- La física, los datos y las reglas son del motor (`packages/sim`, `data/`, `content/`); la
+  interfaz no define números propios.
+- Las escenas usan distancias y tamaños reales; lo que no se vería a escala real se dibuja con un
+  tamaño mínimo en pantalla.
+- El nivel 2 tiene motor pero aún no tiene interfaz.

@@ -1,5 +1,5 @@
 import { Dialog } from "./Dialog";
-import { GLOSSARY } from "./facts";
+import { GLOSSARY } from "../data/sources";
 
 export function Glossary({ onClose }: { onClose: () => void }) {
   return (
@@ -8,7 +8,9 @@ export function Glossary({ onClose }: { onClose: () => void }) {
         {GLOSSARY.map((t) => (
           <div key={t.term}>
             <dt>{t.term}</dt>
-            <dd>{t.def}</dd>
+            <dd>
+              {t.definition} <span className="fact-src">— {t.source}</span>
+            </dd>
           </div>
         ))}
       </dl>
