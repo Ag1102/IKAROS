@@ -18,4 +18,3 @@ Cada valor lleva: `value`, `unit`, `source` (cita o URL), `retrieved` (fecha) y 
 ```
 
 - `scenarios/`: definición de cada nivel (la escribe Persona A, la lee el cliente).
-- Fuentes principales: ver `docs/CONTEXT.md`.
