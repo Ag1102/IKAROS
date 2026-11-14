@@ -1,0 +1,26 @@
+{
+  "title": "Level 1 — On-orbit servicing",
+  "subtitle": "Repair a satellite that lost a solar panel and its antenna",
+  "briefing": [
+    "The reference satellite orbits at 480 km, like Hubble today. It lost a solar panel and its high-gain antenna.",
+    "Your servicing vehicle starts at 400 km. Climb with transfer maneuvers (delta-V) and dock.",
+    "Cargo is limited: every kilogram of tools reduces the available delta-V (Tsiolkovsky equation).",
+    "Repairs only progress while the ground station is in view (communication window)."
+  ],
+  "objectives": [
+    "Reach within ±2 km of the satellite's altitude without running out of fuel.",
+    "Replace the solar panel and the antenna within the mission time."
+  ],
+  "slots": {
+    "panel": "Spare solar panel",
+    "antenna": "Spare antenna",
+    "toolkit": "Toolkit",
+    "camera": "Inspection camera"
+  },
+  "components": {
+    "panel-spare": { "name": "Spare solar panel", "description": "Needed for the panel task." },
+    "antenna-spare": { "name": "Spare high-gain antenna", "description": "Needed for the antenna task." },
+    "toolkit-std": { "name": "EVA toolkit", "description": "Needed for any repair." },
+    "camera-insp": { "name": "Inspection camera", "description": "Adds inspection data to the report. Optional." }
+  }
+}

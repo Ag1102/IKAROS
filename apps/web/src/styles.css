@@ -827,6 +827,14 @@ button.link {
 .menu3d-brand {
   top: clamp(24px, 7vh, 72px);
 }
+/* Selector de idioma del menú: arriba a la derecha, con el estilo de los botones de la barra. */
+.lang-switch {
+  position: absolute;
+  z-index: 3;
+  top: 20px;
+  right: 20px;
+  background: rgba(11, 16, 20, 0.7);
+}
 .menu3d-brand h1 {
   margin: 0;
   font: 600 clamp(44px, 6vw, 76px) / 1 var(--font-head);

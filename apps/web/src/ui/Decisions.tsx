@@ -1,5 +1,6 @@
 import type { PlayerAction, SimEvent } from "@ikaros/contracts";
 import { formatElapsed } from "./format";
+import { tr } from "../i18n";
 
 export const openDecisions = (events: SimEvent[]) => events.filter((e) => e.choices && !e.resolved);
 
@@ -18,10 +19,13 @@ export function Decisions({
   return (
     <>
       {open.map((ev) => (
-        <div key={ev.id} className="decision" role="group" aria-label="Decisión pendiente">
+        <div key={ev.id} className="decision" role="group" aria-label={tr("Decisión pendiente", "Pending decision")}>
           <p className="decision-text">{ev.text}</p>
           {ev.deadline_s !== undefined && (
-            <p className="note">Plazo: {formatElapsed(Math.max(0, ev.deadline_s - now_s))} de misión.</p>
+            <p className="note">
+              {tr("Plazo", "Deadline")}: {formatElapsed(Math.max(0, ev.deadline_s - now_s))}{" "}
+              {tr("de misión", "mission time")}.
+            </p>
           )}
           <div className="choices">
             {ev.choices?.map((c) => (

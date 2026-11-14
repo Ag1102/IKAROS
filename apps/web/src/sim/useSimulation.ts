@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import type { MissionReport, PlayerAction, ScenarioId, SimState, Simulation } from "@ikaros/contracts";
 import { createSimulation, scenario } from "@ikaros/sim";
 import { useGameLoop } from "../hooks/useGameLoop";
+import { getLang } from "../i18n";
 
 const newSeed = () => Math.floor(Math.random() * 1_000_000);
 
@@ -16,7 +17,8 @@ export function useSimulation(
   maxScale?: (s: SimState) => number,
 ) {
   const simRef = useRef<Simulation | null>(null);
-  if (simRef.current === null) simRef.current = createSimulation();
+  // El motor escribe sus eventos e informe en el idioma elegido en el menú.
+  if (simRef.current === null) simRef.current = createSimulation({ lang: getLang() });
   const sim = simRef.current;
 
   const [state, setState] = useState<SimState>(() => sim.load(id, newSeed()));
@@ -46,7 +48,7 @@ export function useSimulation(
 
   const done = state.phase === "complete";
   const report: MissionReport | null = useMemo(() => (done ? sim.report() : null), [done, sim]);
-  const def = useMemo(() => scenario(id), [id]);
+  const def = useMemo(() => scenario(id, getLang()), [id]);
 
   return { state, latest, act, restart, report, def };
 }

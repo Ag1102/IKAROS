@@ -7,7 +7,7 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { Sun } from "./Sun";
-import { LEVELS, type MenuLevel } from "./levels";
+import { menuLevels, type MenuLevel } from "./levels";
 
 type LevelN = MenuLevel["n"];
 
@@ -319,7 +319,7 @@ function Scene({
   onEnter: (n: LevelN) => void;
 }) {
   const [hovered, setHovered] = useState<LevelN | null>(null);
-  const level = (n: LevelN) => LEVELS.find((l) => l.n === n)!;
+  const level = (n: LevelN) => menuLevels().find((l) => l.n === n)!;
   const common = { selected, hovered, onHover: setHovered, onSelect, onEnter };
 
   useEffect(() => {

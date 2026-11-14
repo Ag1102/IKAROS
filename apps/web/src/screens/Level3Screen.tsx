@@ -14,15 +14,16 @@ import { useHotkey } from "../hooks/useHotkey";
 import { ShipPreview } from "../ships/ShipPreview";
 import { usePreview } from "../ships/usePreview";
 import { matchesParker } from "../ships/Spacecraft";
+import { tr } from "../i18n";
 
 const PARKER_URL = "/models/parker-solar-probe.glb";
 
-const SCALES: TimeScale[] = [
-  { value: 0, label: "Pausa" },
+const scales = (): TimeScale[] => [
+  { value: 0, label: tr("Pausa", "Pause") },
   { value: 600, label: "10 min/s" },
   { value: 3600, label: "1 h/s" },
   { value: 86_400, label: "1 d/s" },
-  { value: 604_800, label: "1 sem/s" },
+  { value: 604_800, label: tr("1 sem/s", "1 wk/s") },
 ];
 /** Velocidad máxima durante el encuentro: lo interesante pasa en unas horas cerca del perihelio. */
 const ENCOUNTER_MAX_SCALE = 3600;
@@ -91,7 +92,7 @@ export function Level3Screen({ onExit }: { onExit: () => void }) {
         onCredits={() => setOverlay("credits")}
         onExit={onExit}
         subtitle={def.title}
-        scales={SCALES}
+        scales={scales()}
         maxScale={state.phase === "encounter" ? ENCOUNTER_MAX_SCALE : Infinity}
       />
       <aside className="side">
@@ -99,12 +100,14 @@ export function Level3Screen({ onExit }: { onExit: () => void }) {
         <EventLog events={state.events} />
       </aside>
       <footer className="orbit-note">
-        Distancias y Sol a escala real; planetas y sonda con tamaño mínimo para verlos · Arrastra: girar · Rueda: zoom ·
-        Clic derecho: desplazar · H: paneles
+        {tr(
+          "Distancias y Sol a escala real; planetas y sonda con tamaño mínimo para verlos · Arrastra: girar · Rueda: zoom · Clic derecho: desplazar · H: paneles",
+          "Distances and Sun to real scale; planets and probe drawn at a minimum size so you can see them · Drag: rotate · Wheel: zoom · Right-click: pan · H: panels",
+        )}
       </footer>
       <aside className="guide-wrap">
         <section className="panel guide" aria-labelledby="enc-h">
-          <h2 id="enc-h">Misión</h2>
+          <h2 id="enc-h">{tr("Misión", "Mission")}</h2>
           <Decisions events={state.events} now_s={state.resources.mission_elapsed_s} act={act} />
           {report ? (
             <Report report={report} onRestart={onRestart} />
@@ -166,17 +169,20 @@ function HangarPage({
         <div />
         <div />
         <div className="scale">
-          <button onClick={() => onOverlay("glossary")}>Glosario</button>
-          <button onClick={() => onOverlay("credits")}>Créditos</button>
-          <button onClick={onExit}>Menú</button>
+          <button onClick={() => onOverlay("glossary")}>{tr("Glosario", "Glossary")}</button>
+          <button onClick={() => onOverlay("credits")}>{tr("Créditos", "Credits")}</button>
+          <button onClick={onExit}>{tr("Menú", "Menu")}</button>
         </div>
       </header>
 
       <main className="hangar-body">
         <section className="panel">
-          <h2>Diseño de la nave</h2>
+          <h2>{tr("Diseño de la nave", "Spacecraft design")}</h2>
           <p className="stage">
-            Etapa de diseño: estudio de compromisos (CML 3). Al lanzar, el diseño queda fijo (CML 4).
+            {tr(
+              "Etapa de diseño: estudio de compromisos (CML 3). Al lanzar, el diseño queda fijo (CML 4).",
+              "Design stage: trade study (CML 3). At launch the design is frozen (CML 4).",
+            )}
           </p>
           {def.briefing.map((b) => (
             <p key={b}>{b}</p>
@@ -185,38 +191,52 @@ function HangarPage({
         </section>
 
         <section className="panel summary">
-          <h2>Tu sonda</h2>
-          <div className="ship-preview large" aria-label="Tu sonda">
+          <h2>{tr("Tu sonda", "Your probe")}</h2>
+          <div className="ship-preview large" aria-label={tr("Tu sonda", "Your probe")}>
             <ShipPreview kind="probe" selected={preview} highlight={highlight} nasaUrl={parker ? PARKER_URL : null} />
             <span className="preview-note">
               {parker
-                ? "Coincide con el diseño real: volarás con el modelo de Parker Solar Probe de NASA"
-                : "Pasa el ratón por una pieza para verla montada"}
+                ? tr(
+                    "Coincide con el diseño real: volarás con el modelo de Parker Solar Probe de NASA",
+                    "It matches the real design: you will fly with NASA's Parker Solar Probe model",
+                  )
+                : tr("Pasa el ratón por una pieza para verla montada", "Hover over a part to see it mounted")}
             </span>
           </div>
           {!parker && (
             <p className="note">
-              Elige la configuración del paper (fotovoltaica refrigerada, escudo carbono-carbono y sensores de corona,
-              sin extras) y tu sonda será la Parker Solar Probe real.
+              {tr(
+                "Elige la configuración del paper (fotovoltaica refrigerada, escudo carbono-carbono y sensores de corona, sin extras) y tu sonda será la Parker Solar Probe real.",
+                "Choose the paper's configuration (cooled photovoltaics, carbon-carbon shield and corona sensors, no extras) and your probe will be the real Parker Solar Probe.",
+              )}
             </p>
           )}
-          <h2>Trayectoria</h2>
+          <h2>{tr("Trayectoria", "Trajectory")}</h2>
           <p className="note">
-            Tras el lanzamiento, Venus abre {flybys} ventanas de sobrevuelo. Cada una baja el perihelio si se ejecuta la
-            maniobra de corrección: de {formatNumber(param(def, "perihelion_start_rsun"), 1)} R☉ a{" "}
-            {formatNumber(param(def, `perihelion_after_flyby_${flybys}_rsun`), 1)} R☉. Afelio{" "}
-            {formatNumber(aphelion, 3)} AU, cerca de la órbita de Venus.
+            {tr(
+              `Tras el lanzamiento, Venus abre ${flybys} ventanas de sobrevuelo. Cada una baja el perihelio si se ejecuta la maniobra de corrección: de`,
+              `After launch, Venus opens ${flybys} flyby windows. Each one lowers the perihelion if the correction maneuver is executed: from`,
+            )}{" "}
+            {formatNumber(param(def, "perihelion_start_rsun"), 1)} R☉ {tr("a", "to")}{" "}
+            {formatNumber(param(def, `perihelion_after_flyby_${flybys}_rsun`), 1)} R☉. {tr("Afelio", "Aphelion")}{" "}
+            {formatNumber(aphelion, 3)} AU, {tr("cerca de la órbita de Venus.", "close to the orbit of Venus.")}
           </p>
-          <div className="orbit-preview" aria-label="Órbita inicial y final prevista">
+          <div
+            className="orbit-preview"
+            aria-label={tr("Órbita inicial y final prevista", "Planned initial and final orbit")}
+          >
             <OrbitPreview start={start} final={final} />
             <span className="preview-note">
-              Gris: primera órbita · Blanca: órbita final. Distancias y Sol a escala real.
+              {tr(
+                "Gris: primera órbita · Blanca: órbita final. Distancias y Sol a escala real.",
+                "Gray: first orbit · White: final orbit. Distances and Sun to real scale.",
+              )}
             </span>
           </div>
 
-          <h2>Lanzamiento</h2>
+          <h2>{tr("Lanzamiento", "Launch")}</h2>
           <div className="meter">
-            <span>Masa</span>
+            <span>{tr("Masa", "Mass")}</span>
             <span className="num">
               {formatNumber(mass)} / {formatNumber(cap)} kg
             </span>
@@ -225,17 +245,17 @@ function HangarPage({
             </div>
           </div>
           <div className="meter">
-            <span>Presupuesto restante</span>
+            <span>{tr("Presupuesto restante", "Budget left")}</span>
             <span className={budget < 0 ? "num neg-text" : "num"}>{formatNumber(budget)} M USD</span>
           </div>
           <div className="meter">
-            <span>Consumo eléctrico</span>
+            <span>{tr("Consumo eléctrico", "Power load")}</span>
             <span className="num">{formatNumber(state.power_load_w ?? 0)} W</span>
           </div>
           {blocked.length > 0 && (
             <ul className="problems">
               {blocked.map((e) => (
-                <li key={e.id}>{e.text.replace(/^Lanzamiento bloqueado: /, "")}</li>
+                <li key={e.id}>{e.text.replace(/^(Lanzamiento bloqueado|Launch blocked): /, "")}</li>
               ))}
             </ul>
           )}
@@ -246,7 +266,7 @@ function HangarPage({
               act({ type: "launch" });
             }}
           >
-            Lanzar misión
+            {tr("Lanzar misión", "Launch mission")}
           </button>
           <Assistant events={state.events} max={1} />
         </section>
@@ -271,40 +291,49 @@ function Status({ state }: { state: SimState }) {
     <table className="mini">
       <tbody>
         <Row
-          label="Distancia al Sol"
+          label={tr("Distancia al Sol", "Distance to the Sun")}
           value={`${formatNumber(s.distance_to_sun_rsun ?? 0, 1)} R☉ · ${formatNumber(s.distance_to_sun_au ?? 0, 3)} AU`}
         />
-        <Row label="Intensidad solar" value={`${formatNumber(s.solar_intensity_suns ?? 0, 1)} × AM0`} />
-        <Row label="Velocidad" value={`${formatNumber(s.speed_km_s ?? 0, 1)} km/s`} />
         <Row
-          label="Perihelio"
-          value={`${formatNumber(s.perihelion_rsun ?? 0, 1)} R☉ · ${s.venus_flybys_done ?? 0} sobrevuelos de Venus`}
+          label={tr("Intensidad solar", "Solar intensity")}
+          value={`${formatNumber(s.solar_intensity_suns ?? 0, 1)} × AM0`}
+        />
+        <Row label={tr("Velocidad", "Speed")} value={`${formatNumber(s.speed_km_s ?? 0, 1)} km/s`} />
+        <Row
+          label={tr("Perihelio", "Perihelion")}
+          value={`${formatNumber(s.perihelion_rsun ?? 0, 1)} R☉ · ${s.venus_flybys_done ?? 0} ${tr("sobrevuelos de Venus", "Venus flybys")}`}
         />
         {enc && (
           <>
             <Row
-              label="Celdas"
+              label={tr("Celdas", "Cells")}
               value={`${formatNumber(s.cell_temperature_c ?? 0)} °C / ${PAPER.cellDesignLimit_c}`}
               warn={(s.cell_temperature_c ?? 0) > PAPER.cellDesignLimit_c}
             />
-            <Row label="Radiadores" value={`${formatNumber(s.radiator_temperature_c ?? 0)} °C`} />
+            <Row label={tr("Radiadores", "Radiators")} value={`${formatNumber(s.radiator_temperature_c ?? 0)} °C`} />
             {s.main_array_temperature_c !== undefined && (
-              <Row label="Matriz principal" value={`${formatNumber(s.main_array_temperature_c)} °C`} />
+              <Row
+                label={tr("Matriz principal", "Main array")}
+                value={`${formatNumber(s.main_array_temperature_c)} °C`}
+              />
             )}
             <Row
-              label="Potencia"
+              label={tr("Potencia", "Power")}
               value={`${formatNumber(s.resources.power_generated_w)} / ${formatNumber(s.power_load_w ?? 0)} W`}
               warn={s.resources.power_generated_w < (s.power_load_w ?? 0)}
             />
             <Row
-              label="Casco"
+              label={tr("Casco", "Hull")}
               value={`${formatNumber(s.hull_durability_pct ?? 0, 1)} %`}
               warn={(s.hull_durability_pct ?? 100) < 60}
             />
             {(s.nanobot_reserve_pct ?? 0) > 0 && (
-              <Row label="Reserva de nanobots ⚗" value={`${formatNumber(s.nanobot_reserve_pct ?? 0)} %`} />
+              <Row
+                label={tr("Reserva de nanobots ⚗", "Nanobot reserve ⚗")}
+                value={`${formatNumber(s.nanobot_reserve_pct ?? 0)} %`}
+              />
             )}
-            <Row label="Datos enviados" value={`${formatNumber(s.data_downlinked_mb ?? 0, 1)} MB`} />
+            <Row label={tr("Datos enviados", "Data sent")} value={`${formatNumber(s.data_downlinked_mb ?? 0, 1)} MB`} />
           </>
         )}
       </tbody>
@@ -331,7 +360,8 @@ function Controls({ def, state, act }: { def: ScenarioDefinition; state: SimStat
       {!reactor && (
         <>
           <label htmlFor="ret">
-            Matriz secundaria iluminada <span className="num">{formatNumber(area, area < 10 ? 1 : 0)} cm²</span>
+            {tr("Matriz secundaria iluminada", "Illuminated secondary array")}{" "}
+            <span className="num">{formatNumber(area, area < 10 ? 1 : 0)} cm²</span>
           </label>
           <input
             id="ret"
@@ -346,15 +376,20 @@ function Controls({ def, state, act }: { def: ScenarioDefinition; state: SimStat
             }}
           />
           <p className="note">
-            Escala logarítmica. En el perihelio el paper deja unos {formatNumber(PAPER.perihelionIlluminated_cm2)} cm²
-            iluminados de {formatNumber(full)}.
+            {tr(
+              "Escala logarítmica. En el perihelio el paper deja unos",
+              "Logarithmic scale. At perihelion the paper leaves about",
+            )}{" "}
+            {formatNumber(PAPER.perihelionIlluminated_cm2)} cm² {tr("iluminados de", "illuminated out of")}{" "}
+            {formatNumber(full)}.
           </p>
         </>
       )}
       {!state.main_array_stowed && (
         <>
           <label htmlFor="tilt">
-            Inclinación de la matriz principal <span className="num">{formatNumber(state.array_tilt_deg ?? 0)}°</span>
+            {tr("Inclinación de la matriz principal", "Main array tilt")}{" "}
+            <span className="num">{formatNumber(state.array_tilt_deg ?? 0)}°</span>
           </label>
           <input
             id="tilt"
@@ -366,26 +401,29 @@ function Controls({ def, state, act }: { def: ScenarioDefinition; state: SimStat
             onChange={(e) => act({ type: "tilt-array", deg: Number(e.target.value) })}
           />
           <button className="scale-btn wide" onClick={() => act({ type: "stow-main-array" })}>
-            Plegar la matriz principal tras el escudo
+            {tr("Plegar la matriz principal tras el escudo", "Fold the main array behind the shield")}
           </button>
         </>
       )}
-      <div className="scale attitude" role="group" aria-label="Actitud">
+      <div className="scale attitude" role="group" aria-label={tr("Actitud", "Attitude")}>
         <button
           className={state.attitude === "shield-to-sun" ? "on" : ""}
           onClick={() => act({ type: "set-attitude", attitude: "shield-to-sun" })}
         >
-          Escudo al Sol
+          {tr("Escudo al Sol", "Shield to the Sun")}
         </button>
         <button
           className={state.attitude === "antenna-to-earth" ? "on" : ""}
           onClick={() => act({ type: "set-attitude", attitude: "antenna-to-earth" })}
         >
-          Antena a la Tierra
+          {tr("Antena a la Tierra", "Antenna to Earth")}
         </button>
       </div>
       <p className="note">
-        Con la antena a la Tierra se envían datos, pero los radiadores salen de la sombra del escudo.
+        {tr(
+          "Con la antena a la Tierra se envían datos, pero los radiadores salen de la sombra del escudo.",
+          "With the antenna to Earth data is sent, but the radiators leave the shield's shadow.",
+        )}
       </p>
     </div>
   );

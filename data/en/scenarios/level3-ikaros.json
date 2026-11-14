@@ -1,0 +1,47 @@
+{
+  "title": "Level 3 — Ikaros",
+  "subtitle": "Solar encounter based on the Solar Probe+ power system design",
+  "briefing": [
+    "Ikaros follows the Solar Probe+ design (Landis et al., AIAA 2008-5712): a 9.5 solar radii perihelion, 510 times the sunlight at Earth.",
+    "Build the spacecraft with 500 M USD without exceeding the launcher's capacity. Anything marked ⚗ is theoretical.",
+    "Use the Venus windows to lower the perihelion. The paper uses 7 flybys; the game shortens them to 3.",
+    "During the encounter: fold the main array, retract the secondary one behind the shield, keep the cells below 120 °C and power above 482 W."
+  ],
+  "objectives": [
+    "Reach the 9.5 R☉ perihelion and come out with the hull and power intact.",
+    "Collect at least 3,500 MB of corona data (memory holds 3,000 MB: you must downlink in time)."
+  ],
+  "slots": {
+    "energy": "Power system",
+    "shield": "Heat shield",
+    "defense": "Active defense",
+    "repair": "Self-repair",
+    "science": "Science and return"
+  },
+  "components": {
+    "pv-cooled": {
+      "name": "Actively cooled photovoltaics",
+      "description": "The paper's solution: concentrator cells with a coolant loop and a retractable array. Lower mass and risk."
+    },
+    "stirling": {
+      "name": "Stirling converter",
+      "description": "The paper's alternative: ~26 % system efficiency, no flight heritage. It may fail."
+    },
+    "fission-reactor": {
+      "name": "⚗ Mini fission reactor",
+      "description": "Constant power without depending on the Sun. The paper rules out the nuclear option because of cost."
+    },
+    "shield-cc": { "name": "Carbon-carbon shield", "description": "Material of Parker Solar Probe's real shield." },
+    "shield-liquid-metal": {
+      "name": "⚗ Liquid-metal shield",
+      "description": "Spreads the heat: takes less damage, but weighs twice as much."
+    },
+    "hts-field": { "name": "⚗ HTS magnetic field", "description": "Deflects plasma from a CME. Consumes power." },
+    "nanobots": { "name": "⚗ Nanobot swarm", "description": "Repairs the hull while the reserve lasts." },
+    "corona-sensors": { "name": "Corona sensors", "description": "Particle and field instruments, like Parker's." },
+    "sensors-capsule": {
+      "name": "⚗ Sensors + return capsule",
+      "description": "Adds a 450 kg capsule that returns with samples after the encounter."
+    }
+  }
+}

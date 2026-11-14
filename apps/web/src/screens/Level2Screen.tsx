@@ -12,9 +12,10 @@ import { formatElapsed, formatNumber } from "../ui/format";
 import { useHotkey } from "../hooks/useHotkey";
 import { ShipPreview } from "../ships/ShipPreview";
 import { usePreview } from "../ships/usePreview";
+import { tr } from "../i18n";
 
-const SCALES: TimeScale[] = [
-  { value: 0, label: "Pausa" },
+const scales = (): TimeScale[] => [
+  { value: 0, label: tr("Pausa", "Pause") },
   { value: 60, label: "60×" },
   { value: 600, label: "10 min/s" },
   { value: 3600, label: "1 h/s" },
@@ -68,19 +69,21 @@ export function Level2Screen({ onExit }: { onExit: () => void }) {
         onCredits={() => setOverlay("credits")}
         onExit={onExit}
         subtitle={def.title}
-        scales={SCALES}
+        scales={scales()}
       />
       <aside className="side">
         <ResourcesPanel state={state} />
         <EventLog events={state.events} />
       </aside>
       <footer className="orbit-note">
-        Tierra y órbita a escala real; satélite con tamaño mínimo para verlo · Línea azul: enlace con la estación
-        terrena · H: paneles
+        {tr(
+          "Tierra y órbita a escala real; satélite con tamaño mínimo para verlo · Línea azul: enlace con la estación terrena · H: paneles",
+          "Earth and orbit to real scale; satellite drawn at a minimum size so you can see it · Blue line: link with the ground station · H: panels",
+        )}
       </footer>
       <aside className="guide-wrap">
         <section className="panel guide" aria-labelledby="ops-h">
-          <h2 id="ops-h">Operación</h2>
+          <h2 id="ops-h">{tr("Operación", "Operations")}</h2>
           {report ? <Report report={report} onRestart={onRestart} /> : <Operations def={def} state={state} />}
           <Assistant events={state.events} />
         </section>
@@ -124,16 +127,21 @@ function HangarPage({
         <div />
         <div />
         <div className="scale">
-          <button onClick={() => onOverlay("glossary")}>Glosario</button>
-          <button onClick={() => onOverlay("credits")}>Créditos</button>
-          <button onClick={onExit}>Menú</button>
+          <button onClick={() => onOverlay("glossary")}>{tr("Glosario", "Glossary")}</button>
+          <button onClick={() => onOverlay("credits")}>{tr("Créditos", "Credits")}</button>
+          <button onClick={onExit}>{tr("Menú", "Menu")}</button>
         </div>
       </header>
 
       <main className="hangar-body">
         <section className="panel">
-          <h2>Diseño de la misión</h2>
-          <p className="stage">Etapa de diseño: del objetivo científico a los requisitos y el diseño (CML 1 a 4).</p>
+          <h2>{tr("Diseño de la misión", "Mission design")}</h2>
+          <p className="stage">
+            {tr(
+              "Etapa de diseño: del objetivo científico a los requisitos y el diseño (CML 1 a 4).",
+              "Design stage: from the science objective to requirements and design (CML 1 to 4).",
+            )}
+          </p>
           {def.briefing.map((b) => (
             <p key={b}>{b}</p>
           ))}
@@ -146,24 +154,26 @@ function HangarPage({
         </section>
 
         <section className="panel summary">
-          <h2>Tu satélite</h2>
-          <div className="ship-preview large" aria-label="Tu satélite">
+          <h2>{tr("Tu satélite", "Your satellite")}</h2>
+          <div className="ship-preview large" aria-label={tr("Tu satélite", "Your satellite")}>
             <ShipPreview kind="smallsat" selected={preview} highlight={highlight} />
-            <span className="preview-note">Pasa el ratón por una pieza para verla montada</span>
+            <span className="preview-note">
+              {tr("Pasa el ratón por una pieza para verla montada", "Hover over a part to see it mounted")}
+            </span>
           </div>
-          <h2>Órbita</h2>
-          <div className="orbit-preview" aria-label="Órbita elegida">
+          <h2>{tr("Órbita", "Orbit")}</h2>
+          <div className="orbit-preview" aria-label={tr("Órbita elegida", "Chosen orbit")}>
             <OrbitPreview2 altitude_km={state.altitude_km ?? null} inclination_deg={state.inclination_deg ?? 0} />
             <span className="preview-note">
               {state.altitude_km === undefined
-                ? "Elige una órbita."
-                : `${formatNumber(state.altitude_km)} km · inclinación ${formatNumber(state.inclination_deg ?? 0, 1)}°. Escala real.`}
+                ? tr("Elige una órbita.", "Choose an orbit.")
+                : `${formatNumber(state.altitude_km)} km · ${tr("inclinación", "inclination")} ${formatNumber(state.inclination_deg ?? 0, 1)}°. ${tr("Escala real.", "Real scale.")}`}
             </span>
           </div>
 
-          <h2>Lanzamiento</h2>
+          <h2>{tr("Lanzamiento", "Launch")}</h2>
           <div className="meter">
-            <span>Masa</span>
+            <span>{tr("Masa", "Mass")}</span>
             <span className="num">
               {formatNumber(mass)} {cap !== undefined ? `/ ${formatNumber(cap)}` : ""} kg
             </span>
@@ -174,27 +184,30 @@ function HangarPage({
             )}
           </div>
           <p className="note">
-            La capacidad depende del lanzador y de la órbita: a la heliosíncrona se lleva el{" "}
-            {formatNumber(param(def, "sso_capacity_factor") * 100)} % de la carga.
+            {tr(
+              "La capacidad depende del lanzador y de la órbita: a la heliosíncrona se lleva el",
+              "Capacity depends on the launcher and the orbit: to the sun-synchronous orbit it carries",
+            )}{" "}
+            {formatNumber(param(def, "sso_capacity_factor") * 100)} % {tr("de la carga.", "of the payload.")}
           </p>
           <div className="meter">
-            <span>Presupuesto restante</span>
+            <span>{tr("Presupuesto restante", "Budget left")}</span>
             <span className={budget < 0 ? "num neg-text" : "num"}>{formatNumber(budget)} M USD</span>
           </div>
           <div className="meter">
-            <span>Potencia (sol) / consumo</span>
+            <span>{tr("Potencia (sol) / consumo", "Power (sunlight) / load")}</span>
             <span className={gen < load ? "num neg-text" : "num"}>
               {formatNumber(gen)} / {formatNumber(load)} W
             </span>
           </div>
           <div className="meter">
-            <span>Batería</span>
+            <span>{tr("Batería", "Battery")}</span>
             <span className="num">{formatNumber(state.battery_capacity_wh ?? 0)} Wh</span>
           </div>
           {blocked.length > 0 && (
             <ul className="problems">
               {blocked.map((e) => (
-                <li key={e.id}>{e.text.replace(/^Lanzamiento bloqueado: /, "")}</li>
+                <li key={e.id}>{e.text.replace(/^(Lanzamiento bloqueado|Launch blocked): /, "")}</li>
               ))}
             </ul>
           )}
@@ -205,7 +218,7 @@ function HangarPage({
               act({ type: "launch" });
             }}
           >
-            Lanzar misión
+            {tr("Lanzar misión", "Launch mission")}
           </button>
           <Assistant events={state.events} max={1} />
         </section>
@@ -227,39 +240,43 @@ function Operations({ def, state }: { def: ScenarioDefinition; state: SimState }
       <table className="mini">
         <tbody>
           <tr>
-            <th>Órbita</th>
+            <th>{tr("Órbita", "Orbit")}</th>
             <td className="num">
               {formatNumber(state.altitude_km ?? 0)} km · {formatNumber(state.inclination_deg ?? 0, 1)}°
             </td>
           </tr>
           <tr>
-            <th>Luz</th>
-            <td className="num">{inEclipse ? "Eclipse (sin sol)" : "Al sol"}</td>
+            <th>{tr("Luz", "Light")}</th>
+            <td className="num">
+              {inEclipse ? tr("Eclipse (sin sol)", "Eclipse (no sun)") : tr("Al sol", "In sunlight")}
+            </td>
           </tr>
           <tr>
-            <th>Estación terrena</th>
-            <td className="num">{state.comm_window_open ? "Pase abierto" : "Sin enlace"}</td>
+            <th>{tr("Estación terrena", "Ground station")}</th>
+            <td className="num">
+              {state.comm_window_open ? tr("Pase abierto", "Pass open") : tr("Sin enlace", "No link")}
+            </td>
           </tr>
           <tr className={bat <= 0 ? "neg" : ""}>
-            <th>Batería</th>
+            <th>{tr("Batería", "Battery")}</th>
             <td className="num">
               {formatNumber(bat)} / {formatNumber(batCap)} Wh
             </td>
           </tr>
           <tr className={state.resources.data_stored_mb >= storage ? "neg" : ""}>
-            <th>Memoria</th>
+            <th>{tr("Memoria", "Memory")}</th>
             <td className="num">
               {formatNumber(state.resources.data_stored_mb)} / {formatNumber(storage)} MB
             </td>
           </tr>
           <tr>
-            <th>Tiempo restante</th>
+            <th>{tr("Tiempo restante", "Time left")}</th>
             <td className="num">{formatElapsed(left)}</td>
           </tr>
         </tbody>
       </table>
       <p>
-        Datos en tierra:{" "}
+        {tr("Datos en tierra:", "Data on the ground:")}{" "}
         <span className="num">
           {formatNumber(sent)} / {formatNumber(goal)} MB
         </span>
@@ -268,7 +285,10 @@ function Operations({ def, state }: { def: ScenarioDefinition; state: SimState }
         <div style={{ width: `${Math.min(100, (sent / goal) * 100)}%` }} />
       </div>
       <p className="note">
-        En la operación no hay mandos: el resultado depende del diseño. Observa los eclipses, los pases y la memoria.
+        {tr(
+          "En la operación no hay mandos: el resultado depende del diseño. Observa los eclipses, los pases y la memoria.",
+          "There are no controls during operations: the result depends on the design. Watch the eclipses, the passes and the memory.",
+        )}
       </p>
     </>
   );

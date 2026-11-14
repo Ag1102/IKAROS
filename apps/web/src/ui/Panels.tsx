@@ -1,29 +1,36 @@
 import type { Health, SimEvent, SimState } from "@ikaros/contracts";
 import { formatElapsed, formatNumber } from "./format";
+import { tr } from "../i18n";
 
-const HEALTH_LABEL: Record<Health, string> = {
-  nominal: "NOMINAL",
-  warning: "ADVERTENCIA",
-  critical: "CRÍTICO",
-};
+const healthLabel = (h: Health) =>
+  ({
+    nominal: "NOMINAL",
+    warning: tr("ADVERTENCIA", "WARNING"),
+    critical: tr("CRÍTICO", "CRITICAL"),
+  })[h];
 
 export interface TimeScale {
   value: number;
   label: string;
 }
 
-const TIME_SCALES: TimeScale[] = [0, 1, 10, 60, 600].map((v) => ({ value: v, label: v === 0 ? "Pausa" : `${v}×` }));
+/** Etiqueta de una velocidad de tiempo: "Pausa" o "60×". */
+export const scaleLabel = (v: number) => (v === 0 ? tr("Pausa", "Pause") : `${v}×`);
 
-const PHASE_LABEL: Record<string, string> = {
-  hangar: "Hangar",
-  transfer: "Transferencia",
-  repair: "Reparación",
-  operations: "Operación",
-  cruise: "Crucero",
-  encounter: "Encuentro",
-  exit: "Salida",
-  complete: "Informe",
-};
+const TIME_SCALES = [0, 1, 10, 60, 600];
+
+/** Nombre de cada fase del motor, en el idioma actual. */
+export const phaseLabel = (phase: string): string =>
+  ({
+    hangar: "Hangar",
+    transfer: tr("Transferencia", "Transfer"),
+    repair: tr("Reparación", "Repair"),
+    operations: tr("Operación", "Operations"),
+    cruise: tr("Crucero", "Cruise"),
+    encounter: tr("Encuentro", "Encounter"),
+    exit: tr("Salida", "Exit"),
+    complete: tr("Informe", "Report"),
+  })[phase] ?? phase;
 
 export function TopBar({
   state,
@@ -36,7 +43,7 @@ export function TopBar({
   onGlossary,
   onExit,
   subtitle,
-  scales = TIME_SCALES,
+  scales = TIME_SCALES.map((v) => ({ value: v, label: scaleLabel(v) })),
   maxScale = Infinity,
 }: {
   state: SimState;
@@ -59,15 +66,15 @@ export function TopBar({
         <span className="brand-name">IKAROS</span>
         <span className="brand-sub">{subtitle}</span>
       </div>
-      <div className="clock" aria-label="Tiempo de misión">
+      <div className="clock" aria-label={tr("Tiempo de misión", "Mission time")}>
         <span className="clock-label">T+</span>
         <span className="clock-value">{formatElapsed(state.resources.mission_elapsed_s)}</span>
       </div>
       <div className="status">
-        <span className={`badge badge-${state.health}`}>{HEALTH_LABEL[state.health]}</span>
-        <span className="phase">{PHASE_LABEL[state.phase] ?? state.phase}</span>
+        <span className={`badge badge-${state.health}`}>{healthLabel(state.health)}</span>
+        <span className="phase">{phaseLabel(state.phase)}</span>
       </div>
-      <div className="scale" role="group" aria-label="Velocidad del tiempo">
+      <div className="scale" role="group" aria-label={tr("Velocidad del tiempo", "Time speed")}>
         {scales.map((sc) => (
           <button
             key={sc.value}
@@ -79,18 +86,22 @@ export function TopBar({
           </button>
         ))}
       </div>
-      <div className="scale" role="group" aria-label="Vista">
-        <button onClick={onTogglePanels} title="Mostrar u ocultar paneles (H)">
-          Paneles
+      <div className="scale" role="group" aria-label={tr("Vista", "View")}>
+        <button onClick={onTogglePanels} title={tr("Mostrar u ocultar paneles (H)", "Show or hide panels (H)")}>
+          {tr("Paneles", "Panels")}
         </button>
         {onFollow && (
-          <button className={follow ? "on" : ""} onClick={onFollow} title="Cámara que sigue al objetivo">
-            Seguir
+          <button
+            className={follow ? "on" : ""}
+            onClick={onFollow}
+            title={tr("Cámara que sigue al objetivo", "Camera that follows the target")}
+          >
+            {tr("Seguir", "Follow")}
           </button>
         )}
-        {onGlossary && <button onClick={onGlossary}>Glosario</button>}
-        <button onClick={onCredits}>Créditos</button>
-        {onExit && <button onClick={onExit}>Menú</button>}
+        {onGlossary && <button onClick={onGlossary}>{tr("Glosario", "Glossary")}</button>}
+        <button onClick={onCredits}>{tr("Créditos", "Credits")}</button>
+        {onExit && <button onClick={onExit}>{tr("Menú", "Menu")}</button>}
       </div>
     </header>
   );
@@ -111,60 +122,65 @@ export function ResourcesPanel({ state }: { state: SimState }) {
   const margin = r.power_generated_w - r.power_consumed_w;
   return (
     <section className="panel resources" aria-labelledby="res-h">
-      <h2 id="res-h">Recursos</h2>
+      <h2 id="res-h">{tr("Recursos", "Resources")}</h2>
       <table>
         <tbody>
-          <Row label="Masa" value={formatNumber(r.mass_kg)} unit="kg" />
-          <Row label="Potencia generada" value={formatNumber(r.power_generated_w)} unit="W" />
-          <Row label="Potencia consumida" value={formatNumber(r.power_consumed_w)} unit="W" />
+          <Row label={tr("Masa", "Mass")} value={formatNumber(r.mass_kg)} unit="kg" />
+          <Row label={tr("Potencia generada", "Power generated")} value={formatNumber(r.power_generated_w)} unit="W" />
+          <Row label={tr("Potencia consumida", "Power consumed")} value={formatNumber(r.power_consumed_w)} unit="W" />
           <tr className={margin < 0 ? "neg" : ""}>
-            <th scope="row">Margen</th>
+            <th scope="row">{tr("Margen", "Margin")}</th>
             <td className="num">{(margin > 0 ? "+" : "") + formatNumber(margin)}</td>
             <td className="unit">W</td>
           </tr>
           {state.delta_v_remaining_m_s !== undefined && (
-            <Row label="Δv disponible" value={formatNumber(state.delta_v_remaining_m_s, 1)} unit="m/s" />
+            <Row
+              label={tr("Δv disponible", "Available Δv")}
+              value={formatNumber(state.delta_v_remaining_m_s, 1)}
+              unit="m/s"
+            />
           )}
           {state.battery_wh !== undefined && (
             <Row
-              label="Batería"
+              label={tr("Batería", "Battery")}
               value={`${formatNumber(state.battery_wh)} / ${formatNumber(state.battery_capacity_wh ?? 0)}`}
               unit="Wh"
             />
           )}
           <Row
-            label="Presupuesto restante"
+            label={tr("Presupuesto restante", "Budget left")}
             value={formatNumber(state.budget_remaining_usd_m ?? r.budget_usd_m)}
             unit="M USD"
           />
-          <Row label="Datos almacenados" value={formatNumber(r.data_stored_mb, 1)} unit="MB" />
-          <Row label="Enlace de bajada" value={formatNumber(r.downlink_rate_kbps)} unit="kbps" />
+          <Row label={tr("Datos almacenados", "Data stored")} value={formatNumber(r.data_stored_mb, 1)} unit="MB" />
+          <Row label={tr("Enlace de bajada", "Downlink")} value={formatNumber(r.downlink_rate_kbps)} unit="kbps" />
         </tbody>
       </table>
     </section>
   );
 }
 
-const KIND_LABEL: Record<SimEvent["kind"], string> = {
-  info: "INFO",
-  warning: "AVISO",
-  failure: "FALLO",
-  crisis: "CRISIS",
-};
+const kindLabel = (k: SimEvent["kind"]) =>
+  ({
+    info: "INFO",
+    warning: tr("AVISO", "WARNING"),
+    failure: tr("FALLO", "FAILURE"),
+    crisis: "CRISIS",
+  })[k];
 
 export function EventLog({ events }: { events: SimEvent[] }) {
   const recent = [...events].reverse().slice(0, 8);
   return (
     <section className="panel log" aria-labelledby="log-h">
-      <h2 id="log-h">Registro de misión</h2>
+      <h2 id="log-h">{tr("Registro de misión", "Mission log")}</h2>
       {recent.length === 0 ? (
-        <p className="empty">Sin eventos.</p>
+        <p className="empty">{tr("Sin eventos.", "No events.")}</p>
       ) : (
         <ol>
           {recent.map((e) => (
             <li key={e.id} className={`kind-${e.kind}`}>
               <span className="t">T+ {formatElapsed(e.at_s)}</span>
-              <span className="k">{KIND_LABEL[e.kind]}</span>
+              <span className="k">{kindLabel(e.kind)}</span>
               <span className="x">{e.text}</span>
             </li>
           ))}

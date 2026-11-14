@@ -1,30 +1,37 @@
 import type { MissionReport, MissionSegment } from "@ikaros/contracts";
 import { formatNumber } from "./format";
+import { tr } from "../i18n";
 
-const SEGMENTS: { id: MissionSegment; label: string }[] = [
-  { id: "launch", label: "Lanzamiento" },
-  { id: "space", label: "Espacio" },
-  { id: "ground", label: "Tierra" },
-  { id: "user", label: "Usuario" },
+const segments = (): { id: MissionSegment; label: string }[] => [
+  { id: "launch", label: tr("Lanzamiento", "Launch") },
+  { id: "space", label: tr("Espacio", "Space") },
+  { id: "ground", label: tr("Tierra", "Ground") },
+  { id: "user", label: tr("Usuario", "User") },
 ];
 
-const OUTCOME = { success: "MISIÓN CUMPLIDA", partial: "MISIÓN PARCIAL", failure: "MISIÓN FALLIDA" } as const;
+const outcome = (o: MissionReport["outcome"]) =>
+  ({
+    success: tr("MISIÓN CUMPLIDA", "MISSION ACCOMPLISHED"),
+    partial: tr("MISIÓN PARCIAL", "PARTIAL MISSION"),
+    failure: tr("MISIÓN FALLIDA", "MISSION FAILED"),
+  })[o];
 
 /** Informe post-misión del motor, ordenado por los cuatro segmentos de una misión NASA. */
 export function Report({ report, onRestart }: { report: MissionReport; onRestart: () => void }) {
   return (
     <div className="report">
       <p className={report.outcome === "failure" ? "neg-text" : "ok-text"}>
-        {OUTCOME[report.outcome]} · Puntuación <span className="num">{formatNumber(report.score)}</span>
+        {outcome(report.outcome)} · {tr("Puntuación", "Score")}{" "}
+        <span className="num">{formatNumber(report.score)}</span>
       </p>
-      <ul className="segments" aria-label="Informe por segmentos de misión">
-        {SEGMENTS.map((seg) => {
+      <ul className="segments" aria-label={tr("Informe por segmentos de misión", "Report by mission segment")}>
+        {segments().map((seg) => {
           const causes = report.causes.filter((c) => (c.segment ?? "space") === seg.id);
           return (
             <li key={seg.id}>
               <b>{seg.label}</b>
               {causes.length === 0 ? (
-                <span className="note">Sin observaciones.</span>
+                <span className="note">{tr("Sin observaciones.", "No remarks.")}</span>
               ) : (
                 causes.map((c, i) => (
                   <span key={i} className="cause">
@@ -40,7 +47,7 @@ export function Report({ report, onRestart }: { report: MissionReport; onRestart
       </ul>
       {report.advice && report.advice.length > 0 && (
         <>
-          <h3 className="sub">Qué cambiar la próxima vez</h3>
+          <h3 className="sub">{tr("Qué cambiar la próxima vez", "What to change next time")}</h3>
           <ul className="causes">
             {report.advice.map((a) => (
               <li key={a}>{a}</li>
@@ -50,14 +57,14 @@ export function Report({ report, onRestart }: { report: MissionReport; onRestart
       )}
       {report.comparisons && report.comparisons.length > 0 && (
         <>
-          <h3 className="sub">Comparación con misiones reales</h3>
+          <h3 className="sub">{tr("Comparación con misiones reales", "Comparison with real missions")}</h3>
           <table className="mini compare">
             <thead>
               <tr>
-                <th>Misión</th>
-                <th>Dato</th>
-                <th>Tu misión</th>
-                <th>Real</th>
+                <th>{tr("Misión", "Mission")}</th>
+                <th>{tr("Dato", "Metric")}</th>
+                <th>{tr("Tu misión", "Your mission")}</th>
+                <th>{tr("Real", "Real")}</th>
               </tr>
             </thead>
             <tbody>
@@ -74,7 +81,7 @@ export function Report({ report, onRestart }: { report: MissionReport; onRestart
         </>
       )}
       <button className="primary" onClick={onRestart}>
-        Reiniciar nivel
+        {tr("Reiniciar nivel", "Restart level")}
       </button>
     </div>
   );

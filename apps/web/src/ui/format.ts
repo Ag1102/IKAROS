@@ -1,3 +1,5 @@
+import { numberLocale } from "../i18n";
+
 const pad = (n: number) => String(Math.floor(n)).padStart(2, "0");
 
 /** Tiempo de misión T+ en formato DD:HH:MM:SS (los días solo si hace falta). */
@@ -12,7 +14,7 @@ export function formatElapsed(total_s: number): string {
 }
 
 export function formatNumber(value: number, digits = 0): string {
-  return value.toLocaleString("es-CO", {
+  return value.toLocaleString(numberLocale(), {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   });

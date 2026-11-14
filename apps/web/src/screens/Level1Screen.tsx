@@ -13,13 +13,10 @@ import { formatNumber } from "../ui/format";
 import { useHotkey } from "../hooks/useHotkey";
 import { ShipPreview } from "../ships/ShipPreview";
 import { usePreview } from "../ships/usePreview";
+import { phaseLabel } from "../ui/Panels";
+import { tr } from "../i18n";
 
-const STEPS = [
-  { phase: "hangar", label: "Hangar" },
-  { phase: "transfer", label: "Transferencia" },
-  { phase: "repair", label: "Reparación" },
-  { phase: "complete", label: "Informe" },
-];
+const STEPS = ["hangar", "transfer", "repair", "complete"];
 
 /** Altitud que alcanzaría una transferencia de Hohmann con este Δv, km (física del motor). */
 function altitudeAfter(state: SimState, dv_m_s: number): number {
@@ -38,12 +35,12 @@ function inTransfer(state: SimState): boolean {
 }
 
 function Stepper({ phase }: { phase: string }) {
-  const idx = STEPS.findIndex((s) => s.phase === phase);
+  const idx = STEPS.indexOf(phase);
   return (
-    <ol className="stepper" aria-label="Fases del nivel">
+    <ol className="stepper" aria-label={tr("Fases del nivel", "Level phases")}>
       {STEPS.map((s, i) => (
-        <li key={s.phase} className={i < idx ? "done" : i === idx ? "now" : ""}>
-          {s.label}
+        <li key={s} className={i < idx ? "done" : i === idx ? "now" : ""}>
+          {phaseLabel(s)}
         </li>
       ))}
     </ol>
@@ -97,12 +94,14 @@ export function Level1Screen({ onExit }: { onExit: () => void }) {
         <EventLog events={state.events} />
       </aside>
       <footer className="orbit-note">
-        Tierra y órbitas a escala real; naves con tamaño mínimo para verlas · Arrastra: girar · Rueda: zoom · Clic
-        derecho: desplazar · H: paneles
+        {tr(
+          "Tierra y órbitas a escala real; naves con tamaño mínimo para verlas · Arrastra: girar · Rueda: zoom · Clic derecho: desplazar · H: paneles",
+          "Earth and orbits to real scale; spacecraft drawn at a minimum size so you can see them · Drag: rotate · Wheel: zoom · Right-click: pan · H: panels",
+        )}
       </footer>
       <aside className="guide-wrap">
         <section className="panel guide" aria-labelledby="guide-h">
-          <h2 id="guide-h">Guía de misión</h2>
+          <h2 id="guide-h">{tr("Guía de misión", "Mission guide")}</h2>
           <Stepper phase={state.phase} />
           {state.phase === "hangar" && <HangarStep def={def} state={state} act={act} />}
           {state.phase === "transfer" && (
@@ -142,28 +141,35 @@ function HangarStep({ def, state, act }: { def: ScenarioDefinition; state: SimSt
           <li key={o}>{o}</li>
         ))}
       </ul>
-      <p className="stage">Etapa de diseño: estudio de compromisos (CML 3).</p>
-      <div className="ship-preview" aria-label="Tu vehículo de servicio">
+      <p className="stage">
+        {tr("Etapa de diseño: estudio de compromisos (CML 3).", "Design stage: trade study (CML 3).")}
+      </p>
+      <div className="ship-preview" aria-label={tr("Tu vehículo de servicio", "Your servicing vehicle")}>
         <ShipPreview kind="servicer" selected={preview} highlight={highlight} />
-        <span className="preview-note">Tu vehículo de servicio · pasa el ratón por una pieza para verla montada</span>
+        <span className="preview-note">
+          {tr(
+            "Tu vehículo de servicio · pasa el ratón por una pieza para verla montada",
+            "Your servicing vehicle · hover over a part to see it mounted",
+          )}
+        </span>
       </div>
       <HangarSlots def={def} state={state} act={act} onPreview={onPreview} />
       <table className="mini">
         <tbody>
           <tr className={cargo > cap ? "neg" : ""}>
-            <th>Carga</th>
+            <th>{tr("Carga", "Cargo")}</th>
             <td className="num">
               {formatNumber(cargo)} / {formatNumber(cap)} kg
             </td>
           </tr>
           <tr>
-            <th>Δv disponible</th>
+            <th>{tr("Δv disponible", "Available Δv")}</th>
             <td className="num">{formatNumber(state.delta_v_remaining_m_s ?? 0, 1)} m/s</td>
           </tr>
         </tbody>
       </table>
       <button className="primary" onClick={() => act({ type: "launch" })}>
-        Lanzar
+        {tr("Lanzar", "Launch")}
       </button>
     </>
   );
@@ -192,25 +198,30 @@ function TransferStep({
       <table className="mini">
         <tbody>
           <tr>
-            <th>Altitud actual</th>
+            <th>{tr("Altitud actual", "Current altitude")}</th>
             <td className="num">{formatNumber(alt, 1)} km</td>
           </tr>
           <tr>
-            <th>Altitud del satélite</th>
+            <th>{tr("Altitud del satélite", "Satellite altitude")}</th>
             <td className="num">{formatNumber(target, 1)} km</td>
           </tr>
           <tr>
-            <th>Diferencia</th>
+            <th>{tr("Diferencia", "Difference")}</th>
             <td className="num">{formatNumber(target - alt, 1)} km</td>
           </tr>
         </tbody>
       </table>
       {transferring ? (
-        <p className="note">Transferencia en curso. Puedes acelerar el tiempo hasta la llegada.</p>
+        <p className="note">
+          {tr(
+            "Transferencia en curso. Puedes acelerar el tiempo hasta la llegada.",
+            "Transfer in progress. You can speed up time until arrival.",
+          )}
+        </p>
       ) : (
         <div className="burn">
           <label htmlFor="dv">
-            Δv del encendido <span className="num">{formatNumber(dv, 1)} m/s</span>
+            {tr("Δv del encendido", "Burn Δv")} <span className="num">{formatNumber(dv, 1)} m/s</span>
           </label>
           <input
             id="dv"
@@ -222,12 +233,15 @@ function TransferStep({
             onChange={(e) => setDv(Number(e.target.value))}
           />
           <p className="note">
-            Altitud tras la transferencia:{" "}
-            <span className="num">{preview === null ? "—" : `${formatNumber(preview, 1)} km`}</span> (línea punteada).
-            Hay que quedar a ±2 km del satélite.
+            {tr("Altitud tras la transferencia:", "Altitude after the transfer:")}{" "}
+            <span className="num">{preview === null ? "—" : `${formatNumber(preview, 1)} km`}</span>{" "}
+            {tr(
+              "(línea punteada). Hay que quedar a ±2 km del satélite.",
+              "(dotted line). You must end up within ±2 km of the satellite.",
+            )}
           </p>
           <button className="primary" disabled={dv === 0} onClick={onBurn}>
-            Encender
+            {tr("Encender", "Burn")}
           </button>
         </div>
       )}
@@ -240,10 +254,10 @@ function RepairStep({ state }: { state: SimState }) {
   return (
     <>
       <p>
-        Acoplado.{" "}
+        {tr("Acoplado.", "Docked.")}{" "}
         {state.comm_window_open
-          ? "Estación terrena a la vista: se repara."
-          : "Sin enlace: la reparación espera al siguiente pase."}
+          ? tr("Estación terrena a la vista: se repara.", "Ground station in view: repairing.")
+          : tr("Sin enlace: la reparación espera al siguiente pase.", "No link: the repair waits for the next pass.")}
       </p>
       <div
         className="bar"
@@ -255,7 +269,8 @@ function RepairStep({ state }: { state: SimState }) {
         <div style={{ width: `${progress}%` }} />
       </div>
       <p className="note">
-        Progreso <span className="num">{formatNumber(progress, 0)} %</span> · datos enviados{" "}
+        {tr("Progreso", "Progress")} <span className="num">{formatNumber(progress, 0)} %</span> ·{" "}
+        {tr("datos enviados", "data sent")}{" "}
         <span className="num">{formatNumber(state.data_downlinked_mb ?? 0, 1)} MB</span>
       </p>
     </>

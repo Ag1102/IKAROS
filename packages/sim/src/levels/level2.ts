@@ -1,5 +1,5 @@
 import type { MissionReport, PlayerAction, SimState } from "@ikaros/contracts";
-import { C } from "../data";
+import { C, type Lang } from "../data";
 import { eclipseFraction, orbitalPeriod } from "../physics";
 import { clamp, Level, round } from "./base";
 
@@ -11,8 +11,8 @@ export class Level2 extends Level {
   private launchedAt = 0;
   private brownout_s = 0;
 
-  constructor(seed: number) {
-    super("level2-leo", seed);
+  constructor(seed: number, lang: Lang = "es") {
+    super("level2-leo", seed, lang);
   }
 
   protected initialState(): SimState {
@@ -79,19 +79,35 @@ export class Level2 extends Level {
     const cap = this.capacity();
     if (cap !== undefined && this.state.resources.mass_kg > cap) {
       problems.push(
-        `El satélite pesa ${this.state.resources.mass_kg} kg y el lanzador lleva ${round(cap)} kg a esa órbita.`,
+        this.L(
+          `El satélite pesa ${this.state.resources.mass_kg} kg y el lanzador lleva ${round(cap)} kg a esa órbita.`,
+          `The satellite weighs ${this.state.resources.mass_kg} kg and the launcher carries ${round(cap)} kg to that orbit.`,
+        ),
       );
     }
-    if ((this.state.budget_remaining_usd_m ?? 0) < 0) problems.push("El diseño supera el presupuesto.");
+    if ((this.state.budget_remaining_usd_m ?? 0) < 0)
+      problems.push(this.L("El diseño supera el presupuesto.", "The design is over budget."));
     if (problems.length) {
-      for (const p of problems) this.info(`Lanzamiento bloqueado: ${p}`, "warning", "level2:launch-blocked");
+      for (const p of problems)
+        this.info(
+          this.L(`Lanzamiento bloqueado: ${p}`, `Launch blocked: ${p}`),
+          "warning",
+          "level2:launch-blocked",
+        );
       return;
     }
     this.state.phase = "operations";
-    this.info("Lanzamiento y separación. Comienza la operación.", "info", "level2:launch");
+    this.info(
+      this.L("Lanzamiento y separación. Comienza la operación.", "Launch and separation. Operations begin."),
+      "info",
+      "level2:launch",
+    );
     if (this.id("objective") === "obj-fires" && this.id("orbit") !== "orb-sso") {
       this.info(
-        "Una órbita ecuatorial no ve los bosques boreales: la cobertura será parcial.",
+        this.L(
+          "Una órbita ecuatorial no ve los bosques boreales: la cobertura será parcial.",
+          "An equatorial orbit cannot see the boreal forests: coverage will be partial.",
+        ),
         "warning",
         "level2:coverage",
       );
@@ -116,8 +132,11 @@ export class Level2 extends Level {
       failure.active = true;
       this.info(
         failure.component === "comms"
-          ? "Falla de la radio: el enlace baja a la mitad."
-          : "Falla de un panel: la potencia baja a la mitad.",
+          ? this.L(
+              "Falla de la radio: el enlace baja a la mitad.",
+              "Radio failure: the downlink drops by half.",
+            )
+          : this.L("Falla de un panel: la potencia baja a la mitad.", "Panel failure: power drops by half."),
         "failure",
         `level2:failure-${failure.component}`,
       );
@@ -132,7 +151,15 @@ export class Level2 extends Level {
     const powered = (s.battery_wh ?? 0) > 0 || gen >= load;
     if (!powered) {
       this.brownout_s += dt;
-      this.warnOnce("brownout", "Batería agotada en eclipse: instrumento apagado.", 3600, "level2:brownout");
+      this.warnOnce(
+        "brownout",
+        this.L(
+          "Batería agotada en eclipse: instrumento apagado.",
+          "Battery drained in eclipse: instrument off.",
+        ),
+        3600,
+        "level2:brownout",
+      );
     } else {
       this.brownout_s = 0;
     }
@@ -145,7 +172,10 @@ export class Level2 extends Level {
         this.dataLost += got - Math.max(room, 0);
         this.warnOnce(
           "storage",
-          "Memoria llena: se pierden datos hasta el próximo pase.",
+          this.L(
+            "Memoria llena: se pierden datos hasta el próximo pase.",
+            "Memory full: data is being lost until the next pass.",
+          ),
           7200,
           "level2:storage-full",
         );
@@ -169,7 +199,11 @@ export class Level2 extends Level {
     s.health = this.brownout_s > 0 ? "critical" : failure?.active ? "warning" : "nominal";
 
     if (t - this.launchedAt >= this.param("mission_duration_s")) {
-      this.info("Fin de la campaña de 3 días.", "info", "level2:complete");
+      this.info(
+        this.L("Fin de la campaña de 3 días.", "End of the 3-day campaign."),
+        "info",
+        "level2:complete",
+      );
       this.finish();
     }
   }
@@ -189,10 +223,17 @@ export class Level2 extends Level {
     else if (useful > 0) outcome = "partial";
     const causes: MissionReport["causes"] = [];
     if (!launched)
-      causes.push({ text: "El satélite no se lanzó.", segment: "launch", origin: "theoretical" });
+      causes.push({
+        text: this.L("El satélite no se lanzó.", "The satellite was not launched."),
+        segment: "launch",
+        origin: "theoretical",
+      });
     if (this.coverageFactor() < 1) {
       causes.push({
-        text: "La órbita ecuatorial no cubre las latitudes con incendios boreales.",
+        text: this.L(
+          "La órbita ecuatorial no cubre las latitudes con incendios boreales.",
+          "The equatorial orbit does not cover the latitudes with boreal wildfires.",
+        ),
         source: this.paramSource("inclination_orb-sso_deg"),
         segment: "space",
         origin: "real",
@@ -200,20 +241,29 @@ export class Level2 extends Level {
     }
     if (this.dataLost > 0)
       causes.push({
-        text: `Se perdieron ${Math.round(this.dataLost)} MB por memoria llena.`,
+        text: this.L(
+          `Se perdieron ${Math.round(this.dataLost)} MB por memoria llena.`,
+          `${Math.round(this.dataLost)} MB were lost to full memory.`,
+        ),
         segment: "ground",
         origin: "theoretical",
       });
     if (this.failure?.active) {
-      const what = this.failure.component === "comms" ? "comunicaciones" : "potencia";
+      const comms = this.failure.component === "comms";
       causes.push({
-        text: `Falla en ${what} durante la operación.`,
+        text: this.L(
+          `Falla en ${comms ? "comunicaciones" : "potencia"} durante la operación.`,
+          `${comms ? "Communications" : "Power"} failure during operations.`,
+        ),
         segment: "space",
         origin: "theoretical",
       });
     }
     causes.push({
-      text: `Datos útiles en tierra: ${Math.round(useful)} MB de ${goal} MB.`,
+      text: this.L(
+        `Datos útiles en tierra: ${Math.round(useful)} MB de ${goal} MB.`,
+        `Useful data on the ground: ${Math.round(useful)} MB of ${goal} MB.`,
+      ),
       segment: "user",
       origin: "theoretical",
     });
@@ -225,7 +275,14 @@ export class Level2 extends Level {
         : 0,
       causes,
       advice:
-        this.dataLost > 0 ? ["Un enlace más rápido o una órbita con más pases evita perder datos."] : [],
+        this.dataLost > 0
+          ? [
+              this.L(
+                "Un enlace más rápido o una órbita con más pases evita perder datos.",
+                "A faster downlink or an orbit with more passes avoids losing data.",
+              ),
+            ]
+          : [],
       metrics: {
         data_collected_mb: Math.round(this.dataCollected),
         data_downlinked_mb: Math.round(s.data_downlinked_mb ?? 0),
