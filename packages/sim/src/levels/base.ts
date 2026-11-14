@@ -70,11 +70,21 @@ export abstract class Level {
     let left = Math.min(dt_s, MAX_STEP_S);
     while (left > 0 && !this.finished) {
       const dt = Math.min(left, this.substep());
+      const decisions = this.openDecisionCount();
       this.state.resources.mission_elapsed_s += dt;
       this.expireDeadlines();
       this.tick(dt);
       left -= dt;
+      // Si se abrió una decisión, el paso termina aquí: con pasos largos (crucero acelerado)
+      // la decisión podría abrirse y vencer dentro de la misma llamada sin que nadie la vea.
+      if (this.openDecisionCount() > decisions) break;
     }
+  }
+
+  private openDecisionCount(): number {
+    let n = 0;
+    for (const e of this.state.events) if (e.choices && !e.resolved) n++;
+    return n;
   }
 
   act(action: PlayerAction): void {

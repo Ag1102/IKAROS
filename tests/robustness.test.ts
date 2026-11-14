@@ -177,3 +177,17 @@ describe("misiones que no se traban", () => {
     }
   });
 });
+
+describe("decisiones con pasos largos", () => {
+  it("una ventana de Venus no se abre y vence dentro del mismo step", () => {
+    const sim = createSimulation();
+    sim.load("level3-ikaros", 1);
+    pickAll(sim, REAL_CONFIG);
+    sim.act({ type: "launch" });
+    // Un año de un golpe: el paso debe detenerse al abrirse la primera ventana.
+    const s = sim.step(365 * 86_400);
+    const open = s.events.filter((e) => e.trigger === "level3:venus-window" && !e.resolved);
+    expect(open).toHaveLength(1);
+    expect(s.events.some((e) => e.resolved === "timeout")).toBe(false);
+  });
+});
