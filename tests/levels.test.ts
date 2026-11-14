@@ -185,3 +185,66 @@ describe("contenido conectado con el motor", () => {
     }
   });
 });
+
+describe("nivel 3: zambullida Ikaros ⚗", () => {
+  const KIT = {
+    energy: "fission-reactor",
+    shield: "shield-cc",
+    defense: "hts-field",
+    repair: "nanobots",
+    science: "sensors-capsule",
+  };
+
+  function play(picks: Record<string, string>, dive: boolean) {
+    const sim = createSimulation();
+    let s = sim.load("level3-ikaros", 5);
+    pickAll(sim, picks);
+    s = sim.act({ type: "launch" });
+    const offered: string[] = [];
+    for (let i = 0; i < 20_000 && s.phase !== "complete"; i++) {
+      const ev = s.events.find((e) => e.choices && !e.resolved);
+      if (ev) {
+        offered.push(ev.trigger ?? "");
+        const choice =
+          ev.trigger === "level3:venus-window"
+            ? "execute"
+            : ev.trigger === "level3:ikaros-dive"
+              ? dive
+                ? "dive"
+                : "stay"
+              : ev.trigger === "level3:cme"
+                ? "hts"
+                : "eject";
+        s = sim.act({ type: "resolve-event", eventId: ev.id, choice });
+        continue;
+      }
+      if (s.phase === "encounter" && !s.main_array_stowed) s = sim.act({ type: "stow-main-array" });
+      s = sim.step(s.phase === "cruise" ? 86_400 : 300);
+    }
+    return { report: sim.report(), offered };
+  }
+
+  it("con el kit se ofrece y se logra la zambullida a 850.000 km, récord sobre Parker", () => {
+    const { report, offered } = play(KIT, true);
+    expect(offered).toContain("level3:ikaros-dive");
+    expect(report.metrics.ikaros_dive).toBe(true);
+    expect(report.metrics.min_distance_rsun as number).toBeLessThan(1.3);
+    expect(report.metrics.historical_record_broken).toBe(true);
+    expect(report.metrics.hts_blocked_pct as number).toBeGreaterThan(0);
+    expect(report.outcome).not.toBe("failure");
+  });
+
+  it("sin campo HTS ni nanobots no hay zambullida, pero 9,5 R☉ ya supera a Parker", () => {
+    const { offered } = play(REAL_CONFIG, true);
+    expect(offered).not.toContain("level3:ikaros-dive");
+    // Con la matriz bien pilotada (piloto automático), la configuración del paper bate el récord.
+    const { report } = playLevel3({ downlink: true, cme: "safe-mode" });
+    expect(report.metrics.min_distance_rsun as number).toBeCloseTo(9.5, 1);
+    expect(report.metrics.historical_record_broken).toBe(true);
+  });
+
+  it("quedarse en 9,5 R☉ con el kit es una opción válida", () => {
+    const { report } = play(KIT, false);
+    expect(report.metrics.ikaros_dive).toBe(false);
+  });
+});

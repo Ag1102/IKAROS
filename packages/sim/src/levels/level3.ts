@@ -46,6 +46,11 @@ export class Level3 extends Level {
   private dataCollected = 0;
   private dataDownlinked = 0;
   private capsuleRecovered = false;
+  private dived = false;
+  private erosion = 0;
+  private erosionBlocked = 0;
+  private nanobotRepaired = 0;
+  private reactorEnergy_wh = 0;
 
   constructor(seed: number, lang: Lang = "es") {
     super("level3-ikaros", seed, lang);
@@ -304,6 +309,7 @@ export class Level3 extends Level {
 
   protected onChoice(ev: SimEvent, choice: string): void {
     if (ev.trigger === "level3:venus-window") return this.resolveFlyby(choice);
+    if (ev.trigger === "level3:ikaros-dive") return this.resolveDive(choice);
     if (ev.trigger === "level3:cme") return this.resolveCme(choice);
     if (ev.trigger === "level3:ejection") return this.resolveEjection(choice);
   }
@@ -346,9 +352,70 @@ export class Level3 extends Level {
     }
     if (this.flybyWindows < FLYBYS) {
       this.nextFlybyAt = this.t + this.param("flyby_interval_s");
+    } else if (this.diveReady()) {
+      this.openDive();
     } else {
       this.startEncounter();
     }
+  }
+
+  /** ⚗ El kit Ikaros: mini reactor, campo HTS y nanobots. */
+  private hasIkarosKit(): boolean {
+    return (
+      this.energy() === "fission-reactor" && Boolean(this.chosen("defense")) && Boolean(this.chosen("repair"))
+    );
+  }
+
+  /** La zambullida se ofrece con los tres sobrevuelos hechos y el kit Ikaros a bordo. */
+  private diveReady(): boolean {
+    const atTarget = (this.state.perihelion_rsun ?? Infinity) <= value(paper, "perihelion_rsun") + 1e-9;
+    return atTarget && this.hasIkarosKit();
+  }
+
+  private openDive(): void {
+    const target = this.param("perihelion_ikaros_dive_rsun");
+    this.emit(
+      "crisis",
+      this.L(
+        `⚗ Zambullida Ikaros: con el reactor, el campo HTS y los nanobots, el perihelio puede bajar a ${round(target, 2)} R☉ (850.000 km).`,
+        `⚗ Ikaros dive: with the reactor, the HTS field and the nanobots, the perihelion can drop to ${round(target, 2)} R☉ (850,000 km).`,
+      ),
+      {
+        trigger: "level3:ikaros-dive",
+        source: this.paramSource("perihelion_ikaros_dive_rsun"),
+        deadline_s: this.t + this.param("flyby_window_s"),
+        choices: [
+          {
+            id: "dive",
+            label: this.L("⚗ Zambullirse", "⚗ Dive"),
+            detail: this.L("Récord a 850.000 km.", "Record at 850,000 km."),
+            origin: "theoretical",
+          },
+          {
+            id: "stay",
+            label: this.L("Quedarse en 9,5 R☉", "Stay at 9.5 R☉"),
+            detail: this.L("Ya es más cerca que Parker.", "Already closer than Parker."),
+            origin: "real",
+          },
+        ],
+      },
+    );
+  }
+
+  private resolveDive(choice: string): void {
+    if (choice === "dive") {
+      this.dived = true;
+      this.state.perihelion_rsun = this.param("perihelion_ikaros_dive_rsun");
+      this.info(
+        this.L(
+          `⚗ Zambullida iniciada: perihelio ${round(this.state.perihelion_rsun, 2)} R☉.`,
+          `⚗ Dive started: perihelion ${round(this.state.perihelion_rsun, 2)} R☉.`,
+        ),
+        "info",
+        "level3:dive",
+      );
+    }
+    this.startEncounter();
   }
 
   private deltaVLeft(): number {
@@ -472,6 +539,7 @@ export class Level3 extends Level {
     let heat = 0;
     if (energy === "fission-reactor") {
       power += this.reactorPower();
+      this.reactorEnergy_wh += (this.reactorPower() * dt) / 3600;
       heat += this.param("reactor_waste_heat_w");
     } else if (!(energy === "stirling" && this.stirlingFailed)) {
       const incident = I * area_m2;
@@ -574,9 +642,22 @@ export class Level3 extends Level {
       const peri = solarIntensity(value(paper, "perihelion_rsun") * (C.sunRadius / C.au));
       hull -= this.param("hull_damage_exposed_pct_s") * (I / peri) * factor * dt;
     }
+    // ⚗ Bajo 9,5 R☉ el plasma y el calor desgastan el casco; el campo HTS (con energía) desvía la mayor parte.
+    const r_rsun = s.distance_to_sun_rsun ?? Infinity;
+    const paperPeri = value(paper, "perihelion_rsun");
+    if (r_rsun < paperPeri) {
+      const intensity = (paperPeri / r_rsun) ** 2;
+      const raw = this.param("dive_erosion_pct_s") * intensity * factor * dt;
+      const htsOn = Boolean(this.chosen("defense")) && this.brownout_s === 0;
+      const through = htsOn ? raw * this.param("hts_erosion_factor") : raw;
+      hull -= through;
+      this.erosion += through;
+      this.erosionBlocked += raw - through;
+    }
     if (this.chosen("repair") && (s.nanobot_reserve_pct ?? 0) > 0 && hull < 100 && this.brownout_s === 0) {
       const fix = Math.min(100 - hull, this.param("nanobot_repair_pct_s") * dt);
       hull += fix;
+      this.nanobotRepaired += fix;
       s.nanobot_reserve_pct = Math.max(
         0,
         (s.nanobot_reserve_pct ?? 0) - this.param("nanobot_reserve_pct_s") * dt,
@@ -881,6 +962,28 @@ export class Level3 extends Level {
               origin: "real",
             },
       );
+      const parker = this.param("parker_record_rsun");
+      if (this.minDistanceRsun < parker) {
+        causes.push({
+          text: this.L(
+            `¡Récord histórico! ${round(this.minDistanceRsun, 2)} R☉: más cerca del Sol que Parker Solar Probe (${parker} R☉).`,
+            `Historic record! ${round(this.minDistanceRsun, 2)} R☉: closer to the Sun than Parker Solar Probe (${parker} R☉).`,
+          ),
+          source: this.paramSource("parker_record_rsun"),
+          segment: "user",
+          origin: "real",
+        });
+      }
+      if (this.dived) {
+        causes.push({
+          text: this.L(
+            `⚗ Cómo se logró: el mini reactor dio ${Math.round(this.reactorEnergy_wh)} Wh donde ningún panel sobrevive; el campo HTS desvió ${round(this.erosionBlocked, 1)} % de desgaste del casco y los nanobots repararon ${round(this.nanobotRepaired, 1)} %.`,
+            `⚗ How it was done: the mini reactor supplied ${Math.round(this.reactorEnergy_wh)} Wh where no panel survives; the HTS field deflected ${round(this.erosionBlocked, 1)}% of hull wear and the nanobots repaired ${round(this.nanobotRepaired, 1)}%.`,
+          ),
+          segment: "space",
+          origin: "theoretical",
+        });
+      }
       if (this.secondsDegrading > 0) {
         causes.push({
           text: this.L(
@@ -1013,7 +1116,9 @@ export class Level3 extends Level {
         (reachedTarget ? 2500 : 0) +
         Math.min(1, data / goal) * 2500 +
         (s.hull_durability_pct ?? 0) * 10 +
-        (this.capsuleRecovered ? 1000 : 0) -
+        (this.capsuleRecovered ? 1000 : 0) +
+        (this.minDistanceRsun < this.param("parker_record_rsun") ? 1000 : 0) +
+        (this.dived && outcome !== "failure" ? 3000 : 0) -
         this.secondsOverCellLimit / 6,
     );
 
@@ -1036,6 +1141,12 @@ export class Level3 extends Level {
         main_array_lost: this.mainArrayLost,
         capsule_recovered: this.capsuleRecovered,
         mission_elapsed_s: Math.round(this.t),
+        historical_record_broken: this.minDistanceRsun < this.param("parker_record_rsun"),
+        ikaros_dive: this.dived,
+        hts_blocked_pct: round(this.erosionBlocked, 1),
+        hull_eroded_pct: round(this.erosion, 1),
+        nanobot_repaired_pct: round(this.nanobotRepaired, 1),
+        reactor_energy_wh: Math.round(this.reactorEnergy_wh),
       },
       comparisons: [
         {
