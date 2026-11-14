@@ -1,19 +1,17 @@
 import type { SimEvent } from "@ikaros/contracts";
+import { AU_KM, helioAt, orbitFromApsides, timeFromPerihelion, type HelioOrbit } from "../sim/kepler";
+import { CELL_LIMIT_C, D_START_AU, MIN_POWER_W, RSUN_KM } from "./constants";
+import { scienceBonus } from "./trajectory";
+import { formatNumber } from "../ui/format";
 
-// Simulación de PRUEBA del encuentro solar, solo para mover la interfaz. La física real la
-// define Camilo en packages/sim. Usa constantes del paper (9,5 R☉, 0,25 AU, 482 W, 120 °C,
-// intensidad ∝ 1/d²) y una relación térmica simplificada y provisional. Los efectos de los
-// sistemas ⚗ son supuestos del juego.
+// Simulación de PRUEBA del encuentro solar, solo para mover la interfaz; la física definitiva
+// la aporta el motor de simulación (packages/sim). La sonda sigue una órbita kepleriana real
+// alrededor del Sol; el encuentro va desde que entra en 0,25 AU (la matriz principal se pliega)
+// hasta que vuelve a salir. La relación térmica de las celdas es simplificada y provisional, y
+// los efectos de los sistemas ⚗ son supuestos del juego.
 
-export const AU_KM = 149597870.7;
-export const RSUN_KM = 696000;
-export const D_START_AU = 0.25;
-export const D_MIN_RSUN = 9.5;
-export const D_MIN_AU = (D_MIN_RSUN * RSUN_KM) / AU_KM;
-export const CELL_LIMIT_C = 120;
-export const MIN_POWER_W = 482;
-/** Duración (s de misión) de cada tramo, aproximación y salida. Comprimida respecto al real. */
-export const LEG_S = 21600;
+export { CELL_LIMIT_C, D_START_AU, MIN_POWER_W, RSUN_KM };
+export const DAY_S = 86400;
 /** Intensidad (× AM0) a la que la matriz completa produce su carga de diseño. */
 const DESIGN_SUNS = 16;
 
@@ -28,11 +26,14 @@ export interface EncounterConfig {
   hasCapsule: boolean;
   /** Consumo de los sistemas adicionales, W. */
   extraUse_w: number;
+  perihelion_au: number;
+  aphelion_au: number;
 }
 
 export type EncounterOutcome = "success" | "partial" | "failure";
 
 export class Encounter {
+  /** Segundos de misión desde que la sonda entra en 0,25 AU. */
   t = 0;
   exposed = 1;
   damage = 0;
@@ -41,17 +42,29 @@ export class Encounter {
   events: SimEvent[] = [];
   outcome: EncounterOutcome | null = null;
   score = 0;
+  readonly orbit: HelioOrbit;
+  /** Días entre la entrada en 0,25 AU y el perihelio. */
+  readonly halfDays: number;
   private flags = new Set<string>();
 
   constructor(readonly cfg: EncounterConfig) {
-    this.log("info", "Matriz principal plegada tras el escudo. Entra en servicio la matriz secundaria.");
+    this.orbit = orbitFromApsides(cfg.perihelion_au, cfg.aphelion_au);
+    this.halfDays = timeFromPerihelion(this.orbit, D_START_AU);
+    this.log("info", "Matriz principal plegada tras el escudo a 0,25 AU. Entra en servicio la matriz secundaria.");
   }
 
-  get s() {
-    return Math.min(2, this.t / LEG_S);
+  get durationS() {
+    return 2 * this.halfDays * DAY_S;
+  }
+  /** Días respecto al perihelio (negativo antes, positivo después). */
+  get dayFromPerihelion() {
+    return this.t / DAY_S - this.halfDays;
+  }
+  get position() {
+    return helioAt(this.orbit, this.dayFromPerihelion);
   }
   get distanceAU() {
-    return D_MIN_AU + (D_START_AU - D_MIN_AU) * (1 - this.s) ** 2;
+    return this.position.r;
   }
   get distanceKm() {
     return this.distanceAU * AU_KM;
@@ -89,8 +102,8 @@ export class Encounter {
   }
   get phase(): string {
     if (this.outcome) return "Informe";
-    if (Math.abs(this.s - 1) < 0.06) return "Perihelio";
-    return this.s < 1 ? "Aproximación" : "Salida";
+    if (this.distanceAU < this.cfg.perihelion_au * 1.15) return "Perihelio";
+    return this.dayFromPerihelion < 0 ? "Aproximación" : "Salida";
   }
 
   setExposed(v: number) {
@@ -99,7 +112,8 @@ export class Encounter {
 
   step(dt: number) {
     if (this.outcome) return;
-    this.t = Math.min(this.t + dt, 2 * LEG_S);
+    const before = this.dayFromPerihelion;
+    this.t = Math.min(this.t + dt, this.durationS);
     const T = this.cellTemp_c;
     if (this.cfg.hasSecondary) this.maxTemp_c = Math.max(this.maxTemp_c, T);
     if (this.cfg.hasSecondary && T > CELL_LIMIT_C) {
@@ -111,19 +125,23 @@ export class Encounter {
     }
     if (this.powerW < this.requiredW) {
       this.belowMin_s += dt;
-      this.once("low", "warning", `Potencia por debajo de lo requerido (${Math.round(this.requiredW)} W).`);
+      this.once("low", "warning", `Potencia por debajo de lo requerido (${formatNumber(this.requiredW)} W).`);
     }
     if (this.damage >= 100) this.once("dead", "failure", "La matriz secundaria quedó inutilizada.");
-    if (this.s >= 0.97 && this.s <= 1.03) this.once("peri", "info", "Perihelio: 9,5 radios solares.");
-    if (this.t >= 2 * LEG_S) this.finish();
+    if (before < 0 && this.dayFromPerihelion >= 0) {
+      const rs = (this.cfg.perihelion_au * AU_KM) / RSUN_KM;
+      this.once("peri", "info", `Perihelio: ${formatNumber(rs, 1)} radios solares.`);
+    }
+    if (this.t >= this.durationS) this.finish();
   }
 
   private finish() {
-    const frac = this.belowMin_s / (2 * LEG_S);
+    const frac = this.belowMin_s / this.durationS;
     this.outcome =
       this.damage >= 100 || frac > 0.5 ? "failure" : this.damage < 30 && frac < 0.1 ? "success" : "partial";
-    const samples = this.cfg.hasCapsule && this.outcome !== "failure" ? 100 : 0;
-    this.score = Math.max(0, Math.round(1000 - this.damage * 6 - frac * 600)) + samples;
+    const extra =
+      this.outcome === "failure" ? 0 : scienceBonus(this.cfg.perihelion_au) + (this.cfg.hasCapsule ? 100 : 0);
+    this.score = Math.max(0, Math.round(1000 - this.damage * 6 - frac * 600)) + extra;
     this.log(this.outcome === "failure" ? "failure" : "info", "Fin del encuentro solar.");
   }
 

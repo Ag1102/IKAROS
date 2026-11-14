@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { Encounter, type EncounterConfig } from "./encounter";
+import { DAY_S, Encounter, type EncounterConfig } from "./encounter";
+import { trajectoryById } from "./trajectory";
+
+const V7 = trajectoryById("v7");
 
 const PV: EncounterConfig = {
   hasSecondary: true,
@@ -10,11 +13,13 @@ const PV: EncounterConfig = {
   hasNano: false,
   hasCapsule: false,
   extraUse_w: 0,
+  perihelion_au: V7.perihelion_au,
+  aphelion_au: V7.aphelion_au,
 };
 
 function run(cfg: EncounterConfig, policy: (e: Encounter) => number) {
   const e = new Encounter(cfg);
-  for (let i = 0; i < 100000 && !e.outcome; i++) {
+  for (let i = 0; i < 200000 && !e.outcome; i++) {
     e.setExposed(policy(e));
     e.step(30);
   }
@@ -26,7 +31,7 @@ const reference = (e: Encounter) => Math.min(1, 16 / e.suns);
 describe("encuentro solar (simulación de prueba)", () => {
   it("el perihelio coincide con el paper: 9,5 R☉ y unas 510 veces AM0", () => {
     const e = new Encounter(PV);
-    e.t = 21600;
+    e.t = e.halfDays * DAY_S;
     expect(e.distanceRsun).toBeCloseTo(9.5, 2);
     expect(e.suns).toBeGreaterThan(500);
     expect(e.suns).toBeLessThan(520);
@@ -67,5 +72,27 @@ describe("encuentro solar (simulación de prueba)", () => {
     const a = run(PV, reference).score;
     const b = run({ ...PV, hasCapsule: true }, reference).score;
     expect(b - a).toBe(100);
+  });
+});
+
+describe("trayectoria", () => {
+  it("con 7 sobrevuelos la órbita dura unos 88 días, como la de Parker", async () => {
+    const { periodDays } = await import("../sim/kepler");
+    const e = new Encounter(PV);
+    expect(periodDays(e.orbit.a)).toBeGreaterThan(80);
+    expect(periodDays(e.orbit.a)).toBeLessThan(95);
+  });
+
+  it("la entrada y la salida del encuentro ocurren a 0,25 AU", () => {
+    const e = new Encounter(PV);
+    expect(e.distanceAU).toBeCloseTo(0.25, 6);
+    e.t = e.durationS;
+    expect(e.distanceAU).toBeCloseTo(0.25, 6);
+  });
+
+  it("un perihelio más lejano da menos bonificación científica", async () => {
+    const { scienceBonus } = await import("./trajectory");
+    expect(scienceBonus(trajectoryById("v1").perihelion_au)).toBe(0);
+    expect(scienceBonus(V7.perihelion_au)).toBe(300);
   });
 });

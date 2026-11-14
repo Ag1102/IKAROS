@@ -2,7 +2,9 @@ import { useState } from "react";
 import type { SimState } from "@ikaros/contracts";
 import { Hangar } from "../level3/Hangar";
 import { BUDGET_USD_M, checkDesign, type Design } from "../level3/catalog";
-import { CELL_LIMIT_C, D_MIN_RSUN, Encounter, LEG_S, type EncounterConfig } from "../level3/encounter";
+import { AU_KM } from "../sim/kepler";
+import { CELL_LIMIT_C, Encounter, RSUN_KM, type EncounterConfig } from "../level3/encounter";
+import { MISSION_EPOCH_DAY, trajectoryById } from "../level3/trajectory";
 import { Level3Scene } from "../level3/Level3Scene";
 import { EventLog, ResourcesPanel, TopBar } from "../ui/Panels";
 import { Overlay, type OverlayKind } from "../ui/Overlay";
@@ -11,7 +13,7 @@ import { formatNumber } from "../ui/format";
 import { useGameLoop } from "../hooks/useGameLoop";
 import { useHotkey } from "../hooks/useHotkey";
 
-const INITIAL: Design = { parts: ["shield-flat", "pv-primary", "pv-secondary"], launcher: "l-m" };
+const INITIAL: Design = { parts: ["shield-flat", "pv-primary", "pv-secondary"], launcher: "l-m", trajectory: "v7" };
 
 function toConfig(d: Design): EncounterConfig {
   const has = (id: string) => d.parts.includes(id);
@@ -24,6 +26,8 @@ function toConfig(d: Design): EncounterConfig {
     hasNano: has("nano"),
     hasCapsule: has("capsule"),
     extraUse_w: checkDesign(d).uses_w,
+    perihelion_au: trajectoryById(d.trajectory).perihelion_au,
+    aphelion_au: trajectoryById(d.trajectory).aphelion_au,
   };
 }
 
@@ -65,7 +69,7 @@ function EncounterView({
   onOverlay: (k: OverlayKind) => void;
 }) {
   const [, setFrame] = useState(0);
-  const [timeScale, setTimeScale] = useState(60);
+  const [timeScale, setTimeScale] = useState(3600);
   const [exposed, setExposed] = useState(100);
   const [hideUi, setHideUi] = useState(false);
   const [follow, setFollow] = useState(true);
@@ -102,12 +106,16 @@ function EncounterView({
 
   const reference = Math.min(100, (16 / enc.suns) * 100);
   const done = enc.outcome !== null;
-  const lowPct = (enc.belowMin_s / (2 * LEG_S)) * 100;
+  const lowPct = (enc.belowMin_s / enc.durationS) * 100;
+  const traj = trajectoryById(design.trajectory);
+  const periRsun = (traj.perihelion_au * AU_KM) / RSUN_KM;
+  // Día (desde J2000) del perihelio, solo para situar los planetas en la escena.
+  const encounterDay = MISSION_EPOCH_DAY + traj.duration_yr * 365.25;
 
   return (
     <div className={hideUi ? "shell hide-ui" : "shell"}>
       <div className="viewport">
-        <Level3Scene enc={enc} follow={follow} />
+        <Level3Scene enc={enc} follow={follow} encounterDay={encounterDay} />
       </div>
       <TopBar
         state={state}
@@ -120,13 +128,16 @@ function EncounterView({
         onCredits={() => onOverlay("credits")}
         onExit={onExit}
         subtitle="Nivel 3 · Encuentro solar"
-        scales={[0, 10, 60, 600]}
+        scales={[0, 600, 3600, 21600]}
       />
       <aside className="side">
         <ResourcesPanel state={state} />
         <EventLog events={state.events} />
       </aside>
-      <footer className="orbit-note">Arrastra: girar · Rueda: zoom · Clic derecho: desplazar · H: paneles</footer>
+      <footer className="orbit-note">
+        Distancias y Sol a escala real; planetas y sonda con tamaño mínimo para verlos · Arrastra: girar · Rueda: zoom ·
+        Clic derecho: desplazar · H: paneles
+      </footer>
       <aside className="guide-wrap">
         <section className="panel guide" aria-labelledby="enc-h">
           <h2 id="enc-h">Encuentro solar</h2>
@@ -161,7 +172,9 @@ function EncounterView({
               </tr>
               <tr>
                 <th>Perihelio previsto</th>
-                <td className="num">{formatNumber(D_MIN_RSUN, 1)} R☉</td>
+                <td className="num">
+                  {formatNumber(periRsun, 1)} R☉ · {traj.flybys} sobrevuelos de Venus
+                </td>
               </tr>
             </tbody>
           </table>
@@ -225,7 +238,7 @@ function EncounterView({
                   <b>Usuario</b>
                   {enc.outcome === "failure"
                     ? "La sonda no completó el encuentro."
-                    : `La sonda llegó a ${formatNumber(D_MIN_RSUN, 1)} R☉ y volvió a salir${enc.cfg.hasCapsule ? ", con muestras de la corona (⚗)" : ""}.`}
+                    : `La sonda llegó a ${formatNumber(periRsun, 1)} R☉ y volvió a salir${enc.cfg.hasCapsule ? ", con muestras de la corona (⚗)" : ""}.`}
                 </li>
               </ul>
               <Assistant trigger="l3:result" />

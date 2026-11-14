@@ -133,12 +133,14 @@ export const LAUNCHERS: Launcher[] = [
 
 export const BASE_MASS_KG = 1350; // chasis, enfriador y combustible
 export const BUDGET_USD_M = 500;
-/** Potencia mínima requerida por el paper. */
-export const MIN_POWER_W = 482;
+import { MIN_POWER_W } from "./constants";
+export { MIN_POWER_W };
 
 export interface Design {
   parts: string[];
   launcher: string;
+  /** Id de la trayectoria elegida (ver trajectory.ts). */
+  trajectory: string;
 }
 
 export interface DesignCheck {

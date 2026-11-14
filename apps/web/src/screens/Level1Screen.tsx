@@ -66,7 +66,10 @@ export function Level1Screen({ onExit }: { onExit: () => void }) {
         <ResourcesPanel state={state} fuel_kg={view.propellant_kg} dv_ms={view.dvLeft_ms} />
         <EventLog events={state.events} />
       </aside>
-      <footer className="orbit-note">Arrastra: girar · Rueda: zoom · Clic derecho: desplazar · H: paneles</footer>
+      <footer className="orbit-note">
+        Tierra y órbitas a escala real; naves con tamaño mínimo para verlas · Arrastra: girar · Rueda: zoom · Clic
+        derecho: desplazar · H: paneles
+      </footer>
       <aside className="guide-wrap">
         <LevelPanel
           view={view}

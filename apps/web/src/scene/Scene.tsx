@@ -51,6 +51,7 @@ function EllipseLine({
 }
 
 const HOME = new THREE.Vector3(0, 0, 0);
+const OVERVIEW = new THREE.Vector3(19, 9, 22);
 const TARGET_ORBIT: Orbit = { a: LEVEL1_GEOMETRY.R2, e: 0, w: 0, tp: 0 };
 
 export function Scene({ game, phase, servicer, preview, follow, docked }: Props) {
@@ -77,11 +78,12 @@ export function Scene({ game, phase, servicer, preview, follow, docked }: Props)
       <Servicer
         pos={docked ? targetPos : servicerPos}
         inclination_deg={inc}
-        offset={docked ? [0.5, 0.35, 0] : undefined}
+        offset={docked ? [1.1, 0.4, 0] : undefined}
       />
       <FollowControls
         follow={follow}
         home={HOME}
+        homeOffset={OVERVIEW}
         minDistance={0.8}
         maxDistance={80}
         getTarget={() => {

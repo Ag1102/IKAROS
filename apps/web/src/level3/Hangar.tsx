@@ -1,5 +1,9 @@
 import { BUDGET_USD_M, LAUNCHERS, PARTS, checkDesign, type Design, type Part, type Slot } from "./catalog";
 import { formatNumber } from "../ui/format";
+import { AU_KM, orbitFromApsides, periodDays } from "../sim/kepler";
+import { RSUN_KM } from "./constants";
+import { TRAJECTORIES, trajectoryById } from "./trajectory";
+import { OrbitPreview } from "./Level3Scene";
 
 const SLOT_TITLE: Record<Slot, string> = {
   shield: "Escudo térmico (uno)",
@@ -35,6 +39,7 @@ export function Hangar({
   onGlossary: () => void;
 }) {
   const check = checkDesign(design);
+  const traj = trajectoryById(design.trajectory);
   const toggle = (p: Part) => {
     const has = design.parts.includes(p.id);
     let next = design.parts.filter((id) => id !== p.id);
@@ -101,6 +106,48 @@ export function Hangar({
         </section>
 
         <section className="panel summary">
+          <h2>Trayectoria</h2>
+          <p className="note">
+            Cada sobrevuelo de Venus frena la sonda y acerca el perihelio al Sol, a cambio de años de misión. Perihelios
+            de 1 y 7 sobrevuelos y la duración final: paper; el resto, valores de prueba.
+          </p>
+          <fieldset className="slot">
+            <legend>Órbita final</legend>
+            {TRAJECTORIES.map((t) => {
+              const on = design.trajectory === t.id;
+              return (
+                <label key={t.id} className={on ? "part on" : "part"}>
+                  <input
+                    type="radio"
+                    name="trajectory"
+                    checked={on}
+                    onChange={() => onChange({ ...design, trajectory: t.id })}
+                  />
+                  <span className="pn">
+                    {t.label}{" "}
+                    {t.origin === "paper" ? (
+                      <span className="tag tag-real">paper</span>
+                    ) : (
+                      <span className="tag tag-test">prueba</span>
+                    )}
+                  </span>
+                  <span className="num">{formatNumber((t.perihelion_au * AU_KM) / RSUN_KM, 1)} R☉</span>
+                  <span className="pd">
+                    Perihelio {formatNumber(t.perihelion_au, 3)} AU · afelio {formatNumber(t.aphelion_au, 2)} AU ·
+                    período {formatNumber(periodDays(orbitFromApsides(t.perihelion_au, t.aphelion_au).a))} días · misión{" "}
+                    {formatNumber(t.duration_yr, 1)} años
+                  </span>
+                </label>
+              );
+            })}
+          </fieldset>
+          <div className="orbit-preview" aria-label="Vista de la órbita elegida">
+            <OrbitPreview orbit={orbitFromApsides(traj.perihelion_au, traj.aphelion_au)} />
+            <span className="preview-note">
+              Distancias y Sol a escala real; planetas con tamaño mínimo para verlos.
+            </span>
+          </div>
+
           <h2>Lanzamiento</h2>
           <label htmlFor="launcher" className="note">
             Lanzador

@@ -684,3 +684,32 @@ button.link {
     top: 104px;
   }
 }
+
+.tag-test {
+  color: var(--dim);
+}
+.orbit-preview {
+  position: relative;
+  height: 280px;
+  margin: 10px 0 16px;
+  border: 1px solid var(--line);
+}
+.preview-note {
+  position: absolute;
+  left: 8px;
+  bottom: 6px;
+  font: 400 11px var(--font-mono);
+  color: var(--dim);
+}
+.space-label {
+  font: 500 11px var(--font-head);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+.summary h2 + .note {
+  margin-top: 0;
+}
