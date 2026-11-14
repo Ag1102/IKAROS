@@ -3,6 +3,7 @@
   "references": [
     { "path": "packages/contracts" },
     { "path": "packages/sim" },
-    { "path": "packages/sim-mock" }
+    { "path": "packages/sim-mock" },
+    { "path": "tests" }
   ]
 }
