@@ -1,10 +1,11 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import type { PlayerAction, ScenarioDefinition, SimState } from "@ikaros/contracts";
 import { PAPER } from "../../../data/sources";
 import { formatNumber } from "../../../ui/format";
 import { tr } from "../../../i18n";
 import { apertureBand, areaToKnob, knobToArea } from "../stability";
-import { useKeys } from "./common";
+import { useFrameLoop, useHeldKeys } from "../../../game/minigame";
+import { KeyHint, KeyHints } from "../../../game/KeyHint";
 
 /**
  * Puzzle de estabilidad del paso por el Sol. La perilla vertical abre o cierra la matriz
@@ -39,12 +40,14 @@ export function StabilityHud({
     const r = track.current?.getBoundingClientRect();
     if (r) setKnob(1 - (clientY - r.top) / r.height);
   };
-  useKeys((key, e) => {
+  // ↑/↓ mantenidas abren o cierran la matriz de forma continua.
+  const held = useHeldKeys(["ArrowUp", "ArrowDown"]);
+  const kRef = useRef(k);
+  kRef.current = k;
+  useFrameLoop((dt) => {
     if (reactor) return;
-    if (key === "ArrowUp" || key === "ArrowDown") {
-      e.preventDefault();
-      setKnob(k + (key === "ArrowUp" ? 0.015 : -0.015));
-    }
+    const dir = (held.current.has("ArrowUp") ? 1 : 0) - (held.current.has("ArrowDown") ? 1 : 0);
+    if (dir !== 0) setKnob(kRef.current + dir * 0.25 * dt);
   });
 
   const cell = state.cell_temperature_c ?? 0;
@@ -56,6 +59,23 @@ export function StabilityHud({
   const setAttitude = (a: "shield-to-sun" | "antenna-to-earth") => {
     if (state.attitude !== a) act({ type: "set-attitude", attitude: a });
   };
+  // T mantenida: antena a la Tierra mientras se pulsa.
+  const attRef = useRef(setAttitude);
+  attRef.current = setAttitude;
+  useEffect(() => {
+    const d = (e: KeyboardEvent) => {
+      if ((e.key === "t" || e.key === "T") && !e.repeat) attRef.current("antenna-to-earth");
+    };
+    const u = (e: KeyboardEvent) => {
+      if (e.key === "t" || e.key === "T") attRef.current("shield-to-sun");
+    };
+    window.addEventListener("keydown", d);
+    window.addEventListener("keyup", u);
+    return () => {
+      window.removeEventListener("keydown", d);
+      window.removeEventListener("keyup", u);
+    };
+  }, []);
 
   return (
     <section className="stability" aria-label={tr("Estabilidad de la sonda", "Probe stability")}>
@@ -152,6 +172,10 @@ export function StabilityHud({
               ? tr("Transmitiendo… radiadores al sol", "Transmitting… radiators in sunlight")
               : tr("Mantener para transmitir datos", "Hold to transmit data")}
           </button>
+          <KeyHints>
+            {!reactor && <KeyHint keys={["↑", "↓"]}>{tr("matriz (mantén)", "array (hold)")}</KeyHint>}
+            <KeyHint keys={["T"]}>{tr("transmitir (mantén)", "transmit (hold)")}</KeyHint>
+          </KeyHints>
         </div>
       </div>
     </section>

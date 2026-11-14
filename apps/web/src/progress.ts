@@ -48,6 +48,12 @@ export function recordResult(level: number, outcome: MissionReport["outcome"]): 
 
 /** Vuelve a bloquear todo salvo el nivel 1. */
 export function resetProgress(): void {
+  stars = {};
+  try {
+    window.localStorage.removeItem(STARS_KEY);
+  } catch {
+    // Nada que borrar.
+  }
   save(1);
 }
 
@@ -59,4 +65,33 @@ function subscribe(cb: () => void) {
 /** Nivel más alto desbloqueado; el componente se vuelve a pintar al cambiar. */
 export function useUnlocked(): number {
   return useSyncExternalStore(subscribe, getUnlocked, getUnlocked);
+}
+
+// ---- Estrellas por nivel (mejor resultado) ----
+
+const STARS_KEY = "ikaros-stars";
+let stars: Record<number, number> = {};
+try {
+  stars = JSON.parse(typeof window !== "undefined" ? (window.localStorage.getItem(STARS_KEY) ?? "{}") : "{}");
+} catch {
+  stars = {};
+}
+
+/** Guarda las estrellas de un nivel si mejoran el récord. */
+export function recordStars(level: number, n: number): void {
+  if (n <= (stars[level] ?? 0)) return;
+  stars = { ...stars, [level]: n };
+  try {
+    window.localStorage.setItem(STARS_KEY, JSON.stringify(stars));
+  } catch {
+    // Sin almacenamiento el récord vale para esta pestaña.
+  }
+  for (const l of listeners) l();
+}
+
+const getStars = () => stars;
+
+/** Mejores estrellas de cada nivel; se vuelve a pintar al cambiar. */
+export function useBestStars(): Record<number, number> {
+  return useSyncExternalStore(subscribe, getStars, getStars);
 }

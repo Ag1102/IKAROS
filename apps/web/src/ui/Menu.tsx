@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { LEVELS, menuLevels, type MenuLevel } from "../menu/levels";
 import { setLang, tr, useLang } from "../i18n";
-import { getUnlocked, resetProgress, useUnlocked } from "../progress";
+import { getUnlocked, resetProgress, useBestStars, useUnlocked } from "../progress";
 
 const MenuScene = lazy(() => import("../menu/MenuScene"));
 
@@ -21,6 +21,7 @@ export function Menu({
   // Se abre en el último nivel desbloqueado.
   const [selected, setSelected] = useState<LevelN>(() => getUnlocked() as LevelN);
   const unlocked = useUnlocked();
+  const best = useBestStars();
   const lang = useLang();
   const levels = menuLevels();
   const current = levels.find((l) => l.n === selected)!;
@@ -108,7 +109,18 @@ export function Menu({
                   onDoubleClick={() => enter(l.n)}
                 >
                   <span className="mission-num">{String(l.n).padStart(2, "0")}</span>
-                  <span className="mission-name">{l.name}</span>
+                  <span className="mission-name">
+                    {l.name}
+                    {(best[l.n] ?? 0) > 0 && (
+                      <span
+                        className="mission-stars"
+                        aria-label={tr(`Récord: ${best[l.n]} de 3 estrellas`, `Best: ${best[l.n]} of 3 stars`)}
+                      >
+                        {"★".repeat(best[l.n] ?? 0)}
+                        <span className="dim">{"★".repeat(3 - (best[l.n] ?? 0))}</span>
+                      </span>
+                    )}
+                  </span>
                   <span className="mission-tag">
                     {locked ? (
                       <>

@@ -65,6 +65,27 @@ export function HoldToBurn({
     [],
   );
 
+  // Espacio mantenido en cualquier parte de la pantalla, sin tener que enfocar el botón.
+  const keys = useRef({ start, release });
+  keys.current = { start, release };
+  useEffect(() => {
+    const d = (e: KeyboardEvent) => {
+      if (e.key !== " " || e.repeat) return;
+      if (e.target instanceof HTMLButtonElement || e.target instanceof HTMLInputElement) return;
+      e.preventDefault();
+      keys.current.start();
+    };
+    const u = (e: KeyboardEvent) => {
+      if (e.key === " ") keys.current.release();
+    };
+    window.addEventListener("keydown", d);
+    window.addEventListener("keyup", u);
+    return () => {
+      window.removeEventListener("keydown", d);
+      window.removeEventListener("keyup", u);
+    };
+  }, []);
+
   // Barra de altitudes: de la actual al doble de la distancia hasta el satélite.
   const span = Math.max(10, Math.abs(target_km - alt_km) * 2);
   const lo = up ? alt_km : alt_km - span;
@@ -107,7 +128,11 @@ export function HoldToBurn({
           : `${formatNumber(Math.abs(dv), 1)} m/s`}
       </button>
       <p className="note">
-        {tr("Suelta cuando la flecha llegue al satélite.", "Release when the arrow reaches the satellite.")}
+        <kbd>{tr("Espacio", "Space")}</kbd>{" "}
+        {tr(
+          "mantén y suelta cuando la flecha llegue al satélite.",
+          "hold and release when the arrow reaches the satellite.",
+        )}
       </p>
     </div>
   );

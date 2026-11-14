@@ -1,7 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { PlayerAction, ScenarioDefinition, SimState } from "@ikaros/contracts";
 import { useSimulation } from "../../sim/useSimulation";
-import { recordResult } from "../../progress";
+import { recordResult, recordStars } from "../../progress";
+import { ScoreHud, ScoreProvider, pilotRatio, starsFor, useScore } from "../../game/score";
+import { TimingBar } from "../../game/TimingBar";
+import { Stars } from "../../game/Stars";
+import { lesson } from "../../game/learn";
 import { menuLevels } from "../../menu/levels";
 import { ObservacionTierraScene, OrbitPreview2 } from "./ObservacionTierraScene";
 import { orbitGeometry } from "./geometry";
@@ -30,18 +34,46 @@ const scales = (): TimeScale[] => [
 
 const param = (def: ScenarioDefinition, key: string) => def.params[key]?.value ?? 0;
 
-export function ObservacionTierraScreen({ onExit }: { onExit: () => void }) {
+export function ObservacionTierraScreen(props: { onExit: () => void }) {
+  return (
+    <ScoreProvider>
+      <ObservacionTierraGame {...props} />
+    </ScoreProvider>
+  );
+}
+
+/** Pases sobre la estación terrena que se juegan (apuntar la antena); el resto es automático. */
+const PASSES = 3;
+
+function ObservacionTierraGame({ onExit }: { onExit: () => void }) {
   const [timeScale, setTimeScale] = useState(3600);
   const [hideUi, setHideUi] = useState(false);
   const [overlay, setOverlay] = useState<OverlayKind>(null);
   const [follow, setFollow] = useState(false);
-  const { state, latest, act, restart, report, def } = useSimulation("level2-leo", timeScale);
+  const [pass, setPass] = useState<number | null>(null);
+  const score = useScore();
+  const { state, latest, act, restart, report, def } = useSimulation("level2-leo", pass === null ? timeScale : 0);
   const launchSeq = useLaunchSequence(state.phase, def.title);
 
-  // Una misión cumplida desbloquea el nivel siguiente.
+  // Una misión cumplida desbloquea el nivel siguiente; las estrellas suman la destreza del piloto.
+  const stars = report ? starsFor(report.outcome, pilotRatio(score.ratings)) : 0;
   useEffect(() => {
-    if (report) recordResult(2, report.outcome);
-  }, [report]);
+    if (!report) return;
+    recordResult(2, report.outcome);
+    recordStars(2, stars);
+  }, [report, stars]);
+
+  // Al abrirse un pase sobre la estación terrena, el jugador apunta la antena.
+  const passes = useRef(0);
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    const open = state.phase === "operations" && state.comm_window_open === true;
+    if (open && !wasOpen.current && passes.current < PASSES) {
+      passes.current++;
+      setPass(passes.current);
+    }
+    wasOpen.current = open;
+  }, [state.phase, state.comm_window_open]);
 
   useHotkey("h", () => setHideUi((v) => !v));
 
@@ -51,6 +83,10 @@ export function ObservacionTierraScreen({ onExit }: { onExit: () => void }) {
   }, [state.phase]);
 
   const onRestart = () => {
+    passes.current = 0;
+    wasOpen.current = false;
+    setPass(null);
+    score.reset();
     setTimeScale(3600);
     setFollow(false);
     restart();
@@ -92,13 +128,52 @@ export function ObservacionTierraScreen({ onExit }: { onExit: () => void }) {
         <section className="panel guide" aria-labelledby="ops-h">
           <h2 id="ops-h">{tr("Operación", "Operations")}</h2>
           {report ? (
-            <Report report={report} onRestart={onRestart} unlocks={menuLevels()[2]?.name} />
+            <Report
+              report={report}
+              onRestart={onRestart}
+              unlocks={menuLevels()[2]?.name}
+              extra={
+                <div className="debrief-stars">
+                  <Stars n={stars} />
+                  <span>
+                    {tr("Puntos de piloto", "Pilot points")} <b className="num">{formatNumber(score.points)}</b>
+                  </span>
+                </div>
+              }
+            />
           ) : (
             <Operations def={def} state={state} />
           )}
           <Assistant events={state.events} />
         </section>
       </aside>
+      <ScoreHud />
+      {pass !== null && (
+        <div className="game-layer">
+          <TimingBar
+            key={pass}
+            kicker={tr(`Pase ${pass} de ${PASSES} sobre la estación`, `Pass ${pass} of ${PASSES} over the station`)}
+            title={tr("Apunta la antena", "Point the antenna")}
+            hint={tr(
+              "Pulsa cuando la antena cruce la estación terrena: 3 enlaces por pase.",
+              "Press when the antenna crosses the ground station: 3 links per pass.",
+            )}
+            button={tr("Enlazar", "Link")}
+            attempts={3}
+            window={0.16}
+            speed={0.9}
+            lesson={lesson(pass === 1 ? "capture" : pass === 2 ? "inclination" : "insertion")}
+            resultText={(n) => ({
+              ok: n >= 2,
+              text: tr(`${n} de 3 enlaces con la estación.`, `${n} of 3 links with the station.`),
+            })}
+            onDone={(n) => {
+              score.add(n === 3 ? "perfect" : n === 2 ? "good" : "fail", tr(`Enlace ${pass}`, `Link ${pass}`));
+              setPass(null);
+            }}
+          />
+        </div>
+      )}
       {launchSeq}
       <Overlay kind={overlay} onClose={() => setOverlay(null)} />
     </div>
@@ -118,6 +193,7 @@ function HangarPage({
   onExit: () => void;
   onOverlay: (k: OverlayKind) => void;
 }) {
+  const score = useScore();
   const [attemptFrom, setAttemptFrom] = useState<number | null>(null);
   const blocked =
     attemptFrom === null ? [] : state.events.slice(attemptFrom).filter((e) => e.trigger === "level2:launch-blocked");
@@ -215,7 +291,10 @@ function HangarPage({
           def={def}
           state={state}
           act={act}
-          onDone={() => setValidatedFor(`${state.selected?.orbit}|${state.selected?.objective}`)}
+          onDone={(n) => {
+            score.add(n === 3 ? "perfect" : n === 2 ? "good" : "fail", tr("Inserción en órbita", "Orbit insertion"));
+            setValidatedFor(`${state.selected?.orbit}|${state.selected?.objective}`);
+          }}
           onClose={() => setTaller(false)}
         />
       )}

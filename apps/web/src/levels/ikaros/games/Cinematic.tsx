@@ -84,7 +84,14 @@ export function Cinematic({
   done.current = onDone;
   useEffect(() => {
     const id = window.setTimeout(() => done.current(), DURATION * 1000 + 600);
-    return () => window.clearTimeout(id);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Enter" || e.key === "Escape") done.current();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.clearTimeout(id);
+      window.removeEventListener("keydown", onKey);
+    };
   }, []);
   const arriving = kind === "arrival";
   return (
@@ -112,7 +119,7 @@ export function Cinematic({
               : tr("Ikaros deja la Tierra rumbo a Venus", "Ikaros leaves Earth for Venus")}
         </h2>
         <button className="scale-btn" onClick={() => done.current()}>
-          {tr("Saltar", "Skip")}
+          <kbd>Enter</kbd> {tr("Saltar", "Skip")}
         </button>
       </div>
     </div>

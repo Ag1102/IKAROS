@@ -1,4 +1,6 @@
-import { Suspense, lazy, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
+import { KeyHint, KeyHints } from "./KeyHint";
+import { useFrameLoop, useHeldKeys } from "./minigame";
 import type { PlayerAction, ScenarioDefinition, SimState } from "@ikaros/contracts";
 import { Dialog } from "../ui/Dialog";
 import { formatNumber } from "../ui/format";
@@ -41,7 +43,8 @@ export function OrbitLaunch({
   def: ScenarioDefinition;
   state: SimState;
   act: (a: PlayerAction) => void;
-  onDone: () => void;
+  /** Se llama con las estrellas (1 a 3) al terminar con una órbita útil. */
+  onDone: (stars: number) => void;
   onClose: () => void;
 }) {
   const [step, setStep] = useState<"heading" | "launch">("heading");
@@ -60,6 +63,46 @@ export function OrbitLaunch({
   const v = vc * power;
   const projection = projectLeo(alt, v);
   const stars = landed ? insertionStars(v, alt) : 0;
+
+  // ---- Teclado: ←/→ rumbo y Enter; ↑/↓ potencia (mantenidas), Espacio lanza, R repite ----
+  const held = useHeldKeys(["ArrowUp", "ArrowDown"]);
+  useFrameLoop((dt) => {
+    if (step !== "launch" || flying !== null || landed) return;
+    const dir = (held.current.has("ArrowUp") ? 1 : 0) - (held.current.has("ArrowDown") ? 1 : 0);
+    if (dir !== 0) setPower((p) => Math.max(MIN_F, Math.min(MAX_F, p + dir * 0.12 * dt)));
+  });
+  const keyState = useRef({ step, orbitId, covered, flying, landed, stars });
+  keyState.current = { step, orbitId, covered, flying, landed, stars };
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const k = keyState.current;
+      if (k.step === "heading") {
+        if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+          e.preventDefault();
+          const i = orbits.findIndex((o) => o.id === k.orbitId);
+          const next = orbits[(i + (e.key === "ArrowRight" ? 1 : orbits.length - 1) + (i < 0 ? 1 : 0)) % orbits.length];
+          if (next) act({ type: "select-component", slot: "orbit", componentId: next.id });
+        } else if (e.key === "Enter" && k.orbitId && k.covered) {
+          e.preventDefault();
+          setStep("launch");
+        }
+        return;
+      }
+      if (e.key === " " && k.flying === null && !k.landed) {
+        e.preventDefault();
+        setFlying(performance.now());
+      } else if ((e.key === "r" || e.key === "R") && k.landed) {
+        setLanded(false);
+        setFlying(null);
+      } else if (e.key === "Enter" && k.landed && k.stars > 0) {
+        e.preventDefault();
+        onDone(k.stars);
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [orbits, act, onDone, onClose]);
 
   const result = () => {
     if (projection.outcome === "reentry")
@@ -142,6 +185,10 @@ export function OrbitLaunch({
                 </Callout>
               )}
               <Why {...why("inclination")} />
+              <KeyHints>
+                <KeyHint keys={["←", "→"]}>{tr("rumbo", "heading")}</KeyHint>
+                <KeyHint keys={["Enter"]}>{tr("siguiente", "next")}</KeyHint>
+              </KeyHints>
               <button className="primary" disabled={!covered} onClick={() => setStep("launch")}>
                 {tr("Siguiente", "Next")}
               </button>
@@ -193,6 +240,10 @@ export function OrbitLaunch({
                     "The orange arc shows where it will go. Dotted line: the target orbit.",
                   )}
                 </p>
+                <KeyHints>
+                  <KeyHint keys={["↑", "↓"]}>{tr("potencia (mantén)", "power (hold)")}</KeyHint>
+                  <KeyHint keys={[tr("Espacio", "Space")]}>{tr("lanzar", "launch")}</KeyHint>
+                </KeyHints>
                 <button className="primary big" disabled={flying !== null} onClick={() => setFlying(performance.now())}>
                   {tr("¡Lanzar!", "Launch!")}
                 </button>
@@ -206,6 +257,10 @@ export function OrbitLaunch({
                   {formatNumber(vc, 2)} km/s
                 </p>
                 <Why {...why("insertion")} />
+                <KeyHints>
+                  <KeyHint keys={["R"]}>{tr("otra vez", "again")}</KeyHint>
+                  {stars > 0 && <KeyHint keys={["Enter"]}>{tr("listo", "done")}</KeyHint>}
+                </KeyHints>
                 <div className="row-actions">
                   <button
                     className="scale-btn"
@@ -220,7 +275,7 @@ export function OrbitLaunch({
                     <button
                       className="primary"
                       onClick={() => {
-                        onDone();
+                        onDone(stars);
                         onClose();
                       }}
                     >

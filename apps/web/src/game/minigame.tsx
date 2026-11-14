@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { tr } from "../../../i18n";
+import { tr } from "../i18n";
+import type { Rating } from "./score";
+import type { Lesson } from "./learn";
 
 /** Cuenta atrás en segundos reales; llama a `onEnd` una sola vez al llegar a cero. */
 export function useCountdown(seconds: number, onEnd: () => void, running = true) {
@@ -67,6 +69,53 @@ export function useKeys(onDown: (key: string, e: KeyboardEvent) => void, onUp?: 
   }, []);
 }
 
+/** Teclas mantenidas en este momento (para movimientos continuos con las flechas). */
+export function useHeldKeys(keys: string[]) {
+  const held = useRef(new Set<string>());
+  useEffect(() => {
+    const d = (e: KeyboardEvent) => {
+      if (!keys.includes(e.key)) return;
+      e.preventDefault();
+      held.current.add(e.key);
+    };
+    const u = (e: KeyboardEvent) => held.current.delete(e.key);
+    const blur = () => held.current.clear();
+    window.addEventListener("keydown", d);
+    window.addEventListener("keyup", u);
+    window.addEventListener("blur", blur);
+    return () => {
+      window.removeEventListener("keydown", d);
+      window.removeEventListener("keyup", u);
+      window.removeEventListener("blur", blur);
+    };
+    // Las teclas de cada juego no cambian.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return held;
+}
+
+/** Barra espaciadora (o Enter) mantenida: activa mientras se pulsa, en cualquier parte de la página. */
+export function useHoldSpace(onChange: (down: boolean) => void) {
+  const ref = useRef(onChange);
+  ref.current = onChange;
+  useEffect(() => {
+    const d = (e: KeyboardEvent) => {
+      if (e.key !== " " && e.key !== "Enter") return;
+      e.preventDefault();
+      if (!e.repeat) ref.current(true);
+    };
+    const u = (e: KeyboardEvent) => {
+      if (e.key === " " || e.key === "Enter") ref.current(false);
+    };
+    window.addEventListener("keydown", d);
+    window.addEventListener("keyup", u);
+    return () => {
+      window.removeEventListener("keydown", d);
+      window.removeEventListener("keyup", u);
+    };
+  }, []);
+}
+
 /** Marco común de los minijuegos: título, consigna, tiempo y resultado. */
 export function GameCard({
   kicker,
@@ -76,6 +125,8 @@ export function GameCard({
   total,
   theoretical = false,
   result,
+  keys,
+  lesson,
   children,
 }: {
   kicker: string;
@@ -85,7 +136,11 @@ export function GameCard({
   total?: number;
   theoretical?: boolean;
   /** Texto de resultado al terminar (éxito o fallo). */
-  result?: { ok: boolean; text: string } | null;
+  result?: { ok: boolean; text: string; rating?: Rating } | null;
+  /** Pistas de teclas del reto. */
+  keys?: ReactNode;
+  /** Dato que se aprende, visible al terminar. */
+  lesson?: Lesson;
   children: ReactNode;
 }) {
   return (
@@ -105,20 +160,53 @@ export function GameCard({
         </div>
       )}
       <div className="game-body">{children}</div>
+      {!result && keys}
       {result && <p className="game-result">{result.text}</p>}
+      {result && (
+        <p className="game-next">
+          <kbd>Enter</kbd> {tr("seguir", "continue")}
+        </p>
+      )}
+      {result && lesson && (
+        <p className="game-lesson">
+          <span className="game-lesson-tag">{tr("Dato", "Fact")}</span> {lesson.text}{" "}
+          <span className="fact-src">— {lesson.source}</span>
+        </p>
+      )}
     </section>
   );
 }
 
-/** Muestra el resultado ~1,4 s y luego avisa al director. */
+/**
+ * Muestra el resultado y el dato del reto, y avisa al director: con Enter o Espacio se sigue
+ * enseguida; si no, a los 4 s.
+ */
 export function useFinish<T>(onDone: (r: T) => void) {
   const [result, setResult] = useState<{ ok: boolean; text: string; value: T } | null>(null);
   const doneRef = useRef(onDone);
   doneRef.current = onDone;
   useEffect(() => {
     if (!result) return;
-    const id = window.setTimeout(() => doneRef.current(result.value), 1400);
-    return () => window.clearTimeout(id);
+    let sent = false;
+    const go = () => {
+      if (sent) return;
+      sent = true;
+      doneRef.current(result.value);
+    };
+    const id = window.setTimeout(go, 4000);
+    // Medio segundo de gracia para no saltar el dato con la misma pulsación del juego.
+    const armed = window.setTimeout(() => window.addEventListener("keydown", onKey), 500);
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        go();
+      }
+    }
+    return () => {
+      window.clearTimeout(id);
+      window.clearTimeout(armed);
+      window.removeEventListener("keydown", onKey);
+    };
   }, [result]);
   const finish = (ok: boolean, text: string, value: T) => setResult((r) => r ?? { ok, text, value });
   return { result, finish };

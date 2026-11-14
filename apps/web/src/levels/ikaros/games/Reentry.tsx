@@ -1,6 +1,9 @@
 import { useRef, useState } from "react";
 import { tr } from "../../../i18n";
-import { GameCard, useCountdown, useFinish, useFrameLoop, useKeys } from "./common";
+import type { Rating } from "../../../game/score";
+import { lesson } from "../../../game/learn";
+import { KeyHint, KeyHints } from "../../../game/KeyHint";
+import { GameCard, useCountdown, useFinish, useFrameLoop, useKeys } from "../../../game/minigame";
 
 const SECONDS = 9;
 const CORRIDOR = 0.16;
@@ -9,19 +12,21 @@ const CORRIDOR = 0.16;
  * ⚗ Reentrada de la cápsula: el ángulo de entrada deriva con la atmósfera. Con ←/→ (o los
  * botones) se corrige para mantenerlo en el corredor: muy pendiente se quema, muy plano rebota.
  */
-export function Reentry({ onDone }: { onDone: (ok: boolean) => void }) {
+export function Reentry({ onDone }: { onDone: (r: Rating) => void }) {
   const [angle, setAngle] = useState(0);
   const a = useRef(0);
   const drift = useRef(0.3);
   const push = useRef(0);
   const outside = useRef(0);
   const time = useRef(0);
+  const everOut = useRef(0);
   const { result, finish } = useFinish(onDone);
   useFrameLoop((dt) => {
     time.current += dt;
     drift.current = 0.35 * Math.sin(time.current * 0.9) + 0.25 * Math.sin(time.current * 2.3 + 1);
     a.current = Math.max(-1, Math.min(1, a.current + (drift.current + push.current) * dt));
     setAngle(a.current);
+    if (Math.abs(a.current) > CORRIDOR) everOut.current += dt;
     outside.current = Math.abs(a.current) > CORRIDOR ? outside.current + dt : Math.max(0, outside.current - dt);
     if (outside.current > 1.6) {
       finish(
@@ -29,7 +34,7 @@ export function Reentry({ onDone }: { onDone: (ok: boolean) => void }) {
         a.current > 0
           ? tr("Entrada muy pendiente: la cápsula se quemó.", "Too steep: the capsule burned up.")
           : tr("Entrada muy plana: la cápsula rebotó al espacio.", "Too shallow: the capsule skipped off."),
-        false,
+        "fail",
       );
     }
   }, !result);
@@ -50,7 +55,7 @@ export function Reentry({ onDone }: { onDone: (ok: boolean) => void }) {
       finish(
         true,
         tr("¡Paracaídas abiertos! La cápsula llega a la Tierra.", "Parachutes out! The capsule reaches Earth."),
-        true,
+        everOut.current < 0.5 ? "perfect" : "good",
       ),
     !result,
   );
@@ -63,11 +68,14 @@ export function Reentry({ onDone }: { onDone: (ok: boolean) => void }) {
     <GameCard
       kicker={tr("Regreso a la Tierra", "Return to Earth")}
       title={tr("Mantén el corredor de reentrada", "Hold the reentry corridor")}
-      hint={tr(
-        "Corrige con ←/→ para que la cápsula no salga de la franja.",
-        "Correct with ←/→ to keep the capsule in the band.",
-      )}
+      hint={tr("Corrige para que la cápsula no salga de la franja.", "Correct so the capsule stays in the band.")}
       left={left}
+      lesson={lesson("reentry")}
+      keys={
+        <KeyHints>
+          <KeyHint keys={["←", "→"]}>{tr("corregir (mantén)", "correct (hold)")}</KeyHint>
+        </KeyHints>
+      }
       total={SECONDS}
       theoretical
       result={result}

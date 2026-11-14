@@ -1,5 +1,8 @@
 import { useRef, useState } from "react";
-import { GameCard, useFinish, useFrameLoop, useKeys } from "./common";
+import type { Lesson } from "./learn";
+import { KeyHint, KeyHints } from "./KeyHint";
+import { tr } from "../i18n";
+import { GameCard, useFinish, useFrameLoop, useKeys } from "./minigame";
 
 /**
  * Juego de tiempo: un marcador recorre la barra; se pulsa cuando pasa por la ventana.
@@ -15,6 +18,7 @@ export function TimingBar({
   speed,
   theoretical,
   resultText,
+  lesson,
   onDone,
 }: {
   kicker: string;
@@ -26,6 +30,7 @@ export function TimingBar({
   speed: number;
   theoretical?: boolean;
   resultText: (hits: number) => { ok: boolean; text: string };
+  lesson?: Lesson;
   onDone: (hits: number) => void;
 }) {
   const [pos, setPos] = useState(0);
@@ -69,7 +74,19 @@ export function TimingBar({
     }
   });
   return (
-    <GameCard kicker={kicker} title={title} hint={hint} theoretical={theoretical} result={result}>
+    <GameCard
+      kicker={kicker}
+      title={title}
+      hint={hint}
+      theoretical={theoretical}
+      result={result}
+      lesson={lesson}
+      keys={
+        <KeyHints>
+          <KeyHint keys={[tr("Espacio", "Space")]}>{button}</KeyHint>
+        </KeyHints>
+      }
+    >
       <div className="timing">
         <div className="timing-track">
           <i style={{ left: `${(winCenter - win / 2) * 100}%`, width: `${win * 100}%` }} />

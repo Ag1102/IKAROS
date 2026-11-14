@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { PlayerAction, ScenarioDefinition, SimState } from "@ikaros/contracts";
 import { physics } from "@ikaros/sim";
 import { Scene } from "../../scene/Scene";
 import { useSimulation } from "../../sim/useSimulation";
-import { recordResult } from "../../progress";
+import { recordResult, recordStars } from "../../progress";
+import { ScoreHud, ScoreProvider, pilotRatio, starsFor, useScore } from "../../game/score";
+import { BoltSequence } from "../../game/BoltSequence";
 import { menuLevels } from "../../menu/levels";
 import { C } from "../../data/sources";
 import { EventLog, ResourcesPanel, TopBar } from "../../ui/Panels";
@@ -78,19 +80,56 @@ function Stepper({ phase }: { phase: string }) {
   );
 }
 
-export function ServicioOrbitaScreen({ onExit }: { onExit: () => void }) {
+export function ServicioOrbitaScreen(props: { onExit: () => void }) {
+  return (
+    <ScoreProvider>
+      <ServicioOrbitaGame {...props} />
+    </ScoreProvider>
+  );
+}
+
+/** Caminatas espaciales por misión: una en cada uno de los primeros pases con el enlace abierto. */
+const EVAS = 2;
+
+function ServicioOrbitaGame({ onExit }: { onExit: () => void }) {
   const [timeScale, setTimeScale] = useState(60);
   const [dv, setDv] = useState(0);
   const [hideUi, setHideUi] = useState(false);
   const [overlay, setOverlay] = useState<OverlayKind>(null);
   const [follow, setFollow] = useState(false);
-  const { state, latest, act, restart, report, def } = useSimulation("level1-repair", timeScale);
+  const [eva, setEva] = useState<number | null>(null);
+  const score = useScore();
+  const { state, latest, act, restart, report, def } = useSimulation("level1-repair", eva === null ? timeScale : 0);
   const launchSeq = useLaunchSequence(state.phase, def.title);
 
-  // Una misión cumplida desbloquea el nivel siguiente.
+  // Una misión cumplida desbloquea el nivel siguiente; las estrellas suman la destreza del piloto.
+  const stars = report ? starsFor(report.outcome, pilotRatio(score.ratings)) : 0;
   useEffect(() => {
-    if (report) recordResult(1, report.outcome);
-  }, [report]);
+    if (!report) return;
+    recordResult(1, report.outcome);
+    recordStars(1, stars);
+  }, [report, stars]);
+
+  // Cada llegada de una transferencia se califica: acople a la primera = perfecto.
+  const seenEvents = useRef(0);
+  const evaCount = useRef(0);
+  useEffect(() => {
+    const evs = state.events.slice(seenEvents.current);
+    seenEvents.current = state.events.length;
+    for (const e of evs) {
+      if (e.trigger === "level1:docked") {
+        const n = dockStars(state);
+        score.add(n === 3 ? "perfect" : "good", tr("Acople", "Docking"));
+      } else if (e.trigger === "level1:miss") {
+        score.add("fail", tr("Transferencia corta o larga", "Transfer off target"));
+      } else if (e.trigger === "level1:aos" && state.phase === "repair" && evaCount.current < EVAS) {
+        evaCount.current++;
+        setEva(evaCount.current);
+      }
+    }
+    // score.add es estable; basta con los eventos.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.events]);
 
   useHotkey("h", () => setHideUi((v) => !v));
 
@@ -104,6 +143,10 @@ export function ServicioOrbitaScreen({ onExit }: { onExit: () => void }) {
   const preview = useMemo(() => (canBurn && dv !== 0 ? altitudeAfter(state, dv) : null), [canBurn, dv, state]);
 
   const onRestart = () => {
+    seenEvents.current = 0;
+    evaCount.current = 0;
+    setEva(null);
+    score.reset();
     setDv(0);
     setFollow(false);
     restart();
@@ -156,10 +199,42 @@ export function ServicioOrbitaScreen({ onExit }: { onExit: () => void }) {
             />
           )}
           {state.phase === "repair" && <RepairStep state={state} />}
-          {report && <Report report={report} onRestart={onRestart} unlocks={menuLevels()[1]?.name} />}
+          {report && (
+            <Report
+              report={report}
+              onRestart={onRestart}
+              unlocks={menuLevels()[1]?.name}
+              extra={
+                <div className="debrief-stars">
+                  <Stars n={stars} />
+                  <span>
+                    {tr("Puntos de piloto", "Pilot points")} <b className="num">{formatNumber(score.points)}</b>
+                  </span>
+                </div>
+              }
+            />
+          )}
           <Assistant events={state.events} />
         </section>
       </aside>
+      <ScoreHud />
+      {eva !== null && (
+        <div className="game-layer">
+          <BoltSequence
+            key={eva}
+            seed={eva * 5}
+            title={
+              eva === 1
+                ? tr("Cambia el panel solar", "Replace the solar panel")
+                : tr("Monta la antena", "Mount the antenna")
+            }
+            onDone={(r) => {
+              score.add(r, tr(`Caminata espacial ${eva}`, `Spacewalk ${eva}`));
+              setEva(null);
+            }}
+          />
+        </div>
+      )}
       {launchSeq}
       <Overlay kind={overlay} onClose={() => setOverlay(null)} />
     </div>
