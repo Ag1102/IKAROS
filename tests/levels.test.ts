@@ -134,7 +134,7 @@ describe("nivel 3: Ikaros", () => {
     expect(ev?.choices?.map((c) => c.id)).toEqual(["execute", "skip"]);
     expect(ev?.deadline_s).toBeGreaterThan(ev?.at_s ?? 0);
     s = resolveOpen(sim, s, "level3:venus-window", "execute");
-    expect(s.perihelion_rsun).toBe(25);
+    expect(s.perihelion_rsun).toBe(9.5);
   });
 });
 
@@ -232,6 +232,9 @@ describe("nivel 3: zambullida Ikaros ⚗", () => {
     expect(report.metrics.historical_record_broken).toBe(true);
     expect(report.metrics.hts_blocked_pct as number).toBeGreaterThan(0);
     expect(report.outcome).not.toBe("failure");
+    // Viaje único: un solo sobrevuelo de Venus y la cápsula vuelve con las muestras.
+    expect(offered.filter((t) => t === "level3:venus-window")).toHaveLength(1);
+    expect(report.metrics.capsule_recovered).toBe(true);
   });
 
   it("sin campo HTS ni nanobots no hay zambullida, pero 9,5 R☉ ya supera a Parker", () => {
@@ -246,5 +249,34 @@ describe("nivel 3: zambullida Ikaros ⚗", () => {
   it("quedarse en 9,5 R☉ con el kit es una opción válida", () => {
     const { report } = play(KIT, false);
     expect(report.metrics.ikaros_dive).toBe(false);
+  });
+});
+
+describe("nivel 3: sistemas ⚗ del kit Ikaros", () => {
+  it("con el reactor apagado no hay energía y la batería baja", () => {
+    const sim = createSimulation();
+    sim.load("level3-ikaros", 2);
+    pickAll(sim, {
+      energy: "fission-reactor",
+      shield: "shield-cc",
+      defense: "hts-field",
+      repair: "nanobots",
+      science: "sensors-capsule",
+    });
+    let s = sim.act({ type: "launch" });
+    while (s.phase === "cruise") {
+      const ev = s.events.find((e) => e.choices && !e.resolved);
+      s = ev
+        ? sim.act({ type: "resolve-event", eventId: ev.id, choice: ev.choices![0]!.id })
+        : sim.step(86_400);
+    }
+    s = sim.step(600);
+    expect(s.resources.power_generated_w).toBeGreaterThan(1000);
+    s = sim.act({ type: "set-system", system: "reactor", on: false });
+    const battery = s.battery_wh ?? 0;
+    s = sim.step(3600);
+    expect(s.systems?.reactor).toBe(false);
+    expect(s.resources.power_generated_w).toBeLessThan(100);
+    expect(s.battery_wh ?? 0).toBeLessThan(battery);
   });
 });

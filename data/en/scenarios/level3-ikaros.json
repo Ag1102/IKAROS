@@ -3,8 +3,8 @@
   "subtitle": "Solar encounter based on the Solar Probe+ power system design",
   "briefing": [
     "Ikaros follows the Solar Probe+ design (Landis et al., AIAA 2008-5712): a 9.5 solar radii perihelion, 510 times the sunlight at Earth.",
+    "One trip, no second chances: Earth → Venus → gravity assist → Sun → samples → back to Earth.",
     "Build the spacecraft with 500 M USD without exceeding the launcher's capacity. Anything marked ⚗ is theoretical.",
-    "Use the Venus windows to lower the perihelion. The paper uses 7 flybys; the game shortens them to 3.",
     "During the encounter: fold the main array, retract the secondary one behind the shield, keep the cells below 120 °C and power above 482 W.",
     "To make history: with the Ikaros kit ⚗ (mini reactor, HTS magnetic field and nanobots) a dive to 850,000 km from the Sun opens up, where no solar panel survives."
   ],

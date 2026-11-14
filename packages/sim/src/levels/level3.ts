@@ -16,7 +16,6 @@ import {
 import { clamp, Level, round } from "./base";
 
 const PAPER = "Landis et al., AIAA 2008-5712";
-const FLYBYS = 3;
 
 type Energy = "pv-cooled" | "stirling" | "fission-reactor";
 
@@ -47,6 +46,8 @@ export class Level3 extends Level {
   private dataDownlinked = 0;
   private capsuleRecovered = false;
   private dived = false;
+  private systems: { reactor: boolean; hts: boolean } = { reactor: true, hts: true };
+  private systemsOff_s = 0;
   private erosion = 0;
   private erosionBlocked = 0;
   private nanobotRepaired = 0;
@@ -119,7 +120,7 @@ export class Level3 extends Level {
     for (const c of this.chosenAll()) {
       if (c.power_w >= 0) continue;
       if (c.slot === "science" && this.t < this.safeModeUntil) continue;
-      if (c.slot === "defense" && this.brownout_s > 0) continue;
+      if (c.slot === "defense" && (this.brownout_s > 0 || !this.systems.hts)) continue;
       w += -c.power_w;
     }
     return w;
@@ -184,6 +185,22 @@ export class Level3 extends Level {
             sourceOf(paper, "main_array_limit_au"),
           );
         }
+        return;
+      case "set-system":
+        if (this.state.phase === "hangar") return;
+        this.systems = { ...this.systems, [action.system]: action.on };
+        this.state.systems = { ...this.systems };
+        this.info(
+          action.system === "reactor"
+            ? action.on
+              ? this.L("⚗ Reactor en marcha.", "⚗ Reactor running.")
+              : this.L("⚗ SCRAM: el reactor se apagó.", "⚗ SCRAM: the reactor shut down.")
+            : action.on
+              ? this.L("⚗ Campo HTS activo.", "⚗ HTS field active.")
+              : this.L("⚗ El campo HTS cayó.", "⚗ The HTS field collapsed."),
+          action.on ? "info" : "warning",
+          `level3:system-${action.system}-${action.on ? "on" : "off"}`,
+        );
         return;
       case "set-attitude":
         if (this.state.phase === "hangar") return;
@@ -269,7 +286,7 @@ export class Level3 extends Level {
     this.setDistance(distanceAt(q, Q, since - period / 2));
 
     if (
-      this.flybyWindows < FLYBYS &&
+      this.flybyWindows < this.flybys() &&
       this.t >= this.nextFlybyAt &&
       !this.openDecision("level3:venus-window")
     ) {
@@ -278,8 +295,8 @@ export class Level3 extends Level {
       this.emit(
         "crisis",
         this.L(
-          `Ventana de Venus ${this.flybyWindows} de ${FLYBYS}: el sobrevuelo puede bajar el perihelio a ${next} R☉.`,
-          `Venus window ${this.flybyWindows} of ${FLYBYS}: the flyby can lower the perihelion to ${next} R☉.`,
+          `Ventana de Venus ${this.flybyWindows} de ${this.flybys()}: el sobrevuelo puede bajar el perihelio a ${next} R☉.`,
+          `Venus window ${this.flybyWindows} of ${this.flybys()}: the flyby can lower the perihelion to ${next} R☉.`,
         ),
         {
           trigger: "level3:venus-window",
@@ -350,7 +367,7 @@ export class Level3 extends Level {
         "level3:venus-missed",
       );
     }
-    if (this.flybyWindows < FLYBYS) {
+    if (this.flybyWindows < this.flybys()) {
       this.nextFlybyAt = this.t + this.param("flyby_interval_s");
     } else if (this.diveReady()) {
       this.openDive();
@@ -416,6 +433,11 @@ export class Level3 extends Level {
       );
     }
     this.startEncounter();
+  }
+
+  /** Ventanas de Venus del escenario: tantas como perihelios por sobrevuelo hay en data/. */
+  private flybys(): number {
+    return Object.keys(this.def.params).filter((k) => /^perihelion_after_flyby_\d+_rsun$/.test(k)).length;
   }
 
   private deltaVLeft(): number {
@@ -540,7 +562,7 @@ export class Level3 extends Level {
     if (energy === "fission-reactor") {
       power += this.reactorPower();
       this.reactorEnergy_wh += (this.reactorPower() * dt) / 3600;
-      heat += this.param("reactor_waste_heat_w");
+      if (this.systems.reactor) heat += this.param("reactor_waste_heat_w");
     } else if (!(energy === "stirling" && this.stirlingFailed)) {
       const incident = I * area_m2;
       power += this.cellEfficiency * incident;
@@ -648,7 +670,7 @@ export class Level3 extends Level {
     if (r_rsun < paperPeri) {
       const intensity = (paperPeri / r_rsun) ** 2;
       const raw = this.param("dive_erosion_pct_s") * intensity * factor * dt;
-      const htsOn = Boolean(this.chosen("defense")) && this.brownout_s === 0;
+      const htsOn = Boolean(this.chosen("defense")) && this.brownout_s === 0 && this.systems.hts;
       const through = htsOn ? raw * this.param("hts_erosion_factor") : raw;
       hull -= through;
       this.erosion += through;
@@ -717,6 +739,7 @@ export class Level3 extends Level {
   }
 
   private reactorPower(): number {
+    if (!this.systems.reactor) return 0;
     const reactor = this.def.components.find((c) => c.id === "fission-reactor");
     return reactor ? reactor.power_w : 0;
   }
@@ -782,7 +805,7 @@ export class Level3 extends Level {
     const s = this.state;
     const full = this.param("cme_hull_damage_pct");
     let damage = full;
-    if (choice === "hts" && this.brownout_s === 0) {
+    if (choice === "hts" && this.brownout_s === 0 && this.systems.hts) {
       damage = 0;
       s.resources.data_stored_mb *= 1 - this.param("cme_hts_data_loss");
     } else if (choice === "nanobots") {

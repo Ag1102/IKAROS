@@ -4,8 +4,8 @@
   "subtitle": "Encuentro solar basado en el diseño de energía de Solar Probe+",
   "briefing": [
     "Ikaros sigue el diseño de Solar Probe+ (Landis et al., AIAA 2008-5712): perihelio de 9.5 radios solares, 510 veces la luz solar en la Tierra.",
+    "Un solo viaje, sin segundas oportunidades: Tierra → Venus → asistencia gravitatoria → Sol → muestras → regreso a la Tierra.",
     "Arma la nave con 500 M USD y sin pasar la capacidad del lanzador. Lo marcado con ⚗ es teórico.",
-    "Usa las ventanas de Venus para bajar el perihelio. El paper usa 7 sobrevuelos; el juego los abrevia a 3.",
     "En el encuentro: pliega la matriz principal, retrae la secundaria tras el escudo, mantén las celdas bajo 120 °C y la potencia sobre 482 W.",
     "Para hacer historia: con el kit Ikaros ⚗ (mini reactor, campo magnético HTS y nanobots) se abre una zambullida a 850.000 km del Sol, donde ningún panel solar sobrevive."
   ],
@@ -276,33 +276,19 @@
       "note": "Primer perihelio a 0.18 AU."
     },
     "perihelion_after_flyby_1_rsun": {
-      "value": 25,
-      "unit": "R_sun",
-      "source": "Supuesto del juego",
-      "retrieved": "2026-11-14",
-      "origin": "theoretical"
-    },
-    "perihelion_after_flyby_2_rsun": {
-      "value": 15.5,
-      "unit": "R_sun",
-      "source": "Supuesto del juego",
-      "retrieved": "2026-11-14",
-      "origin": "theoretical"
-    },
-    "perihelion_after_flyby_3_rsun": {
       "value": 9.5,
       "unit": "R_sun",
       "source": "Landis et al., AIAA 2008-5712, p. 1-2",
       "retrieved": "2026-11-14",
-      "origin": "real"
+      "origin": "real",
+      "note": "Viaje único del juego: un solo sobrevuelo de Venus lleva al perihelio del diseño. El paper usa 7."
     },
     "flyby_interval_s": {
-      "value": 15552000,
+      "value": 4492800,
       "unit": "s",
-      "source": "Supuesto del juego",
+      "source": "NASA, Parker Solar Probe: lanzamiento 12 ago 2018 y primer sobrevuelo de Venus 3 oct 2018 (52 días)",
       "retrieved": "2026-11-14",
-      "origin": "theoretical",
-      "note": "~6 meses entre sobrevuelos abreviados."
+      "origin": "real"
     },
     "flyby_window_s": {
       "value": 259200,
