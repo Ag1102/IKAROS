@@ -6,6 +6,7 @@ import { EventLog, ResourcesPanel, TopBar, type TimeScale } from "../../ui/Panel
 import { HangarSlots } from "../../ui/HangarSlots";
 import { Decisions, openDecisions } from "../../ui/Decisions";
 import { Report } from "../../ui/Report";
+import { useLaunchSequence } from "../../ui/LaunchSequence";
 import { Assistant } from "../../ui/Assistant";
 import { Overlay, type OverlayKind } from "../../ui/Overlay";
 import { formatNumber } from "../../ui/format";
@@ -37,6 +38,7 @@ export function IkarosScreen({ onExit }: { onExit: () => void }) {
   const { state, latest, act, restart, report, def } = useSimulation("level3-ikaros", timeScale, (s) =>
     s.phase === "encounter" ? ENCOUNTER_MAX_SCALE : Infinity,
   );
+  const launchSeq = useLaunchSequence(state.phase, def.title);
 
   useHotkey("h", () => setHideUi((v) => !v));
 
@@ -117,6 +119,7 @@ export function IkarosScreen({ onExit }: { onExit: () => void }) {
           <Assistant events={state.events} />
         </section>
       </aside>
+      {launchSeq}
       <Overlay kind={overlay} onClose={() => setOverlay(null)} />
     </div>
   );

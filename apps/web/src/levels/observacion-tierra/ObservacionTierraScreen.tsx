@@ -6,6 +6,7 @@ import { orbitGeometry } from "./geometry";
 import { EventLog, ResourcesPanel, TopBar, type TimeScale } from "../../ui/Panels";
 import { HangarSlots } from "../../ui/HangarSlots";
 import { Report } from "../../ui/Report";
+import { useLaunchSequence } from "../../ui/LaunchSequence";
 import { Assistant } from "../../ui/Assistant";
 import { Overlay, type OverlayKind } from "../../ui/Overlay";
 import { formatElapsed, formatNumber } from "../../ui/format";
@@ -30,6 +31,7 @@ export function ObservacionTierraScreen({ onExit }: { onExit: () => void }) {
   const [overlay, setOverlay] = useState<OverlayKind>(null);
   const [follow, setFollow] = useState(false);
   const { state, latest, act, restart, report, def } = useSimulation("level2-leo", timeScale);
+  const launchSeq = useLaunchSequence(state.phase, def.title);
 
   useHotkey("h", () => setHideUi((v) => !v));
 
@@ -86,6 +88,7 @@ export function ObservacionTierraScreen({ onExit }: { onExit: () => void }) {
           <Assistant events={state.events} />
         </section>
       </aside>
+      {launchSeq}
       <Overlay kind={overlay} onClose={() => setOverlay(null)} />
     </div>
   );

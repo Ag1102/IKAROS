@@ -75,7 +75,7 @@ export default function HangarStage({ model, active }: { model: NasaModelInfo; a
       className="hangar-canvas"
       shadows
       dpr={[1, 2]}
-      camera={{ position: [4.2, 2.1, 5.4], fov: 34, near: 0.05, far: 200 }}
+      camera={{ position: [4.8, 2.3, 6.2], fov: 34, near: 0.05, far: 200 }}
       gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.1 }}
     >
       <color attach="background" args={["#030507"]} />
@@ -93,7 +93,7 @@ export default function HangarStage({ model, active }: { model: NasaModelInfo; a
       />
       <group position={[0.9, -0.9, 0]}>
         <Suspense fallback={null}>
-          <Model url={model.url} size={2.9} />
+          <Model url={model.url} size={2.4} />
         </Suspense>
         <Platform active={active} />
         <ContactShadows position={[0, 0.01, 0]} opacity={0.6} scale={6} blur={2.4} far={3} />

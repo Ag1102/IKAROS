@@ -83,8 +83,8 @@ export function ObservacionTierraScene({
   return (
     <Canvas camera={{ position: [16, 10, 20], fov: 40, near: 0.001, far: 400 }} dpr={[1, 2]}>
       <color attach="background" args={["#020407"]} />
-      <ambientLight intensity={0.06} />
-      <hemisphereLight args={["#9fc4ff", "#000000", 0.08]} />
+      <ambientLight intensity={0.1} />
+      <hemisphereLight args={["#9fc4ff", "#000000", 0.18]} />
       <SunLight latest={latest} inclination={inclination_deg} />
       <Suspense fallback={null}>
         <Sky radius={350} />

@@ -8,6 +8,7 @@ import { EventLog, ResourcesPanel, TopBar } from "../../ui/Panels";
 import { HangarSlots } from "../../ui/HangarSlots";
 import { Assistant } from "../../ui/Assistant";
 import { Report } from "../../ui/Report";
+import { useLaunchSequence } from "../../ui/LaunchSequence";
 import { Overlay, type OverlayKind } from "../../ui/Overlay";
 import { formatNumber } from "../../ui/format";
 import { useHotkey } from "../../hooks/useHotkey";
@@ -58,6 +59,7 @@ export function ServicioOrbitaScreen({ onExit }: { onExit: () => void }) {
   const [overlay, setOverlay] = useState<OverlayKind>(null);
   const [follow, setFollow] = useState(false);
   const { state, latest, act, restart, report, def } = useSimulation("level1-repair", timeScale);
+  const launchSeq = useLaunchSequence(state.phase, def.title);
 
   useHotkey("h", () => setHideUi((v) => !v));
 
@@ -132,6 +134,7 @@ export function ServicioOrbitaScreen({ onExit }: { onExit: () => void }) {
           <Assistant events={state.events} />
         </section>
       </aside>
+      {launchSeq}
       <Overlay kind={overlay} onClose={() => setOverlay(null)} />
     </div>
   );

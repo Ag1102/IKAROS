@@ -69,8 +69,8 @@ export function Scene({ latest, docked, previewAltitude, follow }: Props) {
   return (
     <Canvas camera={{ position: [19, 9, 22], fov: 40, near: 0.001, far: 400 }} dpr={[1, 2]}>
       <color attach="background" args={["#020407"]} />
-      <ambientLight intensity={0.06} />
-      <hemisphereLight args={["#9fc4ff", "#000000", 0.08]} />
+      <ambientLight intensity={0.1} />
+      <hemisphereLight args={["#9fc4ff", "#000000", 0.18]} />
       <directionalLight position={SUN_DIR.clone().multiplyScalar(50)} intensity={3} />
       <Suspense fallback={null}>
         <Sky radius={350} />

@@ -106,12 +106,70 @@ function Row({ label, value, unit }: { label: string; value: string; unit: strin
   );
 }
 
+/** Medidor de HUD: etiqueta, valor y barra; cambia de color al cruzar el umbral. */
+function Gauge({
+  label,
+  value,
+  max,
+  text,
+  tone,
+}: {
+  label: string;
+  value: number;
+  max: number;
+  text: string;
+  tone: string;
+}) {
+  const pct = max > 0 ? Math.max(0, Math.min(100, (value / max) * 100)) : 0;
+  return (
+    <div className={`gauge gauge-${tone}`}>
+      <div className="gauge-head">
+        <span>{label}</span>
+        <span className="num">{text}</span>
+      </div>
+      <div className="gauge-bar" aria-hidden="true">
+        <div style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
 export function ResourcesPanel({ state }: { state: SimState }) {
   const r = state.resources;
   const margin = r.power_generated_w - r.power_consumed_w;
+  const battery = state.battery_wh;
+  const batteryCap = state.battery_capacity_wh ?? 0;
+  const hull = state.hull_durability_pct;
   return (
     <section className="panel resources" aria-labelledby="res-h">
       <h2 id="res-h">Recursos</h2>
+      <div className="gauges">
+        <Gauge
+          label="Potencia"
+          value={r.power_generated_w}
+          max={Math.max(r.power_consumed_w * 1.5, r.power_generated_w, 1)}
+          text={`${formatNumber(r.power_generated_w)} / ${formatNumber(r.power_consumed_w)} W`}
+          tone={margin < 0 ? "bad" : "ok"}
+        />
+        {battery !== undefined && batteryCap > 0 && (
+          <Gauge
+            label="Batería"
+            value={battery}
+            max={batteryCap}
+            text={`${formatNumber((battery / batteryCap) * 100)} %`}
+            tone={battery / batteryCap < 0.25 ? "bad" : battery / batteryCap < 0.5 ? "mid" : "ok"}
+          />
+        )}
+        {hull !== undefined && (
+          <Gauge
+            label="Casco"
+            value={hull}
+            max={100}
+            text={`${formatNumber(hull, 1)} %`}
+            tone={hull < 30 ? "bad" : hull < 60 ? "mid" : "ok"}
+          />
+        )}
+      </div>
       <table>
         <tbody>
           <Row label="Masa" value={formatNumber(r.mass_kg)} unit="kg" />

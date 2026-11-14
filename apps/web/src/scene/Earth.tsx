@@ -27,9 +27,9 @@ const cloudsMaterial = () =>
         float lat = abs(p.y);
         float belts = 0.55 + 0.25 * cos(lat * 9.0);
         float n = fbm(p * 3.2 + vec3(uTime * 0.004, 0.0, uTime * 0.002));
-        float c = smoothstep(0.52 - belts * 0.25, 0.85, n * 0.5 + 0.5);
+        float c = smoothstep(0.62 - belts * 0.2, 0.92, n * 0.5 + 0.5);
         float light = clamp(dot(vWorldNormal, uSun) * 1.4 + 0.15, 0.0, 1.0);
-        gl_FragColor = vec4(vec3(1.0) * light, c * 0.85);
+        gl_FragColor = vec4(vec3(1.0) * light, c * 0.75);
       }`,
     transparent: true,
     depthWrite: false,
