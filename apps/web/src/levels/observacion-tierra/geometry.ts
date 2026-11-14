@@ -1,6 +1,6 @@
 import type { SimState } from "@ikaros/contracts";
 import { physics } from "@ikaros/sim";
-import { C } from "../data/sources";
+import { C } from "../../data/sources";
 
 /**
  * Fase de la órbita igual que en el motor: el satélite está en eclipse en el último tramo de

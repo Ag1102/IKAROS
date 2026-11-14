@@ -1,19 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { PlayerAction, ScenarioDefinition, SimState } from "@ikaros/contracts";
-import { useSimulation } from "../sim/useSimulation";
-import { Level3Scene, OrbitPreview, probeOrbit } from "../level3/Level3Scene";
-import { EventLog, ResourcesPanel, TopBar, type TimeScale } from "../ui/Panels";
-import { HangarSlots } from "../ui/HangarSlots";
-import { Decisions, openDecisions } from "../ui/Decisions";
-import { Report } from "../ui/Report";
-import { Assistant } from "../ui/Assistant";
-import { Overlay, type OverlayKind } from "../ui/Overlay";
-import { formatNumber } from "../ui/format";
-import { PAPER } from "../data/sources";
-import { useHotkey } from "../hooks/useHotkey";
-import { ShipPreview } from "../ships/ShipPreview";
-import { usePreview } from "../ships/usePreview";
-import { matchesParker } from "../ships/Spacecraft";
+import { useSimulation } from "../../sim/useSimulation";
+import { IkarosScene, OrbitPreview, probeOrbit } from "./IkarosScene";
+import { EventLog, ResourcesPanel, TopBar, type TimeScale } from "../../ui/Panels";
+import { HangarSlots } from "../../ui/HangarSlots";
+import { Decisions, openDecisions } from "../../ui/Decisions";
+import { Report } from "../../ui/Report";
+import { Assistant } from "../../ui/Assistant";
+import { Overlay, type OverlayKind } from "../../ui/Overlay";
+import { formatNumber } from "../../ui/format";
+import { PAPER } from "../../data/sources";
+import { useHotkey } from "../../hooks/useHotkey";
+import { ShipPreview } from "../../ships/ShipPreview";
+import { usePreview } from "../../ships/usePreview";
+import { matchesParker } from "../../ships/Spacecraft";
 
 const PARKER_URL = "/models/parker-solar-probe.glb";
 
@@ -31,7 +31,7 @@ const param = (def: ScenarioDefinition, key: string) => def.params[key]?.value ?
 const flybysOf = (def: ScenarioDefinition) =>
   Object.keys(def.params).filter((k) => /^perihelion_after_flyby_\d+_rsun$/.test(k)).length;
 
-export function Level3Screen({ onExit }: { onExit: () => void }) {
+export function IkarosScreen({ onExit }: { onExit: () => void }) {
   const [timeScale, setTimeScale] = useState(86_400);
   const [hideUi, setHideUi] = useState(false);
   const [overlay, setOverlay] = useState<OverlayKind>(null);
@@ -73,7 +73,7 @@ export function Level3Screen({ onExit }: { onExit: () => void }) {
   return (
     <div className={hideUi ? "shell hide-ui" : "shell"}>
       <div className="viewport">
-        <Level3Scene
+        <IkarosScene
           latest={latest}
           follow={follow}
           aphelion_au={param(def, "aphelion_au")}

@@ -1,4 +1,4 @@
-import { solveKepler, type HelioOrbit } from "../sim/kepler";
+import { solveKepler, type HelioOrbit } from "../../sim/kepler";
 
 // Planetas del sistema solar interior para la escena del nivel 3 (solo visual).
 

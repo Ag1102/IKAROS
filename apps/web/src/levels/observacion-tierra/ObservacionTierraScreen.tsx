@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
 import type { PlayerAction, ScenarioDefinition, SimState } from "@ikaros/contracts";
-import { useSimulation } from "../sim/useSimulation";
-import { Level2Scene, OrbitPreview2 } from "../level2/Level2Scene";
-import { orbitGeometry } from "../level2/geometry";
-import { EventLog, ResourcesPanel, TopBar, type TimeScale } from "../ui/Panels";
-import { HangarSlots } from "../ui/HangarSlots";
-import { Report } from "../ui/Report";
-import { Assistant } from "../ui/Assistant";
-import { Overlay, type OverlayKind } from "../ui/Overlay";
-import { formatElapsed, formatNumber } from "../ui/format";
-import { useHotkey } from "../hooks/useHotkey";
-import { ShipPreview } from "../ships/ShipPreview";
-import { usePreview } from "../ships/usePreview";
+import { useSimulation } from "../../sim/useSimulation";
+import { ObservacionTierraScene, OrbitPreview2 } from "./ObservacionTierraScene";
+import { orbitGeometry } from "./geometry";
+import { EventLog, ResourcesPanel, TopBar, type TimeScale } from "../../ui/Panels";
+import { HangarSlots } from "../../ui/HangarSlots";
+import { Report } from "../../ui/Report";
+import { Assistant } from "../../ui/Assistant";
+import { Overlay, type OverlayKind } from "../../ui/Overlay";
+import { formatElapsed, formatNumber } from "../../ui/format";
+import { useHotkey } from "../../hooks/useHotkey";
+import { ShipPreview } from "../../ships/ShipPreview";
+import { usePreview } from "../../ships/usePreview";
 
 const SCALES: TimeScale[] = [
   { value: 0, label: "Pausa" },
@@ -23,7 +23,7 @@ const SCALES: TimeScale[] = [
 
 const param = (def: ScenarioDefinition, key: string) => def.params[key]?.value ?? 0;
 
-export function Level2Screen({ onExit }: { onExit: () => void }) {
+export function ObservacionTierraScreen({ onExit }: { onExit: () => void }) {
   const [timeScale, setTimeScale] = useState(3600);
   const [hideUi, setHideUi] = useState(false);
   const [overlay, setOverlay] = useState<OverlayKind>(null);
@@ -55,7 +55,7 @@ export function Level2Screen({ onExit }: { onExit: () => void }) {
   return (
     <div className={hideUi ? "shell hide-ui" : "shell"}>
       <div className="viewport">
-        <Level2Scene latest={latest} follow={follow} inclination_deg={state.inclination_deg ?? 0} />
+        <ObservacionTierraScene latest={latest} follow={follow} inclination_deg={state.inclination_deg ?? 0} />
       </div>
       <TopBar
         state={state}

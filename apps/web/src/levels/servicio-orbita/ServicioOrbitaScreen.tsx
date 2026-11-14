@@ -1,18 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import type { PlayerAction, ScenarioDefinition, SimState } from "@ikaros/contracts";
 import { physics } from "@ikaros/sim";
-import { Scene } from "../scene/Scene";
-import { useSimulation } from "../sim/useSimulation";
-import { C } from "../data/sources";
-import { EventLog, ResourcesPanel, TopBar } from "../ui/Panels";
-import { HangarSlots } from "../ui/HangarSlots";
-import { Assistant } from "../ui/Assistant";
-import { Report } from "../ui/Report";
-import { Overlay, type OverlayKind } from "../ui/Overlay";
-import { formatNumber } from "../ui/format";
-import { useHotkey } from "../hooks/useHotkey";
-import { ShipPreview } from "../ships/ShipPreview";
-import { usePreview } from "../ships/usePreview";
+import { Scene } from "../../scene/Scene";
+import { useSimulation } from "../../sim/useSimulation";
+import { C } from "../../data/sources";
+import { EventLog, ResourcesPanel, TopBar } from "../../ui/Panels";
+import { HangarSlots } from "../../ui/HangarSlots";
+import { Assistant } from "../../ui/Assistant";
+import { Report } from "../../ui/Report";
+import { Overlay, type OverlayKind } from "../../ui/Overlay";
+import { formatNumber } from "../../ui/format";
+import { useHotkey } from "../../hooks/useHotkey";
+import { ShipPreview } from "../../ships/ShipPreview";
+import { usePreview } from "../../ships/usePreview";
 
 const STEPS = [
   { phase: "hangar", label: "Hangar" },
@@ -50,7 +50,7 @@ function Stepper({ phase }: { phase: string }) {
   );
 }
 
-export function Level1Screen({ onExit }: { onExit: () => void }) {
+export function ServicioOrbitaScreen({ onExit }: { onExit: () => void }) {
   const [timeScale, setTimeScale] = useState(60);
   const [dv, setDv] = useState(0);
   const [hideUi, setHideUi] = useState(false);

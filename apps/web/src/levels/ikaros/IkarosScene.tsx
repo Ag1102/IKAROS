@@ -3,11 +3,11 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Html, Stars, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 import type { SimState } from "@ikaros/contracts";
-import { FollowControls } from "../scene/FollowControls";
-import { Spacecraft, matchesParker } from "../ships/Spacecraft";
-import { displaySize } from "../scene/screenSize";
-import { anomalyFromDistance, ellipsePoints, orbitFromApsides, type HelioOrbit } from "../sim/kepler";
-import { C, PAPER } from "../data/sources";
+import { FollowControls } from "../../scene/FollowControls";
+import { Spacecraft, matchesParker } from "../../ships/Spacecraft";
+import { displaySize } from "../../scene/screenSize";
+import { anomalyFromDistance, ellipsePoints, orbitFromApsides, type HelioOrbit } from "../../sim/kepler";
+import { C, PAPER } from "../../data/sources";
 import { MISSION_EPOCH_DAY, PLANETS, planetAt, planetOrbit, type Planet } from "./planets";
 
 /**
@@ -241,7 +241,7 @@ function Probe({
 
 useGLTF.preload(PROBE_URL);
 
-export function Level3Scene({
+export function IkarosScene({
   latest,
   follow,
   aphelion_au,

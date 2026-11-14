@@ -3,12 +3,12 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { Stars } from "@react-three/drei";
 import * as THREE from "three";
 import type { SimState } from "@ikaros/contracts";
-import { Earth } from "../scene/Earth";
-import { SmallSat } from "../scene/Ships";
-import { OrbitRing } from "../scene/OrbitRing";
-import { FollowControls } from "../scene/FollowControls";
-import { C } from "../data/sources";
-import { SCENE_UNIT_KM, planeToScene } from "../sim/orbit";
+import { Earth } from "../../scene/Earth";
+import { SmallSat } from "../../scene/Ships";
+import { OrbitRing } from "../../scene/OrbitRing";
+import { FollowControls } from "../../scene/FollowControls";
+import { C } from "../../data/sources";
+import { SCENE_UNIT_KM, planeToScene } from "../../sim/orbit";
 import { orbitGeometry } from "./geometry";
 
 const HOME = new THREE.Vector3(0, 0, 0);
@@ -53,7 +53,7 @@ function DownlinkBeam({ getPos, latest }: { getPos: () => THREE.Vector3; latest:
   return <primitive object={line} />;
 }
 
-export function Level2Scene({
+export function ObservacionTierraScene({
   latest,
   follow,
   inclination_deg,
