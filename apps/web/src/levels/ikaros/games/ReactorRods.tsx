@@ -6,7 +6,7 @@ import { KeyHint, KeyHints } from "../../../game/KeyHint";
 import { GameCard, useCountdown, useFinish, useFrameLoop, useHeldKeys, useArmed } from "../../../game/minigame";
 
 const SECONDS = 10;
-const BAND = [0.4, 0.65] as const;
+const BAND = [0.35, 0.7] as const;
 
 /**
  * ⚗ Mini reactor: el núcleo se calienta solo y a saltos. ↓ mete las barras de control (enfría)
@@ -29,12 +29,13 @@ export function ReactorRods({ onDone, seed }: { onDone: (r: Rating) => void; see
     setRods(r.current);
     phase.current += dt;
     const surge = 0.22 + 0.18 * Math.sin(phase.current * 1.7) + 0.12 * Math.sin(phase.current * 4.3);
-    t.current = Math.max(0, Math.min(1, t.current + (surge - r.current * 0.62) * dt));
+    // Dinámica suave: el núcleo responde a las barras en segundos, no al instante.
+    t.current = Math.max(0, Math.min(1, t.current + (surge - r.current * 0.62) * 0.5 * dt));
     setTemp(t.current);
     const outside = t.current < BAND[0] || t.current > BAND[1];
     if (outside) everOut.current += dt;
     out.current = outside ? out.current + dt : Math.max(0, out.current - dt * 0.5);
-    if (out.current > 2.2) {
+    if (out.current > 3.5) {
       finish(
         false,
         tr("SCRAM: el reactor se apagó por seguridad.", "SCRAM: the reactor shut down for safety."),

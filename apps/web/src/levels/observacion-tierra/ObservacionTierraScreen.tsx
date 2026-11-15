@@ -63,17 +63,18 @@ function ObservacionTierraGame({ onExit }: { onExit: () => void }) {
     recordStars(2, stars);
   }, [report, stars]);
 
-  // Al abrirse un pase sobre la estación terrena, el jugador apunta la antena.
+  // Pases jugables repartidos por la misión. Con el tiempo acelerado una ventana de 10 min se
+  // abre y se cierra entre dos cuadros, así que se programan por tiempo de misión.
   const passes = useRef(0);
-  const wasOpen = useRef(false);
+  const duration = param(def, "mission_duration_s");
   useEffect(() => {
-    const open = state.phase === "operations" && state.comm_window_open === true;
-    if (open && !wasOpen.current && passes.current < PASSES) {
+    if (state.phase !== "operations" || passes.current >= PASSES) return;
+    const due = (duration * (passes.current + 1)) / (PASSES + 1);
+    if (state.resources.mission_elapsed_s >= due) {
       passes.current++;
       setPass(passes.current);
     }
-    wasOpen.current = open;
-  }, [state.phase, state.comm_window_open]);
+  }, [state.phase, state.resources.mission_elapsed_s, duration]);
 
   useHotkey("h", () => setHideUi((v) => !v));
 
@@ -84,7 +85,6 @@ function ObservacionTierraGame({ onExit }: { onExit: () => void }) {
 
   const onRestart = () => {
     passes.current = 0;
-    wasOpen.current = false;
     setPass(null);
     score.reset();
     setTimeScale(3600);

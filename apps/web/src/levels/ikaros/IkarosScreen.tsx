@@ -459,7 +459,11 @@ function IkarosGame({ onExit }: { onExit: () => void }) {
             speed_km_s={state.speed_km_s ?? 0}
             parker_rsun={parker}
             dive={dived}
-            onDone={() => setStage({ k: "samples" })}
+            onDone={() => {
+              // Del récord se pasa directo a las muestras: se marcan ya, para no pedirlas dos veces.
+              flags.current.samples = true;
+              setStage({ k: "samples" });
+            }}
           />
         )}
         {stage.k === "samples" && (

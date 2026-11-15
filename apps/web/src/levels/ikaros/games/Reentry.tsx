@@ -6,7 +6,7 @@ import { KeyHint, KeyHints } from "../../../game/KeyHint";
 import { GameCard, useCountdown, useFinish, useFrameLoop, useKeys, useArmed } from "../../../game/minigame";
 
 const SECONDS = 9;
-const CORRIDOR = 0.16;
+const CORRIDOR = 0.22;
 
 /**
  * ⚗ Reentrada de la cápsula: el ángulo de entrada deriva con la atmósfera. Con ←/→ (o los
@@ -29,7 +29,7 @@ export function Reentry({ onDone }: { onDone: (r: Rating) => void }) {
     setAngle(a.current);
     if (Math.abs(a.current) > CORRIDOR) everOut.current += dt;
     outside.current = Math.abs(a.current) > CORRIDOR ? outside.current + dt : Math.max(0, outside.current - dt);
-    if (outside.current > 1.6) {
+    if (outside.current > 2.4) {
       finish(
         false,
         a.current > 0

@@ -6,11 +6,11 @@ import { KeyHint, KeyHints } from "../../../game/KeyHint";
 import { GameCard, useCountdown, useFinish, useFrameLoop, useHoldSpace, useArmed } from "../../../game/minigame";
 
 const SECONDS = 7;
-const ZONE = [0.7, 0.86] as const;
+const ZONE = [0.65, 0.9] as const;
 
 /**
  * ⚗ Campo HTS: se carga mientras se mantiene Espacio y se descarga al soltar. Hay que sostener
- * la carga en la franja 1,5 s seguidos para desviar la CME.
+ * la carga en la franja 1,2 s seguidos para desviar la CME.
  */
 export function ShieldCharge({ onDone }: { onDone: (r: Rating) => void }) {
   const [charge, setCharge] = useState(0);
@@ -22,10 +22,10 @@ export function ShieldCharge({ onDone }: { onDone: (r: Rating) => void }) {
   const { armed, pre } = useArmed();
   useHoldSpace((down) => (holding.current = down));
   useFrameLoop((dt) => {
-    c.current = Math.max(0, Math.min(1, c.current + (holding.current ? 0.45 : -0.35) * dt));
+    c.current = Math.max(0, Math.min(1, c.current + (holding.current ? 0.4 : -0.25) * dt));
     setCharge(c.current);
     held.current = c.current >= ZONE[0] && c.current <= ZONE[1] ? held.current + dt : 0;
-    if (held.current >= 1.5) {
+    if (held.current >= 1.2) {
       finish(
         true,
         tr("Campo estable: la CME se desvía.", "Field stable: the CME is deflected."),
