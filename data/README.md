@@ -17,4 +17,4 @@ Cada valor lleva: `value`, `unit`, `source` (cita o URL), `retrieved` (fecha) y 
 }
 ```
 
-- `scenarios/`: definición de cada nivel (la escribe Persona A, la lee el cliente).
+- `scenarios/`: definición de cada nivel (la escribe el motor, la lee el cliente).

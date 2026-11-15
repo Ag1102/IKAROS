@@ -122,7 +122,8 @@ export function timeFromPerihelion(q_au: number, Q_au: number, r_au: number): nu
 export function distanceAt(q_au: number, Q_au: number, t_s: number): number {
   const { a_au, e, n } = solarOrbit(q_au, Q_au);
   const M = n * Math.abs(t_s);
-  let E = M;
+  // Con excentricidades altas (la zambullida) Newton solo converge si arranca en π.
+  let E = e > 0.8 ? Math.PI : M;
   for (let i = 0; i < 30; i++) {
     E -= (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E));
   }

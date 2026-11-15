@@ -72,8 +72,9 @@ export abstract class Level {
       const dt = Math.min(left, this.substep());
       const decisions = this.openDecisionCount();
       this.state.resources.mission_elapsed_s += dt;
-      this.expireDeadlines();
       this.tick(dt);
+      // Los plazos vencen después del subpaso: un cambio de fase cuenta desde el siguiente.
+      this.expireDeadlines();
       left -= dt;
       // Si se abrió una decisión, el paso termina aquí: con pasos largos (crucero acelerado)
       // la decisión podría abrirse y vencer dentro de la misma llamada sin que nadie la vea.
@@ -110,7 +111,7 @@ export abstract class Level {
 
   protected onChoice(_ev: SimEvent, _choice: string): void {}
 
-  // ---- Hangar ----
+  // Hangar
 
   protected components(slot: string): ComponentOption[] {
     return this.def.components.filter((c) => c.slot === slot);
@@ -152,7 +153,7 @@ export abstract class Level {
       .map((s) => this.L(`Falta elegir: ${s.label}.`, `Still to choose: ${s.label}.`));
   }
 
-  // ---- Eventos ----
+  // Eventos
 
   protected emit(
     kind: SimEvent["kind"],

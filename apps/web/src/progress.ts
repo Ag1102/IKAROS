@@ -9,7 +9,7 @@ export const LAST_LEVEL = 2;
 function load(): number {
   try {
     const n = Number(window.localStorage.getItem(KEY));
-    // Un progreso guardado con la antigua misión 3 abre todo lo que hay ahora.
+    // Un valor guardado por encima del último nivel se limita a LAST_LEVEL.
     if (Number.isInteger(n) && n >= 1) return Math.min(n, LAST_LEVEL);
   } catch {
     // Sin almacenamiento (modo privado, pruebas): se empieza desde el nivel 1.
@@ -68,9 +68,8 @@ export function useUnlocked(): number {
   return useSyncExternalStore(subscribe, getUnlocked, getUnlocked);
 }
 
-// ---- Estrellas por nivel (mejor resultado) ----
+// Estrellas por nivel (mejor resultado)
 
-// Clave nueva: las estrellas guardadas antes eran de otra numeración de misiones.
 const STARS_KEY = "ikaros-stars-v2";
 let stars: Record<number, number> = {};
 try {

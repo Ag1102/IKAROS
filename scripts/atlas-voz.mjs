@@ -44,15 +44,22 @@ for (const [i, line] of pending.entries()) {
   const wav = join(tmpdir(), `atlas-${lang}-${line.id}.wav`);
   writeFileSync(wav, Buffer.from(await res.arrayBuffer()));
   // MP3 mono a 64 kbps: suficiente para voz y liviano para la web. loudnorm iguala el volumen entre líneas.
-  execFileSync("ffmpeg", ["-v", "error", "-y", "-i", wav, "-af", "loudnorm=I=-16:TP=-1.5", "-ac", "1", "-b:a", "64k", join(outDir, `${line.id}.mp3`)]);
-  rmSync(wav);
+  try {
+    execFileSync("ffmpeg", ["-v", "error", "-y", "-i", wav, "-af", "loudnorm=I=-16:TP=-1.5", "-ac", "1", "-b:a", "64k", join(outDir, `${line.id}.mp3`)]);
+  } finally {
+    rmSync(wav, { force: true });
+  }
   manifest[lang][line.id] = { text: hash(text), voice };
   writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
   console.log(`  [${i + 1}/${pending.length}] ${line.id} (${Math.round((Date.now() - started) / 1000)} s)`);
 }
 
-// Las líneas que ya no existen en el guion se quitan del manifiesto.
+// Las líneas que ya no existen en el guion se quitan del manifiesto y de la carpeta.
 const ids = new Set(lines.map((l) => l.id));
-for (const id of Object.keys(manifest[lang])) if (!ids.has(id)) delete manifest[lang][id];
+for (const id of Object.keys(manifest[lang])) {
+  if (ids.has(id)) continue;
+  delete manifest[lang][id];
+  rmSync(join(outDir, `${id}.mp3`), { force: true });
+}
 writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
 console.log("Listo.");

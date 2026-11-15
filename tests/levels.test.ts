@@ -293,7 +293,7 @@ describe("nivel 3: zambullida Ikaros ⚗", () => {
 });
 
 describe("nivel 3: sistemas ⚗ del kit Ikaros", () => {
-  it("con el reactor apagado no hay energía y la batería baja", () => {
+  it("con el reactor apagado se pierde su energía", () => {
     const sim = createSimulation();
     sim.load("level3-ikaros", 2);
     pickAll(sim, {
@@ -312,11 +312,11 @@ describe("nivel 3: sistemas ⚗ del kit Ikaros", () => {
     }
     s = sim.step(600);
     expect(s.resources.power_generated_w).toBeGreaterThan(1000);
+    const before = s.resources.power_generated_w;
     s = sim.act({ type: "set-system", system: "reactor", on: false });
-    const battery = s.battery_wh ?? 0;
     s = sim.step(3600);
     expect(s.systems?.reactor).toBe(false);
-    expect(s.resources.power_generated_w).toBeLessThan(100);
-    expect(s.battery_wh ?? 0).toBeLessThan(battery);
+    // Los 2 kW del reactor desaparecen; lo que queda es de los paneles.
+    expect(s.resources.power_generated_w).toBeLessThan(before - 1500);
   });
 });

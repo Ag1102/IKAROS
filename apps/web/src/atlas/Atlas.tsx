@@ -40,18 +40,21 @@ function Holo(props: { gesture: Gesture; visible: boolean; warn?: boolean; class
 
 /** Escribe el texto letra a letra; con menos movimiento lo muestra completo. */
 function useTypewriter(text: string): string {
-  const [n, setN] = useState(0);
+  // La cuenta va ligada a su texto: al cambiar de línea no se ve un cuadro con la longitud anterior.
+  const [st, setSt] = useState({ text, n: 0 });
+  const n = st.text === text ? st.n : 0;
   useEffect(() => {
     const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
     if (reduced) {
-      setN(text.length);
+      setSt({ text, n: text.length });
       return;
     }
-    setN(0);
+    setSt({ text, n: 0 });
     const id = window.setInterval(() => {
-      setN((v) => {
-        if (v >= text.length) window.clearInterval(id);
-        return Math.min(text.length, v + 1);
+      setSt((v) => {
+        const cur = v.text === text ? v.n : 0;
+        if (cur >= text.length) window.clearInterval(id);
+        return { text, n: Math.min(text.length, cur + 1) };
       });
     }, 28);
     return () => window.clearInterval(id);

@@ -1,5 +1,5 @@
 // Contrato entre la simulación (packages/sim) y el cliente (apps/web).
-// Solo tipos. Los cambios se avisan a la otra persona y van en un commit aparte.
+// Solo tipos.
 // Unidades en el nombre del campo: _kg, _w, _km, _s, _c, _usd_m.
 
 export type ScenarioId = "level1-repair" | "level3-ikaros";
@@ -194,7 +194,7 @@ export interface MissionComparison {
   source: string;
 }
 
-// ---- Definición de escenarios (data/scenarios/*.json) ----
+// Definición de escenarios (data/scenarios/*.json)
 
 export interface SlotDefinition {
   id: string;
@@ -230,7 +230,7 @@ export interface ScenarioDefinition {
   params: Record<string, SourcedValue>;
 }
 
-// ---- Contenido escrito (content/*.json) ----
+// Contenido escrito (content/*.json)
 
 export interface ContentEntry {
   id: string;

@@ -1,4 +1,4 @@
-// Lectura de data/ y content/ (Persona A). La interfaz no define números propios.
+// Lectura de data/ y content/. La interfaz no define números propios.
 import type { GlossaryEntry, SourcedValue } from "@ikaros/contracts";
 import constantsJson from "../../../../data/constants.json";
 import paperJson from "../../../../data/paper-solar-probe-plus.json";

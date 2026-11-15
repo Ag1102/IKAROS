@@ -32,7 +32,7 @@ export function Menu({
     if (l && canPlay(l)) onPlay(n);
   };
 
-  // Teclado de consola: flechas o W/S para elegir, Enter para entrar, 1–3 directo.
+  // Teclado de consola: flechas o W/S para elegir, Enter para entrar, el número del nivel directo.
   const keys = useRef({ selected, enter });
   keys.current = { selected, enter };
   useEffect(() => {
@@ -47,7 +47,7 @@ export function Menu({
       } else if (k === "arrowup" || k === "w") {
         e.preventDefault();
         setSelected(LEVELS[(i + LEVELS.length - 1) % LEVELS.length]!.n);
-      } else if (k === "1" || k === "2" || k === "3") {
+      } else if (LEVELS.some((l) => String(l.n) === k)) {
         setSelected(Number(k) as LevelN);
       } else if (k === "enter" && !(e.target instanceof HTMLButtonElement)) {
         keys.current.enter(keys.current.selected);
@@ -194,7 +194,7 @@ export function Menu({
               <button
                 className="link"
                 onClick={() => {
-                  if (window.confirm(tr("¿Volver a bloquear los niveles 2 y 3?", "Lock levels 2 and 3 again?"))) {
+                  if (window.confirm(tr("¿Volver a bloquear el nivel 2?", "Lock level 2 again?"))) {
                     resetProgress();
                     setSelected(1);
                   }

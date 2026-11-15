@@ -100,7 +100,7 @@ export class Level3 extends Level {
     return s;
   }
 
-  // ---- Hangar ----
+  // Hangar
 
   private energy(): Energy | undefined {
     return this.chosen("energy")?.id as Energy | undefined;
@@ -257,7 +257,7 @@ export class Level3 extends Level {
     );
   }
 
-  // ---- Simulación ----
+  // Simulación
 
   protected substep(): number {
     // El crucero no tiene física fina: basta un subpaso de una hora.
@@ -757,7 +757,10 @@ export class Level3 extends Level {
         origin: "theoretical",
       });
     }
-    if (this.chosen("repair")) {
+    if (
+      this.chosen("repair") &&
+      (this.state.nanobot_reserve_pct ?? 0) >= this.param("cme_nanobot_reserve_cost_pct")
+    ) {
       choices.push({
         id: "nanobots",
         label: this.cmeLabel("nanobots"),
@@ -808,7 +811,7 @@ export class Level3 extends Level {
     if (choice === "hts" && this.brownout_s === 0 && this.systems.hts) {
       damage = 0;
       s.resources.data_stored_mb *= 1 - this.param("cme_hts_data_loss");
-    } else if (choice === "nanobots") {
+    } else if (choice === "nanobots" && (s.nanobot_reserve_pct ?? 0) > 0) {
       damage = 5;
       s.nanobot_reserve_pct = Math.max(
         0,
@@ -1101,8 +1104,8 @@ export class Level3 extends Level {
     if (!reachedTarget)
       advice.push(
         this.L(
-          "Ejecuta las tres ventanas de Venus: cada sobrevuelo baja el perihelio.",
-          "Execute all three Venus windows: each flyby lowers the perihelion.",
+          "Aprovecha cada ventana de Venus: cada sobrevuelo baja el perihelio.",
+          "Use every Venus window: each flyby lowers the perihelion.",
         ),
       );
     if (this.secondsOverCellLimit > 0 || this.secondsDegrading > 0)

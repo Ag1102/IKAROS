@@ -59,7 +59,7 @@ function Normalized({ children, deps }: { children: ReactNode; deps: string }) {
 
 const X90: [number, number, number] = [Math.PI / 2, 0, 0];
 
-// ---------- Nivel 1: vehículo de servicio ----------
+// Nivel 1: vehículo de servicio
 
 function Servicer({ s, hl }: { s: Selection; hl?: string | null }) {
   const has = (slot: string) => Boolean(s?.[slot]);
@@ -130,7 +130,7 @@ function Servicer({ s, hl }: { s: Selection; hl?: string | null }) {
   );
 }
 
-// ---------- Nivel 3: sonda solar ----------
+// Nivel 3: sonda solar
 
 function Probe({ s, hl }: { s: Selection; hl?: string | null }) {
   const energy = s?.energy;

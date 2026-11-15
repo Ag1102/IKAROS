@@ -10,7 +10,7 @@ const def3 = scenario("level3-ikaros");
 const p3 = (k: string) => def3.params[k]!.value;
 
 export function pickAll(sim: Simulation, picks: Record<string, string>): SimState {
-  let s!: SimState;
+  let s = sim.act({ type: "set-time-scale", value: 1 });
   for (const [slot, id] of Object.entries(picks))
     s = sim.act({ type: "select-component", slot, componentId: id });
   return s;

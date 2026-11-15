@@ -1,6 +1,6 @@
 # apps/web
 
-Cliente del juego (Persona B): escena 3D, interfaz y flujo de los niveles.
+Cliente del juego: escena 3D, interfaz y flujo de los niveles.
 
 ## Uso
 
@@ -16,10 +16,13 @@ npm run build -w @ikaros/web        # typecheck + build de producción
 
 | Carpeta | Contenido |
 |---|---|
-| `src/screens` | Pantallas de cada nivel, conectadas al motor `@ikaros/sim` |
+| `src/levels` | Pantallas, escenas y minijuegos de cada nivel, conectados al motor `@ikaros/sim` |
+| `src/game` | Piezas comunes de los retos: marco, puntuación, logros y datos que se aprenden |
+| `src/atlas` | Atlas, el control de misión: guion, voz y holograma |
+| `src/menu` | Escena 3D del menú y lista de misiones |
 | `src/sim` | `useSimulation` (puente con el motor), Kepler y geometría para las escenas |
-| `src/scene` | Escena 3D del nivel 1, tamaños en pantalla y controles de cámara |
-| `src/level3` | Escena del nivel 3: Sol, planetas (elementos de JPL) y órbita de la sonda |
+| `src/scene` | Escena 3D del nivel 1, espacio (Sol, cielo, bloom), tamaños en pantalla y cámara |
+| `src/ships` | Naves armadas en el hangar y modelos de NASA |
 | `src/ui` | Paneles, hangar, decisiones, informe, asistente, glosario y diálogos |
 | `src/data` | Lectura de `data/` y `content/` |
 | `public/` | Modelos y texturas de NASA sin modificar (ver `public/CREDITS.md`) |

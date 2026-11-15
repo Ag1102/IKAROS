@@ -23,20 +23,28 @@ export function setMuted(value: boolean): void {
   } catch {
     // Se mantiene en la pestaña aunque no se pueda guardar.
   }
-  if (value) stop();
+  // Al silenciar, la línea en curso sigue en pantalla el tiempo de lectura en vez de cortarse.
+  if (value && audio) {
+    const end = finish;
+    audio.pause();
+    audio = null;
+    if (end) window.setTimeout(end, readingMs(currentText));
+  }
 }
 
 let audio: HTMLAudioElement | null = null;
 let finish: (() => void) | null = null;
-/** Atlas está "hablando" (con audio, con la voz del sistema o solo con texto). */
+let currentText = "";
+/** Atlas está "hablando" (con audio o solo con texto). */
 let talking = false;
 
-// ---- Volumen en vivo (Web Audio) ----
+// Volumen en vivo (Web Audio)
 
 let ctx: AudioContext | null = null;
 let analyser: AnalyserNode | null = null;
 let samples: Uint8Array | null = null;
 let analysed: HTMLAudioElement | null = null;
+let source: MediaElementAudioSourceNode | null = null;
 
 /**
  * Conecta el clip a un analizador. Solo si el contexto ya está corriendo: si quedara suspendido,
@@ -53,7 +61,9 @@ function analyse(el: HTMLAudioElement): void {
       analyser.connect(ctx.destination);
       samples = new Uint8Array(analyser.fftSize);
     }
-    ctx.createMediaElementSource(el).connect(analyser);
+    source?.disconnect();
+    source = ctx.createMediaElementSource(el);
+    source.connect(analyser);
     analysed = el;
   } catch {
     analysed = null;
@@ -85,7 +95,7 @@ export function stop(): void {
   f?.();
 }
 
-// ---- Clip al día con el texto ----
+// Clip al día con el texto
 
 type Manifest = Record<string, Record<string, { text: string }>>;
 let manifest: Promise<Manifest | null> | null = null;
@@ -102,7 +112,7 @@ async function textHash(text: string): Promise<string | null> {
 
 /**
  * ¿El clip grabado dice exactamente este texto? Si el guion cambió y la voz aún no se
- * regeneró, Atlas lee el texto con la voz del sistema en vez de decir la versión vieja.
+ * regeneró, Atlas muestra solo el texto en vez de decir la versión vieja.
  */
 async function clipIsCurrent(id: string, text: string, lang: Lang): Promise<boolean> {
   manifest ??= fetch("/atlas/manifest.json")
@@ -123,6 +133,7 @@ export const readingMs = (text: string) => Math.max(3000, text.length * 65);
 export function speak(id: string, text: string, lang: Lang): Promise<void> {
   stop();
   talking = true;
+  currentText = text;
   return new Promise((resolve) => {
     let done = false;
     const end = () => {
@@ -141,7 +152,7 @@ export function speak(id: string, text: string, lang: Lang): Promise<void> {
     }
     void clipIsCurrent(id, text, lang).then((current) => {
       if (done) return; // se detuvo mientras se comprobaba
-      if (!current) return textOnly(text, end);
+      if (!current || muted) return textOnly(text, end);
       const clip = new Audio(`/atlas/${lang}/${id}.mp3`);
       audio = clip;
       analyse(clip);

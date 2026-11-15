@@ -12,7 +12,15 @@ const ZONE = [0.65, 0.9] as const;
  * ⚗ Campo HTS: se carga mientras se mantiene Espacio y se descarga al soltar. Hay que sostener
  * la carga en la franja 1,2 s seguidos para desviar la CME.
  */
-export function ShieldCharge({ onDone }: { onDone: (r: Rating) => void }) {
+export function ShieldCharge({
+  onDone,
+  kicker = tr("Eyección de masa coronal", "Coronal mass ejection"),
+  okText = tr("Campo estable: la CME se desvía.", "Field stable: the CME is deflected."),
+}: {
+  onDone: (r: Rating) => void;
+  kicker?: string;
+  okText?: string;
+}) {
   const [charge, setCharge] = useState(0);
   const c = useRef(0);
   const held = useRef(0);
@@ -26,11 +34,7 @@ export function ShieldCharge({ onDone }: { onDone: (r: Rating) => void }) {
     setCharge(c.current);
     held.current = c.current >= ZONE[0] && c.current <= ZONE[1] ? held.current + dt : 0;
     if (held.current >= 1.2) {
-      finish(
-        true,
-        tr("Campo estable: la CME se desvía.", "Field stable: the CME is deflected."),
-        leftRef.current > 3 ? "perfect" : "good",
-      );
+      finish(true, okText, leftRef.current > 3 ? "perfect" : "good");
     }
   }, !result && armed);
   const left = useCountdown(
@@ -42,7 +46,7 @@ export function ShieldCharge({ onDone }: { onDone: (r: Rating) => void }) {
   return (
     <GameCard
       pre={pre}
-      kicker={tr("Eyección de masa coronal", "Coronal mass ejection")}
+      kicker={kicker}
       title={tr("Carga el campo HTS", "Charge the HTS field")}
       hint={tr(
         "Mantén Espacio para cargar y suéltalo para no pasarte.",

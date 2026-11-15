@@ -28,7 +28,7 @@ import { Cinematic } from "./games/Cinematic";
 import { TapBoost } from "./games/TapBoost";
 import { LeverAlign } from "./games/LeverAlign";
 import { FoldArray } from "./games/FoldArray";
-import { PillarConsole, type PillarUptime } from "./games/PillarConsole";
+import { PillarConsole, freshUptime, type PillarUptime } from "./games/PillarConsole";
 import { NanoRepair } from "./games/NanoRepair";
 import { ShieldCharge } from "./games/ShieldCharge";
 import { ReactorRods } from "./games/ReactorRods";
@@ -116,7 +116,7 @@ function IkarosGame({ onExit }: { onExit: () => void }) {
   defRef.current = def;
   const atlas = useAtlas("level3-ikaros", state.events);
   useHotkey("h", () => setHideUi((v) => !v));
-  useHotkey("p", () => setPaused((v) => !v));
+  useHotkey("p", () => RUNNING.has(stage.k) && setPaused((v) => !v));
 
   const parker = param(def, "parker_record_rsun");
   const dived = state.events.some((e) => e.trigger === "level3:dive");
@@ -129,11 +129,13 @@ function IkarosGame({ onExit }: { onExit: () => void }) {
     setLog((l) => [...l, { label, rating, theoretical }]);
   };
 
-  // ---- Posición de la sonda en los tramos que el motor no dibuja (crucero, caída, regreso) ----
+  // Posición de la sonda en los tramos que el motor no dibuja (crucero, caída, regreso)
   const override = useRef<{ x: number; y: number } | null>(null);
   const dayOverride = useRef<number | null>(null);
   const legStart = useRef(0);
   const exitDay = useRef(MISSION_EPOCH_DAY);
+  const [routeDay, setRouteDay] = useState(MISSION_EPOCH_DAY);
+  const route = useMemo(() => trip.route(routeDay), [trip, routeDay]);
   useEffect(() => {
     legStart.current = performance.now();
   }, [stage.k]);
@@ -171,7 +173,7 @@ function IkarosGame({ onExit }: { onExit: () => void }) {
     return () => window.clearTimeout(id);
   }, [stage.k]);
 
-  // ---- Transiciones que dicta el motor ----
+  // Transiciones que dicta el motor
   const prevPhase = useRef(state.phase);
   useEffect(() => {
     const from = prevPhase.current;
@@ -229,12 +231,15 @@ function IkarosGame({ onExit }: { onExit: () => void }) {
   }, [state, stage.k, report, parker, flybyTime]);
 
   const boostRating = useRef<Rating>("fail");
-  const uptime = useRef<PillarUptime>({ reactor_s: 0, hts_s: 0, total_s: 0 });
+  const uptime = useRef<PillarUptime>(freshUptime());
   // Al salir del Sol se califica cuánto tiempo estuvieron en marcha los pilares.
   const graded = useRef(false);
   useEffect(() => {
     if (graded.current || state.phase === "encounter" || uptime.current.total_s === 0) return;
     graded.current = true;
+    // Fuera del Sol los sistemas quedan encendidos.
+    act({ type: "set-system", system: "reactor", on: true });
+    act({ type: "set-system", system: "hts", on: true });
     const u = uptime.current;
     const ratio = (u.reactor_s + u.hts_s) / (2 * u.total_s);
     rate(
@@ -257,7 +262,9 @@ function IkarosGame({ onExit }: { onExit: () => void }) {
   const onRestart = () => {
     flags.current = { boost: false, record: false, samples: false, nano: 0, minR: Infinity };
     boostRating.current = "fail";
-    uptime.current = { reactor_s: 0, hts_s: 0, total_s: 0 };
+    uptime.current = freshUptime();
+    exitDay.current = MISSION_EPOCH_DAY;
+    setRouteDay(MISSION_EPOCH_DAY);
     graded.current = false;
     setLog([]);
     setCapsuleHome(false);
@@ -306,6 +313,7 @@ function IkarosGame({ onExit }: { onExit: () => void }) {
 
   const exitNow = () => {
     exitDay.current = MISSION_EPOCH_DAY + latest.current.resources.mission_elapsed_s / 86400;
+    setRouteDay(exitDay.current);
   };
 
   return (
@@ -319,7 +327,7 @@ function IkarosGame({ onExit }: { onExit: () => void }) {
           varpi={trip.varpi}
           override={override}
           getDayOverride={dayOverride}
-          route={trip.route(exitDay.current)}
+          route={route}
         />
       </div>
       <TopBar
@@ -416,6 +424,8 @@ function IkarosGame({ onExit }: { onExit: () => void }) {
         {stage.k === "pillar-hts" && (
           <PillarIntro step={3}>
             <ShieldCharge
+              kicker={tr("Zambullida hacia el Sol", "Dive toward the Sun")}
+              okText={tr("Campo estable: el plasma se desvía.", "Field stable: the plasma is deflected.")}
               onDone={(r) => {
                 if (pillar(stage.id, r, tr("Pilar 3 · Campo magnético HTS", "Pillar 3 · HTS magnetic field"))) {
                   act({ type: "resolve-event", eventId: stage.id, choice: "dive" });
@@ -799,7 +809,10 @@ function HangarPage({
           </KeyHints>
         </>
       }
-      problems={[...pillarProblems, ...blocked.map((e) => e.text.replace(/^Lanzamiento bloqueado: /, ""))]}
+      problems={[
+        ...pillarProblems,
+        ...blocked.map((e) => e.text.replace(/^(Lanzamiento bloqueado|Launch blocked): /, "")),
+      ]}
       launchLabel={tr("Despegar · L", "Lift off · L")}
       onLaunch={launch}
       assistant={<Assistant events={state.events} max={1} />}

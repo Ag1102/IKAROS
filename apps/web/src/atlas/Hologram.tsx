@@ -111,7 +111,14 @@ function Figure({ gesture, visible, warn }: { gesture: Gesture; visible: boolean
 
   useEffect(() => () => material.dispose(), [material]);
 
-  useFrame((state, dt) => {
+  // Cada aparición se vuelve a proyectar desde abajo.
+  useEffect(() => {
+    if (visible) reveal.current = 0;
+  }, [visible]);
+
+  useFrame((state, delta) => {
+    // Tras una pausa (frameloop "demand") el primer cuadro trae todo el tiempo detenido.
+    const dt = Math.min(delta, 0.1);
     const u = material.uniforms;
     const t = state.clock.elapsedTime;
     u.uTime!.value = t;
