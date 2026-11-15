@@ -1,9 +1,9 @@
 # data/
 
-Todo valor numérico del juego vive aquí, nunca en el código de la interfaz.
+Every numeric value in the game lives here, never in the interface code.
 
-Cada valor lleva: `value`, `unit`, `source` (cita o URL), `retrieved` (fecha) y `origin`
-(`real` o `theoretical`). Ejemplo:
+Each value carries: `value`, `unit`, `source` (citation or URL), `retrieved` (date) and `origin`
+(`real` or `theoretical`). Example:
 
 ```json
 {
@@ -17,4 +17,4 @@ Cada valor lleva: `value`, `unit`, `source` (cita o URL), `retrieved` (fecha) y 
 }
 ```
 
-- `scenarios/`: definición de cada nivel (la escribe el motor, la lee el cliente).
+- `scenarios/`: definition of each level (written by the engine, read by the client).

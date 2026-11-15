@@ -3882,6 +3882,44 @@ button.primary.pulse {
   opacity: 0;
 }
 
+/* Con un reto abierto la tarjeta del reto ocupa el centro: Atlas pasa al margen izquierdo. */
+body:has(.game-card) .atlas-comms {
+  left: 16px;
+  transform: none;
+  width: min(300px, calc((100vw - 460px) / 2 - 32px));
+  min-height: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 6px 12px 10px;
+  animation-name: atlas-fade;
+}
+body:has(.game-card) .atlas-comms .atlas-holo {
+  position: relative;
+  left: auto;
+  top: auto;
+  transform: none;
+  align-self: center;
+  width: 160px;
+  height: 87px;
+}
+body:has(.game-card) .atlas-text {
+  font-size: 13px;
+}
+/* Sin margen lateral suficiente, abajo y por debajo del reto: el reto nunca queda tapado. */
+@media (max-width: 1019px) {
+  body:has(.game-card) .atlas-comms {
+    z-index: 19;
+    top: auto;
+    bottom: 64px;
+    right: 16px;
+    width: auto;
+  }
+  body:has(.game-card) .atlas-comms .atlas-holo {
+    display: none;
+  }
+}
+
 /* Título de los mandos del acople: una sola línea sobre la lista de teclas. */
 .rcs-caption {
   margin: 4px 0 0;
