@@ -26,6 +26,7 @@ import { usePreview } from "../../ships/usePreview";
 import { ProxView } from "./ProxView";
 import { ProxHud, maneuversLeft, useThrusters } from "./ProxHud";
 import { tr } from "../../i18n";
+import { useAtlas } from "../../atlas/Atlas";
 
 const ORBIT_SCALES: TimeScale[] = [
   { value: 0, label: tr("Pausa", "Pause") },
@@ -115,6 +116,7 @@ function ServicioOrbitaGame({ onExit }: { onExit: () => void }) {
     speedCap,
   );
   const launchSeq = useLaunchSequence(state.phase, def.title);
+  const atlas = useAtlas("level1-repair", state.events);
   const approach = state.phase === "approach";
 
   // Al empezar a pilotar el tiempo pasa a escala humana.
@@ -199,6 +201,7 @@ function ServicioOrbitaGame({ onExit }: { onExit: () => void }) {
       <>
         <HangarPage def={def} state={state} act={act} onExit={onExit} onOverlay={setOverlay} />
         <Overlay kind={overlay} onClose={() => setOverlay(null)} />
+        {atlas}
       </>
     );
   }
@@ -206,10 +209,15 @@ function ServicioOrbitaGame({ onExit }: { onExit: () => void }) {
   return (
     <div className={hideUi ? "shell hide-ui" : "shell"}>
       <div className="viewport">
+        {/* Cada vista entra con un fundido desde negro: el paso de la órbita al acople no es un corte seco. */}
         {approach || (report?.metrics.docked && state.rel_position_m) ? (
-          <ProxView latest={latest} day={state.in_daylight ?? true} />
+          <div key="prox" className="view-in">
+            <ProxView latest={latest} day={state.in_daylight ?? true} />
+          </div>
         ) : (
-          <Scene latest={latest} inclination_deg={state.inclination_deg ?? 51.6} follow={follow} />
+          <div key="orbit" className="view-in">
+            <Scene latest={latest} inclination_deg={state.inclination_deg ?? 51.6} follow={follow} />
+          </div>
         )}
       </div>
       <TopBar
@@ -278,6 +286,7 @@ function ServicioOrbitaGame({ onExit }: { onExit: () => void }) {
         </div>
       )}
       {launchSeq}
+      {atlas}
       <Overlay kind={overlay} onClose={() => setOverlay(null)} />
     </div>
   );

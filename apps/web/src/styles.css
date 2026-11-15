@@ -3738,3 +3738,269 @@ button.primary.pulse {
     height: 90px;
   }
 }
+/* ---------- Atlas, control de misión ---------- */
+.atlas-kicker {
+  margin: 0;
+  font: 600 12px var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+.atlas-kicker span {
+  color: var(--amber);
+}
+.atlas-btn {
+  font: 500 12px var(--font-mono);
+  color: var(--dim);
+  background: transparent;
+  border: 1px solid var(--line);
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.atlas-btn:hover {
+  color: var(--text);
+}
+.atlas-btn:focus-visible {
+  outline: 2px solid var(--cyan);
+}
+
+.atlas-prologue {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: radial-gradient(circle at center, rgba(3, 5, 7, 0.9), rgba(3, 5, 7, 0.98));
+  backdrop-filter: blur(6px);
+  animation: atlas-in 400ms ease-out;
+}
+.atlas-prologue-card {
+  width: min(640px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  text-align: center;
+}
+.atlas-prologue-text {
+  margin: 0;
+  min-height: 5.6em;
+  font: 400 clamp(18px, 2.4vw, 24px) / 1.45 var(--font-ui);
+  color: #eef3f5;
+}
+.atlas-caret {
+  display: inline-block;
+  width: 0.5em;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: -0.12em;
+  background: var(--cyan);
+  animation: atlas-blink 1s steps(1) infinite;
+}
+@keyframes atlas-blink {
+  50% {
+    opacity: 0;
+  }
+}
+.atlas-dots {
+  display: flex;
+  gap: 8px;
+}
+.atlas-dots i {
+  width: 22px;
+  height: 3px;
+  background: var(--line);
+}
+.atlas-dots i.done {
+  background: var(--dim);
+}
+.atlas-dots i.on {
+  background: var(--amber);
+}
+.atlas-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+.atlas-next {
+  min-width: 180px;
+}
+
+.atlas-comms {
+  position: fixed;
+  z-index: 30;
+  left: 50%;
+  /* Arriba al centro, bajo la barra superior: ahí no hay mandos, retículas ni minijuegos. */
+  top: 62px;
+  transform: translateX(-50%);
+  /* Cabe en el hueco central entre los paneles laterales del hangar y del vuelo. */
+  width: clamp(420px, calc(100vw - 760px), 700px);
+  min-height: 112px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px 14px 206px;
+  background: rgba(11, 16, 20, 0.92);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--cyan);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  animation: atlas-in 300ms ease-out;
+}
+.atlas-comms.kind-tip {
+  border-left-color: var(--amber);
+}
+.atlas-comms.kind-fact {
+  border-left-color: #9b8cd6;
+}
+.atlas-body {
+  flex: 1;
+  min-width: 0;
+}
+.atlas-text {
+  margin: 6px 0 0;
+  font-size: 15px;
+  line-height: 1.45;
+  color: #e3eaee;
+}
+.atlas-body .fact-src {
+  margin: 6px 0 0;
+}
+.atlas-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.atlas-head .atlas-kicker {
+  flex: 1;
+  min-width: 0;
+}
+.atlas-head .atlas-btn {
+  padding: 3px 7px;
+  font-size: 11px;
+}
+@keyframes atlas-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -10px);
+  }
+}
+.atlas-prologue {
+  animation-name: atlas-fade;
+}
+@keyframes atlas-fade {
+  from {
+    opacity: 0;
+  }
+}
+/* Pantallas medianas: el hueco entre paneles es angosto; holograma arriba y texto abajo. */
+@media (max-width: 1199px) {
+  .atlas-comms {
+    width: clamp(280px, calc(100vw - 740px), 340px);
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    padding: 6px 14px 12px;
+  }
+  .atlas-comms .atlas-holo {
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+    align-self: center;
+    width: 200px;
+    height: 109px;
+  }
+}
+@media (max-width: 900px) {
+  .atlas-comms {
+    width: calc(100% - 32px);
+  }
+}
+@media (max-width: 600px) {
+  .atlas-comms {
+    top: 56px;
+    padding: 4px 10px 10px;
+  }
+  .atlas-comms .atlas-holo {
+    width: 160px;
+    height: 87px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .atlas-caret,
+  .atlas-comms,
+  .atlas-prologue {
+    animation: none;
+  }
+}
+
+/* Holograma de Atlas: lienzo transparente dentro de la tarjeta, a la izquierda del texto. */
+.atlas-holo {
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 196px;
+  height: 107px;
+  pointer-events: none;
+  transition: opacity 400ms ease;
+}
+.atlas-holo canvas {
+  display: block;
+}
+.atlas-holo.large {
+  position: relative;
+  left: auto;
+  top: auto;
+  transform: none;
+  width: min(460px, 90vw);
+  aspect-ratio: 470 / 256;
+  height: auto;
+  margin-bottom: -6px;
+}
+.atlas-comms {
+  transition:
+    background 300ms ease,
+    border-color 300ms ease,
+    box-shadow 300ms ease;
+}
+.atlas-comms.idle {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  pointer-events: none;
+  animation: none;
+}
+.atlas-comms.idle .atlas-holo {
+  opacity: 0;
+}
+
+/* Título de los mandos del acople: una sola línea sobre la lista de teclas. */
+.rcs-caption {
+  margin: 4px 0 0;
+  font: 600 11px var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+/* Cambio de vista (órbita ⇄ acople): fundido desde negro en lugar de un corte. */
+.view-in {
+  position: absolute;
+  inset: 0;
+  animation: view-in 900ms ease-out;
+}
+@keyframes view-in {
+  from {
+    opacity: 0;
+    filter: blur(6px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .view-in {
+    animation: none;
+  }
+}

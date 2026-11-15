@@ -280,6 +280,9 @@ export function ProxHud({
             {tr("Estabilizar", "Stabilize")} ␣
           </button>
         </div>
+        <p className="rcs-caption">
+          {tr("Muévete con el teclado o estos botones", "Move with the keyboard or these buttons")}
+        </p>
         <KeyHints>
           <KeyHint keys={[tr("Espacio", "Space")]}>{tr("estabilizar", "stabilize")}</KeyHint>
           <KeyHint keys={["W", "S"]}>{tr("acercar / alejar", "closer / back")}</KeyHint>

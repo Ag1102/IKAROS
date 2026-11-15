@@ -1,0 +1,342 @@
+[
+  {
+    "id": "l1-prologue-1",
+    "scenario": "level1-repair",
+    "trigger": "prologue",
+    "kind": "prologue",
+    "es": "Aquí Atlas, control de misión. La Estación Espacial Internacional necesita carga urgente: comida, agua y repuestos.",
+    "en": "This is Atlas, mission control. The International Space Station urgently needs cargo: food, water and spare parts."
+  },
+  {
+    "id": "l1-prologue-2",
+    "scenario": "level1-repair",
+    "trigger": "prologue",
+    "kind": "prologue",
+    "es": "Orbita a cuatrocientos quince kilómetros y nunca se detiene: va a casi veintiocho mil kilómetros por hora. Tu transbordador tendrá que alcanzarla.",
+    "en": "It orbits at four hundred and fifteen kilometers and never stops: it moves at almost twenty-eight thousand kilometers per hour. Your shuttle has to catch it."
+  },
+  {
+    "id": "l1-prologue-3",
+    "scenario": "level1-repair",
+    "trigger": "prologue",
+    "kind": "prologue",
+    "es": "Tu misión: cargar el transbordador, alcanzar la estación y acoplarte sin chocar. Yo te acompaño en cada paso.",
+    "en": "Your mission: load the shuttle, catch up with the station and dock without crashing. I will be with you every step of the way."
+  },
+  {
+    "id": "l1-hangar",
+    "scenario": "level1-repair",
+    "trigger": "hangar",
+    "kind": "guide",
+    "es": "Primero, la bodega. Todo sale del mismo tanque: cuanto más carga subes, menos combustible te queda para corregir. Lleva lo que la estación necesita, ni un kilo más.",
+    "en": "First, the cargo bay. Everything comes from the same tank: the more cargo you carry, the less fuel you have left to correct. Take what the station needs, not a kilogram more."
+  },
+  {
+    "id": "l1-overweight",
+    "scenario": "level1-repair",
+    "trigger": "level1:overweight",
+    "kind": "tip",
+    "es": "La bodega pesa demasiado. Quita lo que no vas a usar.",
+    "en": "The cargo bay is too heavy. Take out what you will not use."
+  },
+  {
+    "id": "l1-launch",
+    "scenario": "level1-repair",
+    "trigger": "level1:launch",
+    "kind": "guide",
+    "es": "Separación confirmada. Vamos más abajo que la estación, y más abajo se va más rápido. Espera a que la estación quede justo delante y enciende para subir hasta ella.",
+    "en": "Separation confirmed. We are lower than the station, and lower means faster. Wait until the station is right ahead, then burn to climb up to it."
+  },
+  {
+    "id": "l1-burn",
+    "scenario": "level1-repair",
+    "trigger": "level1:burn",
+    "kind": "guide",
+    "es": "Encendido completo. Vas en una transferencia de Hohmann: media vuelta hasta la altura de la estación. Puedes acelerar el tiempo.",
+    "en": "Burn complete. You are on a Hohmann transfer: half an orbit up to the station's altitude. You can speed up time."
+  },
+  {
+    "id": "l1-miss",
+    "scenario": "level1-repair",
+    "trigger": "level1:miss",
+    "kind": "tip",
+    "es": "No llegaste al punto de encuentro. Tranquilo: un encendido pequeño corrige la órbita.",
+    "en": "You did not reach the meeting point. Relax: a small burn corrects the orbit."
+  },
+  {
+    "id": "l1-sunset",
+    "scenario": "level1-repair",
+    "trigger": "level1:sunset",
+    "kind": "fact",
+    "es": "Dato curioso: en órbita baja das una vuelta a la Tierra cada noventa minutos. Eso son unos dieciséis atardeceres al día.",
+    "en": "Fun fact: in low orbit you circle the Earth every ninety minutes. That is about sixteen sunsets a day.",
+    "source": "NASA, International Space Station facts"
+  },
+  {
+    "id": "l1-approach",
+    "scenario": "level1-repair",
+    "trigger": "level1:approach",
+    "kind": "guide",
+    "es": "Estás a ciento veintidós metros del puerto. Ahora pilotas tú: la W te acerca, la S te aleja y la barra espaciadora frena. Con A, D, R y F centras la nave. Acércate despacio.",
+    "en": "You are one hundred and twenty-two meters from the port. Now you fly: W moves you closer, S backs you away and the space bar brakes. Use A, D, R and F to center the shuttle. Come in slowly."
+  },
+  {
+    "id": "l1-corridor-warn",
+    "scenario": "level1-repair",
+    "trigger": "level1:corridor-warn",
+    "kind": "tip",
+    "es": "Te estás saliendo del corredor de aproximación. Corrige hacia el centro antes de seguir avanzando.",
+    "en": "You are drifting out of the approach corridor. Steer back to the center before moving forward."
+  },
+  {
+    "id": "l1-bingo",
+    "scenario": "level1-repair",
+    "trigger": "level1:bingo",
+    "kind": "tip",
+    "es": "Combustible en reserva. Si bajas de ahí, la estación ordena abortar. Maniobra solo lo necesario.",
+    "en": "Fuel at reserve. If you go below it, the station orders an abort. Only maneuver when you need to."
+  },
+  {
+    "id": "l1-collision",
+    "scenario": "level1-repair",
+    "trigger": "level1:collision",
+    "kind": "tip",
+    "es": "Contacto demasiado fuerte. La próxima vez frena antes del puerto: el acople se hace a pocos centímetros por segundo.",
+    "en": "Contact too hard. Next time slow down before the port: docking happens at a few centimeters per second."
+  },
+  {
+    "id": "l1-docked",
+    "scenario": "level1-repair",
+    "trigger": "level1:docked",
+    "kind": "guide",
+    "es": "Acople confirmado. Bienvenido a bordo de la Estación Espacial Internacional.",
+    "en": "Docking confirmed. Welcome aboard the International Space Station."
+  },
+  {
+    "id": "l1-complete",
+    "scenario": "level1-repair",
+    "trigger": "level1:complete",
+    "kind": "fact",
+    "es": "Misión cerrada. La estación está habitada sin interrupción desde el año 2000, gracias a misiones de carga como esta.",
+    "en": "Mission closed. The station has been continuously crewed since the year 2000, thanks to cargo missions like this one.",
+    "source": "NASA, International Space Station"
+  },
+  {
+    "id": "l2-prologue-1",
+    "scenario": "level2-leo",
+    "trigger": "prologue",
+    "kind": "prologue",
+    "es": "Aquí Atlas. Esta vez no hay nada roto: hay una pregunta. ¿Dónde arden los bosques del planeta? ¿Cuánto se calienta el océano?",
+    "en": "This is Atlas. This time nothing is broken: there is a question. Where are the planet's forests burning? How much is the ocean warming?"
+  },
+  {
+    "id": "l2-prologue-2",
+    "scenario": "level2-leo",
+    "trigger": "prologue",
+    "kind": "prologue",
+    "es": "Vas a diseñar un satélite desde cero, elegir su órbita y su cohete, y operarlo durante tres días.",
+    "en": "You will design a satellite from scratch, choose its orbit and its rocket, and operate it for three days."
+  },
+  {
+    "id": "l2-prologue-3",
+    "scenario": "level2-leo",
+    "trigger": "prologue",
+    "kind": "prologue",
+    "es": "Así trabajan los equipos de la NASA: primero la ciencia, después la nave.",
+    "en": "That is how NASA teams work: science first, then the spacecraft."
+  },
+  {
+    "id": "l2-hangar",
+    "scenario": "level2-leo",
+    "trigger": "hangar",
+    "kind": "guide",
+    "es": "Empieza por el objetivo científico: decide todo lo demás. Para incendios necesitas una órbita polar que vea todo el planeta. Y revisa que el cohete pueda llevar tu masa a esa órbita.",
+    "en": "Start with the science objective: it decides everything else. For wildfires you need a polar orbit that sees the whole planet. And check that the rocket can carry your mass to that orbit."
+  },
+  {
+    "id": "l2-blocked",
+    "scenario": "level2-leo",
+    "trigger": "level2:launch-blocked",
+    "kind": "tip",
+    "es": "Lanzamiento bloqueado. Revisa la lista: falta una pieza, sobra masa o no alcanza el presupuesto.",
+    "en": "Launch blocked. Check the list: a part is missing, there is too much mass or the budget falls short."
+  },
+  {
+    "id": "l2-launch",
+    "scenario": "level2-leo",
+    "trigger": "level2:launch",
+    "kind": "guide",
+    "es": "Estamos en órbita. Desde aquí no hay mandos: tu diseño trabaja solo. Vigila los eclipses, los pases por la estación y la memoria.",
+    "en": "We are in orbit. There are no controls from here: your design works on its own. Watch the eclipses, the station passes and the memory."
+  },
+  {
+    "id": "l2-coverage",
+    "scenario": "level2-leo",
+    "trigger": "level2:coverage",
+    "kind": "tip",
+    "es": "Atención: desde una órbita ecuatorial no veremos los bosques del norte. Los datos de incendios serán parciales.",
+    "en": "Heads up: from an equatorial orbit we will not see the northern forests. The wildfire data will be partial."
+  },
+  {
+    "id": "l2-brownout",
+    "scenario": "level2-leo",
+    "trigger": "level2:brownout",
+    "kind": "tip",
+    "es": "La batería se agotó en la sombra de la Tierra. Más batería o más paneles evitarían este apagón.",
+    "en": "The battery ran out in Earth's shadow. More battery or more panels would prevent this blackout."
+  },
+  {
+    "id": "l2-storage",
+    "scenario": "level2-leo",
+    "trigger": "level2:storage-full",
+    "kind": "tip",
+    "es": "Memoria llena. Lo que el instrumento mida ahora se pierde hasta el próximo pase.",
+    "en": "Memory full. Whatever the instrument measures now is lost until the next pass."
+  },
+  {
+    "id": "l2-failure-comms",
+    "scenario": "level2-leo",
+    "trigger": "level2:failure-comms",
+    "kind": "fact",
+    "es": "Falla de radio. En el espacio no hay técnico que la arregle: por eso las misiones reales llevan sistemas de respaldo.",
+    "en": "Radio failure. There is no technician in space to fix it: that is why real missions carry backup systems."
+  },
+  {
+    "id": "l2-failure-power",
+    "scenario": "level2-leo",
+    "trigger": "level2:failure-power",
+    "kind": "fact",
+    "es": "Falla de un panel. En el espacio no hay técnico que lo arregle: por eso las misiones reales llevan margen de energía.",
+    "en": "Panel failure. There is no technician in space to fix it: that is why real missions carry a power margin."
+  },
+  {
+    "id": "l2-complete",
+    "scenario": "level2-leo",
+    "trigger": "level2:complete",
+    "kind": "fact",
+    "es": "Campaña terminada. Los satélites Landsat llevan más de cincuenta años mirando la Tierra así, desde 1972.",
+    "en": "Campaign complete. Landsat satellites have been watching the Earth this way for more than fifty years, since 1972.",
+    "source": "NASA/USGS, Landsat program"
+  },
+  {
+    "id": "l3-prologue-1",
+    "scenario": "level3-ikaros",
+    "trigger": "prologue",
+    "kind": "prologue",
+    "es": "Aquí Atlas. Esta es la misión más difícil de todas: tocar el Sol.",
+    "en": "This is Atlas. This is the hardest mission of all: touching the Sun."
+  },
+  {
+    "id": "l3-prologue-2",
+    "scenario": "level3-ikaros",
+    "trigger": "prologue",
+    "kind": "prologue",
+    "es": "En el mito, Ícaro voló demasiado cerca del Sol y la cera de sus alas se derritió. Nosotros llevamos un escudo de carbono y un plan.",
+    "en": "In the myth, Icarus flew too close to the Sun and the wax on his wings melted. We carry a carbon shield and a plan."
+  },
+  {
+    "id": "l3-prologue-3",
+    "scenario": "level3-ikaros",
+    "trigger": "prologue",
+    "kind": "prologue",
+    "es": "Vamos a bajar a nueve coma cinco radios solares, donde la luz es quinientas diez veces más fuerte que en la Tierra. Ahí nada sobrevive sin un buen diseño.",
+    "en": "We will go down to nine point five solar radii, where sunlight is five hundred and ten times stronger than at Earth. Nothing survives there without a good design."
+  },
+  {
+    "id": "l3-hangar",
+    "scenario": "level3-ikaros",
+    "trigger": "hangar",
+    "kind": "guide",
+    "es": "Elige la energía, el escudo y la ciencia. Lo marcado como teórico es ficción del juego. Si eliges la configuración del paper, volarás con la Parker Solar Probe real.",
+    "en": "Choose the power system, the shield and the science. Anything marked theoretical is game fiction. If you pick the paper's configuration, you will fly the real Parker Solar Probe."
+  },
+  {
+    "id": "l3-launch",
+    "scenario": "level3-ikaros",
+    "trigger": "level3:launch",
+    "kind": "guide",
+    "es": "Despegue. No vamos directo al Sol: usaremos a Venus como freno. Su gravedad baja el perihelio sin gastar combustible.",
+    "en": "Liftoff. We are not going straight to the Sun: we will use Venus as a brake. Its gravity lowers the perihelion without spending fuel."
+  },
+  {
+    "id": "l3-venus-window",
+    "scenario": "level3-ikaros",
+    "trigger": "level3:venus-window",
+    "kind": "guide",
+    "es": "Ventana de Venus abierta. Ejecuta el sobrevuelo: cuesta poco combustible y nos acerca al Sol.",
+    "en": "Venus window open. Execute the flyby: it costs little fuel and brings us closer to the Sun."
+  },
+  {
+    "id": "l3-venus-flyby",
+    "scenario": "level3-ikaros",
+    "trigger": "level3:venus-flyby",
+    "kind": "fact",
+    "es": "Dato curioso: Parker Solar Probe es el objeto más rápido que ha construido la humanidad. Pasó junto al Sol a casi doscientos kilómetros por segundo.",
+    "en": "Fun fact: Parker Solar Probe is the fastest object humanity has ever built. It swept past the Sun at almost two hundred kilometers per second.",
+    "source": "NASA, Parker Solar Probe"
+  },
+  {
+    "id": "l3-encounter",
+    "scenario": "level3-ikaros",
+    "trigger": "level3:encounter-start",
+    "kind": "guide",
+    "es": "Entramos al encuentro. Pliega la matriz principal tras el escudo y retrae la secundaria poco a poco. Las celdas deben quedar bajo ciento veinte grados.",
+    "en": "We are entering the encounter. Fold the main array behind the shield and retract the secondary one little by little. The cells must stay below one hundred and twenty degrees."
+  },
+  {
+    "id": "l3-cell-hot",
+    "scenario": "level3-ikaros",
+    "trigger": "level3:cell-hot",
+    "kind": "tip",
+    "es": "Las celdas se están calentando. Retrae más la matriz secundaria.",
+    "en": "The cells are heating up. Retract the secondary array further."
+  },
+  {
+    "id": "l3-low-power",
+    "scenario": "level3-ikaros",
+    "trigger": "level3:low-power",
+    "kind": "tip",
+    "es": "Retrajiste de más: la potencia cayó bajo cuatrocientos ochenta y dos vatios. Extiende un poco la matriz.",
+    "en": "You retracted too much: power fell below four hundred and eighty-two watts. Extend the array a little."
+  },
+  {
+    "id": "l3-attitude",
+    "scenario": "level3-ikaros",
+    "trigger": "level3:attitude-antenna-to-earth",
+    "kind": "tip",
+    "es": "Cuidado: al girar la antena hacia la Tierra, los radiadores salen de la sombra del escudo. Hazlo lejos del Sol.",
+    "en": "Careful: turning the antenna to Earth takes the radiators out of the shield's shadow. Do it far from the Sun."
+  },
+  {
+    "id": "l3-cme",
+    "scenario": "level3-ikaros",
+    "trigger": "level3:cme",
+    "kind": "guide",
+    "es": "Eyección de masa coronal en camino. Tienes dos horas para decidir. El modo seguro es la opción real y conservadora.",
+    "en": "Coronal mass ejection incoming. You have two hours to decide. Safe mode is the real, conservative option."
+  },
+  {
+    "id": "l3-hull-lost",
+    "scenario": "level3-ikaros",
+    "trigger": "level3:hull-lost",
+    "kind": "tip",
+    "es": "Perdimos el casco. La próxima vez mantén el escudo hacia el Sol cerca del perihelio.",
+    "en": "We lost the hull. Next time keep the shield facing the Sun near perihelion."
+  },
+  {
+    "id": "l3-dive",
+    "scenario": "level3-ikaros",
+    "trigger": "level3:dive",
+    "kind": "guide",
+    "es": "Zambullida Ikaros activada. Esto ya es teórico: ninguna nave real ha bajado a ochocientos cincuenta mil kilómetros del Sol. Confía en tus pilares.",
+    "en": "Ikaros dive engaged. This is theoretical now: no real spacecraft has gone down to eight hundred and fifty thousand kilometers from the Sun. Trust your pillars."
+  },
+  {
+    "id": "l3-encounter-end",
+    "scenario": "level3-ikaros",
+    "trigger": "level3:encounter-end",
+    "kind": "guide",
+    "es": "Salimos del encuentro. El escudo aguantó. Ícaro no tuvo tanta suerte.",
+    "en": "We are out of the encounter. The shield held. Icarus was not so lucky."
+  }
+]

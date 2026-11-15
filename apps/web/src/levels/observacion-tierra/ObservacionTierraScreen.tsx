@@ -23,6 +23,7 @@ import { usePreview } from "../../ships/usePreview";
 import { OrbitLaunch } from "../../game/OrbitLaunch";
 import { PrepCard } from "../../game/PrepCard";
 import { tr } from "../../i18n";
+import { useAtlas } from "../../atlas/Atlas";
 
 const scales = (): TimeScale[] => [
   { value: 0, label: tr("Pausa", "Pause") },
@@ -54,6 +55,7 @@ function ObservacionTierraGame({ onExit }: { onExit: () => void }) {
   const score = useScore();
   const { state, latest, act, restart, report, def } = useSimulation("level2-leo", pass === null ? timeScale : 0);
   const launchSeq = useLaunchSequence(state.phase, def.title);
+  const atlas = useAtlas("level2-leo", state.events);
 
   // Una misión cumplida desbloquea el nivel siguiente; las estrellas suman la destreza del piloto.
   const stars = report ? starsFor(report.outcome, pilotRatio(score.ratings)) : 0;
@@ -97,6 +99,7 @@ function ObservacionTierraGame({ onExit }: { onExit: () => void }) {
       <>
         <HangarPage def={def} state={state} act={act} onExit={onExit} onOverlay={setOverlay} />
         <Overlay kind={overlay} onClose={() => setOverlay(null)} />
+        {atlas}
       </>
     );
   }
@@ -175,6 +178,7 @@ function ObservacionTierraGame({ onExit }: { onExit: () => void }) {
         </div>
       )}
       {launchSeq}
+      {atlas}
       <Overlay kind={overlay} onClose={() => setOverlay(null)} />
     </div>
   );

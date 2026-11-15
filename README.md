@@ -69,6 +69,20 @@ Los números son los mismos en ambos idiomas; solo cambian los textos.
 
 `tests/i18n.test.ts` falla si un texto nuevo queda sin versión en inglés.
 
+## Atlas, el control de misión
+
+Atlas guía cada nivel con voz: un prólogo al entrar, qué hacer en el hangar y avisos o datos
+curiosos cuando el motor emite ciertos eventos. Habla en el idioma del menú y se puede silenciar.
+
+- Guion: `content/atlas.json` (`trigger`: `prologue`, `hangar` o un `SimEvent.trigger` del motor).
+- Voz: clips pregenerados en `apps/web/public/atlas/<idioma>/<id>.mp3`. Si falta un clip, el
+  navegador usa su voz del sistema.
+- Regenerar la voz tras cambiar el guion (Windows, con la voz local de Argo/Chatterbox):
+  `npm run atlas:voz`. Solo rehace las líneas nuevas o cambiadas. `ATLAS_VOZ` apunta a la carpeta
+  `voz` de Argo si no está en la ruta por defecto.
+- `tests/atlas.test.ts` comprueba que cada disparador exista en el motor y que cada línea tenga su
+  voz al día.
+
 ## Git
 
 Ramas cortas `a/<tema>` y `b/<tema>`; fusionar a `main` seguido. Cada quien hace commit

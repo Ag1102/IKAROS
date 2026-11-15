@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { PlayerAction, ScenarioDefinition, SimEvent, SimState } from "@ikaros/contracts";
 import { useSimulation } from "../../sim/useSimulation";
+import { useAtlas } from "../../atlas/Atlas";
 import { recordResult, recordStars } from "../../progress";
 import { IkarosScene, OrbitPreview, probeOrbit } from "./IkarosScene";
 import { TopBar, type TimeScale } from "../../ui/Panels";
@@ -113,6 +114,7 @@ function IkarosGame({ onExit }: { onExit: () => void }) {
     return s.phase === "encounter" && defRef.current ? encounterTimeScale(s, defRef.current) : Infinity;
   });
   defRef.current = def;
+  const atlas = useAtlas("level3-ikaros", state.events);
   useHotkey("h", () => setHideUi((v) => !v));
   useHotkey("p", () => setPaused((v) => !v));
 
@@ -270,17 +272,21 @@ function IkarosGame({ onExit }: { onExit: () => void }) {
       <>
         <HangarPage def={def} state={state} act={act} onExit={onExit} onOverlay={setOverlay} />
         <Overlay kind={overlay} onClose={() => setOverlay(null)} />
+        {atlas}
       </>
     );
   }
 
   if (stage.k === "departure" || stage.k === "arrival") {
     return (
-      <Cinematic
-        kind={stage.k}
-        capsule={capsuleHome}
-        onDone={() => setStage(stage.k === "departure" ? { k: "to-venus" } : { k: "debrief" })}
-      />
+      <>
+        <Cinematic
+          kind={stage.k}
+          capsule={capsuleHome}
+          onDone={() => setStage(stage.k === "departure" ? { k: "to-venus" } : { k: "debrief" })}
+        />
+        {atlas}
+      </>
     );
   }
 
@@ -545,6 +551,7 @@ function IkarosGame({ onExit }: { onExit: () => void }) {
           extra={<Debrief stars={stars} points={score.points} log={log} />}
         />
       )}
+      {atlas}
       <Overlay kind={overlay} onClose={() => setOverlay(null)} />
     </div>
   );
