@@ -7,7 +7,7 @@ export function achievementName(id: AchievementId): string {
   return {
     "first-orbit": tr("Primera órbita", "First orbit"),
     "perfect-orbit": tr("Órbita perfecta", "Perfect orbit"),
-    "dock-first-try": tr("Acople a la primera", "Docked on the first try"),
+    "dock-first-try": tr("Acople suave", "Soft docking"),
     "sun-survivor": tr("Sobreviviste al Sol", "You survived the Sun"),
   }[id];
 }

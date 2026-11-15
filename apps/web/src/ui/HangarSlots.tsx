@@ -51,7 +51,7 @@ export function HangarSlots({
                     {c.name} {c.origin === "theoretical" && <span className="tag tag-theory">⚗</span>}
                   </span>
                   <span className="num">
-                    {formatNumber(c.mass_kg)} kg · {formatNumber(c.cost_usd_m)} M$
+                    {formatNumber(c.mass_kg)} kg{c.cost_usd_m > 0 && ` · ${formatNumber(c.cost_usd_m)} M$`}
                     {c.power_w !== 0 && ` · ${c.power_w > 0 ? "+" : ""}${formatNumber(c.power_w)} W`}
                   </span>
                 </label>

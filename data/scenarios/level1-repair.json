@@ -1,207 +1,261 @@
 {
   "id": "level1-repair",
-  "title": "Nivel 1 — Servicio en órbita",
-  "subtitle": "Reparar un satélite que perdió un panel solar y su antena",
+  "title": "Nivel 1 — Acople con la Estación Espacial",
+  "subtitle": "Lleva carga a la ISS y acóplate pilotando el transbordador",
   "briefing": [
-    "El satélite de referencia orbita a 480 km, como Hubble hoy. Perdió un panel solar y la antena de alta ganancia.",
-    "Tu vehículo de servicio parte de 400 km. Sube con maniobras de transferencia (delta-V) y acóplate.",
-    "La carga es limitada: cada kilo de herramientas reduce el delta-V disponible (ecuación de Tsiolkovsky).",
-    "Las reparaciones solo avanzan con la estación terrena a la vista (ventana de comunicaciones)."
+    "La ISS orbita a unos 415 km. Tu transbordador parte más abajo, a 345 km, y la estación va por delante.",
+    "Más abajo se va más rápido: esperas a que la ISS quede justo delante y enciendes para subir hasta ella.",
+    "A 122 m del puerto pilotas tú con los propulsores. El contacto debe ser lento y centrado.",
+    "Todo sale del mismo tanque: cuanto más carga subes, menos combustible te queda para corregir."
   ],
   "objectives": [
-    "Llegar a ±2 km de la altitud del satélite sin agotar el combustible.",
-    "Cambiar el panel solar y la antena dentro del tiempo de misión."
+    "Acoplarte a la ISS sin chocar ni salir del corredor de aproximación.",
+    "No bajar de la reserva de combustible: si pasa, la ISS ordena abortar."
   ],
   "slots": [
     {
-      "id": "panel",
-      "label": "Panel solar de repuesto",
+      "id": "module",
+      "label": "Módulo para la estación",
       "required": false
     },
     {
-      "id": "antenna",
-      "label": "Antena de repuesto",
+      "id": "supplies",
+      "label": "Suministros",
       "required": false
     },
     {
-      "id": "toolkit",
-      "label": "Kit de herramientas",
-      "required": false
-    },
-    {
-      "id": "camera",
-      "label": "Cámara de inspección",
+      "id": "repair",
+      "label": "Kit de reparación",
       "required": false
     }
   ],
   "components": [
     {
-      "id": "panel-spare",
-      "slot": "panel",
-      "name": "Panel solar de repuesto",
-      "description": "Necesario para la tarea del panel.",
-      "cost_usd_m": 4,
-      "mass_kg": 45,
+      "id": "harmony",
+      "slot": "module",
+      "name": "Nodo Harmony",
+      "description": "El módulo que llevó Discovery en la STS-120 (2007). Pesa mucho y vale mucho.",
+      "cost_usd_m": 0,
+      "mass_kg": 14288,
       "power_w": 0,
-      "origin": "theoretical",
+      "origin": "real",
+      "figures_origin": "real",
+      "source": "NASA JSC, Fact Sheet FS-2007-10-014: Node 2 Harmony, 14,288 kg al lanzamiento"
+    },
+    {
+      "id": "supplies-small",
+      "slot": "supplies",
+      "name": "Suministros: 1 tonelada",
+      "description": "Comida, agua y ropa para la tripulación.",
+      "cost_usd_m": 0,
+      "mass_kg": 1000,
+      "power_w": 0,
+      "origin": "real",
       "figures_origin": "theoretical",
       "source": "Supuesto del juego"
     },
     {
-      "id": "antenna-spare",
-      "slot": "antenna",
-      "name": "Antena de alta ganancia de repuesto",
-      "description": "Necesaria para la tarea de la antena.",
-      "cost_usd_m": 3,
-      "mass_kg": 30,
+      "id": "supplies-large",
+      "slot": "supplies",
+      "name": "Suministros: 2,5 toneladas",
+      "description": "Más víveres y repuestos. Más puntos, más masa.",
+      "cost_usd_m": 0,
+      "mass_kg": 2500,
       "power_w": 0,
-      "origin": "theoretical",
+      "origin": "real",
       "figures_origin": "theoretical",
       "source": "Supuesto del juego"
     },
     {
-      "id": "toolkit-std",
-      "slot": "toolkit",
-      "name": "Kit de herramientas de EVA",
-      "description": "Necesario para cualquier reparación.",
-      "cost_usd_m": 1,
-      "mass_kg": 25,
+      "id": "p6-repair-kit",
+      "slot": "repair",
+      "name": "Kit para el panel P6",
+      "description": "Grapas como las que usó Parazynski para coser el panel solar roto en la STS-120.",
+      "cost_usd_m": 0,
+      "mass_kg": 50,
       "power_w": 0,
-      "origin": "theoretical",
+      "origin": "real",
       "figures_origin": "theoretical",
-      "source": "Supuesto del juego"
-    },
-    {
-      "id": "camera-insp",
-      "slot": "camera",
-      "name": "Cámara de inspección",
-      "description": "Suma datos de inspección al informe. Opcional.",
-      "cost_usd_m": 2,
-      "mass_kg": 20,
-      "power_w": -15,
-      "origin": "theoretical",
-      "figures_origin": "theoretical",
-      "source": "Supuesto del juego"
+      "source": "NASA, STS-120: reparación del panel solar P6 (caminata espacial del 3 nov 2007)"
     }
   ],
   "params": {
-    "start_altitude_km": {
-      "value": 400,
+    "iss_altitude_km": {
+      "value": 415,
       "unit": "km",
-      "source": "Supuesto del juego",
-      "retrieved": "2026-11-14",
-      "origin": "theoretical",
-      "note": "Órbita de partida del vehículo de servicio."
-    },
-    "target_altitude_km": {
-      "value": 480,
-      "unit": "km",
-      "source": "STScI, HST Overview and Status: altitud actual de Hubble",
+      "source": "Wikipedia, International Space Station (datos orbitales): perigeo 413 km y apogeo 422 km",
       "retrieved": "2026-11-14",
       "origin": "real"
     },
-    "dock_tolerance_km": {
-      "value": 2,
+    "iss_inclination_deg": {
+      "value": 51.6,
+      "unit": "°",
+      "source": "NASA JSC, Space Station Orbit Tutorial (eol.jsc.nasa.gov): inclinación de 51.6°",
+      "retrieved": "2026-11-14",
+      "origin": "real"
+    },
+    "start_altitude_km": {
+      "value": 345,
       "unit": "km",
       "source": "Supuesto del juego",
       "retrieved": "2026-11-14",
-      "origin": "theoretical"
+      "origin": "theoretical",
+      "note": "Órbita de persecución, por debajo de la ISS."
     },
-    "cargo_capacity_kg": {
-      "value": 110,
+    "start_lead_deg": {
+      "value": 12,
+      "unit": "°",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "Ventaja inicial de la ISS sobre la nave: unas 3 h de persecución."
+    },
+    "orbiter_mass_kg": {
+      "value": 100000,
       "unit": "kg",
       "source": "Supuesto del juego",
       "retrieved": "2026-11-14",
-      "origin": "theoretical"
+      "origin": "theoretical",
+      "note": "Orden de magnitud del orbitador con tripulación y consumibles, sin carga."
     },
-    "servicer_dry_mass_kg": {
-      "value": 600,
+    "propellant_kg": {
+      "value": 2020,
       "unit": "kg",
       "source": "Supuesto del juego",
       "retrieved": "2026-11-14",
-      "origin": "theoretical"
+      "origin": "theoretical",
+      "note": "Propelente asignado a este encuentro, no la carga total de los tanques."
     },
-    "fuel_mass_kg": {
-      "value": 30,
+    "reserve_kg": {
+      "value": 200,
       "unit": "kg",
       "source": "Supuesto del juego",
       "retrieved": "2026-11-14",
-      "origin": "theoretical"
+      "origin": "theoretical",
+      "note": "Reserva para alejarse con seguridad si hay que abortar."
     },
     "isp_s": {
-      "value": 300,
+      "value": 313,
       "unit": "s",
-      "source": "Supuesto del juego",
+      "source": "NASA SP-407, Space Shuttle (cap. 3): motor OMS, impulso específico de 313 s",
       "retrieved": "2026-11-14",
-      "origin": "theoretical",
-      "note": "Orden típico de un motor bipropelente hipergólico."
+      "origin": "real"
     },
-    "comm_period_s": {
-      "value": 5400,
-      "unit": "s",
+    "cargo_capacity_kg": {
+      "value": 16000,
+      "unit": "kg",
       "source": "Supuesto del juego",
       "retrieved": "2026-11-14",
       "origin": "theoretical",
-      "note": "Aproxima un periodo orbital en LEO (~90 min)."
+      "note": "Orden de la carga que el transbordador subía a la órbita de la ISS."
     },
-    "comm_window_s": {
-      "value": 900,
-      "unit": "s",
+    "rendezvous_window_km": {
+      "value": 150,
+      "unit": "km",
       "source": "Supuesto del juego",
       "retrieved": "2026-11-14",
       "origin": "theoretical",
-      "note": "Pase sobre una estación terrena de ~15 min."
+      "note": "Si llegas más lejos, la aproximación final no puede cerrar la distancia."
     },
-    "repair_work_s": {
-      "value": 2400,
+    "hold_point_m": {
+      "value": 122,
+      "unit": "m",
+      "source": "Spaceflight Now, STS-132: el transbordador se situaba unos 400 pies (122 m) delante de la estación",
+      "retrieved": "2026-11-14",
+      "origin": "real"
+    },
+    "approach_window_s": {
+      "value": 1500,
       "unit": "s",
       "source": "Supuesto del juego",
       "retrieved": "2026-11-14",
       "origin": "theoretical",
-      "note": "Trabajo total con la estación a la vista."
+      "note": "Tiempo para el acercamiento manual. En los vuelos reales se coordinaba con la luz del día y la cobertura de comunicaciones."
+    },
+    "stationkeeping_kg_min": {
+      "value": 2,
+      "unit": "kg/min",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "Propelente que se gasta en mantener la posición junto a la estación."
+    },
+    "keep_out_sphere_m": {
+      "value": 200,
+      "unit": "m",
+      "source": "The Planetary Society, acercamiento a la ISS: esfera de exclusión de 200 m",
+      "retrieved": "2026-11-14",
+      "origin": "real"
+    },
+    "corridor_half_angle_deg": {
+      "value": 15,
+      "unit": "°",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "Cono de aproximación alrededor del eje del puerto."
+    },
+    "corridor_grace_s": {
+      "value": 20,
+      "unit": "s",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "Tiempo fuera del corredor antes de que la ISS ordene abortar."
+    },
+    "max_range_m": {
+      "value": 400,
+      "unit": "m",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical"
+    },
+    "contact_speed_real_m_s": {
+      "value": 0.03,
+      "unit": "m/s",
+      "source": "Spaceflight Now, STS-111: el comandante describe el contacto a una décima de pie por segundo (0.03 m/s)",
+      "retrieved": "2026-11-14",
+      "origin": "real"
+    },
+    "contact_speed_max_m_s": {
+      "value": 0.15,
+      "unit": "m/s",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "Mucho más permisivo que el real (0.03 m/s) para que se pueda jugar con teclado."
+    },
+    "capture_radius_m": {
+      "value": 0.5,
+      "unit": "m",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "Desalineación lateral admitida en el contacto."
+    },
+    "station_radius_m": {
+      "value": 6,
+      "unit": "m",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "Contorno del módulo alrededor del puerto: tocarlo fuera del centro es un choque."
+    },
+    "start_offset_m": {
+      "value": 1.5,
+      "unit": "m",
+      "source": "Supuesto del juego",
+      "retrieved": "2026-11-14",
+      "origin": "theoretical",
+      "note": "Desalineación máxima al empezar a pilotar."
     },
     "time_limit_s": {
-      "value": 43200,
+      "value": 28800,
       "unit": "s",
       "source": "Supuesto del juego",
       "retrieved": "2026-11-14",
       "origin": "theoretical",
-      "note": "12 h de misión."
-    },
-    "power_generated_w": {
-      "value": 1500,
-      "unit": "W",
-      "source": "Supuesto del juego",
-      "retrieved": "2026-11-14",
-      "origin": "theoretical"
-    },
-    "power_consumed_w": {
-      "value": 900,
-      "unit": "W",
-      "source": "Supuesto del juego",
-      "retrieved": "2026-11-14",
-      "origin": "theoretical"
-    },
-    "budget_usd_m": {
-      "value": 50,
-      "unit": "M USD",
-      "source": "Supuesto del juego",
-      "retrieved": "2026-11-14",
-      "origin": "theoretical"
-    },
-    "camera_data_mb_s": {
-      "value": 0.5,
-      "unit": "MB/s",
-      "source": "Supuesto del juego",
-      "retrieved": "2026-11-14",
-      "origin": "theoretical"
-    },
-    "downlink_kbps": {
-      "value": 2000,
-      "unit": "kbps",
-      "source": "Supuesto del juego",
-      "retrieved": "2026-11-14",
-      "origin": "theoretical"
+      "note": "8 h para acoplarse."
     }
   }
 }

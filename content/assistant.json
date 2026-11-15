@@ -2,15 +2,15 @@
   {
     "id": "l1-start",
     "trigger": "level1:start",
-    "text": "El servicio en órbita no es ciencia ficción: los astronautas visitaron Hubble cinco veces entre 1993 y 2009 para repararlo y mejorarlo.",
-    "source": "NASA, misiones de servicio a Hubble",
+    "text": "La ISS mide 109 m de punta a punta y pesa 419.725 kg. Da unas 16 vueltas a la Tierra cada día.",
+    "source": "NASA, Space Station Facts and Figures",
     "origin": "real"
   },
   {
     "id": "l1-launch",
     "trigger": "level1:launch",
-    "text": "Para subir de una órbita circular a otra con el mínimo combustible se usa la transferencia de Hohmann: un encendido para entrar en una elipse y otro para circularizar.",
-    "source": "Transferencia de Hohmann; NASA, Basics of Space Flight (JPL)",
+    "text": "Para alcanzar algo en órbita hay que ir más abajo: las órbitas bajas son más rápidas. Por eso se espera en una órbita de persecución.",
+    "source": "Mecánica orbital: velocidad circular v = √(μ/r)",
     "origin": "real"
   },
   {
@@ -21,30 +21,44 @@
     "origin": "real"
   },
   {
+    "id": "l1-rendezvous",
+    "trigger": "level1:rendezvous",
+    "text": "Cerca de la estación todo es raro: acelerar hacia delante te sube y te deja atrás. Lo describen las ecuaciones de Clohessy-Wiltshire.",
+    "source": "Ecuaciones de Clohessy-Wiltshire (movimiento relativo en órbita circular)",
+    "origin": "real"
+  },
+  {
+    "id": "l1-approach",
+    "trigger": "level1:approach",
+    "text": "El transbordador se situaba unos 400 pies (122 m) delante de la estación y desde ahí el comandante pilotaba a mano.",
+    "source": "Spaceflight Now, STS-132",
+    "origin": "real"
+  },
+  {
     "id": "l1-docked",
     "trigger": "level1:docked",
-    "text": "En la misión SM4 (2009) la tripulación del Atlantis hizo cinco caminatas espaciales sobre Hubble.",
-    "source": "NASA, Hubble Servicing Mission 4 (STS-125)",
+    "text": "En la STS-120 (2007) Discovery llevó a la estación el nodo Harmony, de 14.288 kg.",
+    "source": "NASA JSC, Fact Sheet FS-2007-10-014",
     "origin": "real"
   },
   {
-    "id": "l1-aos",
-    "trigger": "level1:aos",
-    "text": "Un satélite en órbita baja pasa sobre una estación terrena unos minutos por vuelta. Fuera de esa ventana no hay enlace.",
-    "source": "NASA, CubeSat 101: Basic Concepts and Processes for First-Time CubeSat Developers",
+    "id": "l1-sunset",
+    "trigger": "level1:sunset",
+    "text": "Una noche orbital a 415 km dura unos 36 minutos: la ISS ve 16 amaneceres al día.",
+    "source": "NASA, Space Station Facts and Figures (16 vueltas al día)",
     "origin": "real"
   },
   {
-    "id": "l1-los",
-    "trigger": "level1:los",
-    "text": "Pérdida de señal (LOS): la estación quedó bajo el horizonte. El trabajo espera al próximo pase.",
-    "source": "NASA, CubeSat 101",
+    "id": "l1-collision",
+    "trigger": "level1:collision",
+    "text": "El comandante de la STS-111 llamaba al acople un choque muy lento: una décima de pie por segundo.",
+    "source": "Spaceflight Now, STS-111",
     "origin": "real"
   },
   {
     "id": "l1-miss",
     "trigger": "level1:miss",
-    "text": "¿Te pasaste? Un encendido negativo baja la órbita con la misma lógica de Hohmann.",
+    "text": "Encender pronto te deja detrás de la ISS; tarde, delante. El adelanto justo es lo que avanza la ISS en media vuelta.",
     "source": "Transferencia de Hohmann",
     "origin": "real"
   },
@@ -56,10 +70,17 @@
     "origin": "real"
   },
   {
+    "id": "l1-corridor",
+    "trigger": "level1:corridor-warn",
+    "text": "Si una nave sale de su corredor o entra sin permiso en la esfera de 200 m, debe abortar y alejarse.",
+    "source": "The Planetary Society, acercamiento a la ISS",
+    "origin": "real"
+  },
+  {
     "id": "l1-complete",
     "trigger": "level1:complete",
-    "text": "Misión de servicio terminada. Hubble sigue operando décadas después de su lanzamiento en 1990 gracias a esas reparaciones.",
-    "source": "NASA, Hubble Space Telescope",
+    "text": "En la STS-120 Parazynski cosió el panel P6 roto con grapas, colgado del extremo del brazo robótico.",
+    "source": "NASA/ESA, STS-120: reparación del panel P6 (3 nov 2007)",
     "origin": "real"
   },
   {

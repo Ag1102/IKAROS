@@ -60,6 +60,33 @@ export interface SimState {
   repair_progress_pct?: number;
   data_downlinked_mb?: number;
 
+  // Nivel 1: encuentro y acople con la ISS
+  /** Posición en la órbita, grados (0 = mediodía orbital). */
+  orbit_angle_deg?: number;
+  target_orbit_angle_deg?: number;
+  /** Cuánto va la ISS por delante de la nave, grados (negativo = va por detrás). */
+  target_lead_deg?: number;
+  /** Adelanto que necesita una transferencia de Hohmann desde la altitud actual, grados. */
+  ideal_lead_deg?: number;
+  /** Distancia a lo largo de la órbita hasta la ISS, km (positivo = la ISS va delante). */
+  separation_km?: number;
+  fuel_kg?: number;
+  fuel_capacity_kg?: number;
+  /** Por debajo de esta cantidad la ISS ordena abortar el acople. */
+  fuel_reserve_kg?: number;
+  /** Posición relativa al puerto de acople, m: x adelante (eje V), y arriba (eje R), z a la derecha. */
+  rel_position_m?: Vec3;
+  rel_velocity_m_s?: Vec3;
+  in_daylight?: boolean;
+  /** Compensación automática de la deriva orbital durante el acercamiento. */
+  rcs_assist?: boolean;
+  /** true si la nave va dentro del corredor de aproximación. */
+  in_corridor?: boolean;
+  /** Fin de la fase automática de encuentro, s de misión. */
+  rendezvous_end_s?: number;
+  /** Hasta cuándo puede durar el acercamiento manual, s de misión. */
+  approach_deadline_s?: number;
+
   // Nivel 3 (Ikaros)
   distance_to_sun_rsun?: number;
   distance_to_sun_au?: number;
@@ -119,7 +146,17 @@ export type PlayerAction =
   | { type: "stow-main-array" }
   | { type: "set-attitude"; attitude: Attitude }
   /** ⚗ Enciende o apaga un sistema teórico del nivel 3 (reactor o campo HTS). */
-  | { type: "set-system"; system: IkarosSystem; on: boolean };
+  | { type: "set-system"; system: IkarosSystem; on: boolean }
+  /** Pulso de los propulsores de control de reacción: Δv en m/s en ejes del puerto (x, y, z). */
+  | { type: "rcs"; x: number; y: number; z: number }
+  /** Enciende o apaga la compensación automática de la deriva orbital. */
+  | { type: "set-assist"; on: boolean };
+
+export interface Vec3 {
+  x: number;
+  y: number;
+  z: number;
+}
 
 /** ⚗ Sistemas teóricos del nivel 3 que el jugador mantiene en marcha. */
 export type IkarosSystem = "reactor" | "hts";

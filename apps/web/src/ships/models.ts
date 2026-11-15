@@ -13,4 +13,5 @@ export const MODELS = {
   landsat: { url: "/models/landsat-8.glb", name: "Landsat 8", size_km: 0.0099 },
   cubesat: { url: "/models/cubesat-2u.glb", name: "CubeSat 2U", size_km: 0.00023 },
   parker: { url: "/models/parker-solar-probe.glb", name: "Parker Solar Probe", size_km: 0.003 },
+  iss: { url: "/models/iss.glb", name: "International Space Station", size_km: 0.109 },
 } satisfies Record<string, NasaModelInfo>;

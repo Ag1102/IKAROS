@@ -3,7 +3,15 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { ContentEntry } from "@ikaros/contracts";
 import { createSimulation } from "../packages/sim/src/index";
-import { pickAll, playLevel1, playLevel3, REAL_CONFIG, resolveOpen } from "../packages/sim/src/autopilot";
+import {
+  LEVEL1_CARGO,
+  level1BurnDv,
+  pickAll,
+  playLevel1,
+  playLevel3,
+  REAL_CONFIG,
+  resolveOpen,
+} from "../packages/sim/src/autopilot";
 
 const triggers = new Set(
   (JSON.parse(readFileSync(join(__dirname, "../content/assistant.json"), "utf8")) as ContentEntry[]).map(
@@ -11,22 +19,54 @@ const triggers = new Set(
   ),
 );
 
-describe("nivel 1: servicio en órbita", () => {
-  it("una transferencia de Hohmann exacta acopla y repara todo", () => {
+describe("nivel 1: acople con la ISS", () => {
+  it("con el adelanto justo y un contacto suave se acopla con toda la carga", () => {
     const { report, state } = playLevel1();
     expect(report.outcome).toBe("success");
-    expect(report.metrics.tasks_done).toBe(2);
-    expect(report.metrics.delta_v_used_m_s).toBeCloseTo(report.metrics.delta_v_ideal_m_s as number, 1);
+    expect(report.metrics.docked).toBe(true);
+    expect(report.metrics.cargo_delivered_kg).toBe(15_338);
+    expect(report.metrics.rendezvous_miss_km as number).toBeLessThan(5);
+    expect(report.metrics.delta_v_used_m_s as number).toBeLessThan(
+      (report.metrics.delta_v_ideal_m_s as number) + 2,
+    );
     expect(state.phase).toBe("complete");
   });
 
-  it("sin la antena la misión es parcial", () => {
-    const { report } = playLevel1({ picks: { panel: "panel-spare", toolkit: "toolkit-std" } });
-    expect(report.outcome).toBe("partial");
-    expect(report.causes.some((c) => c.text.includes("antena"))).toBe(true);
+  it("encender antes o después del adelanto cuesta combustible en la aproximación final", () => {
+    const exact = playLevel1().report.metrics;
+    const early = playLevel1({ burnEarly_deg: 0.4 }).report.metrics;
+    const late = playLevel1({ burnEarly_deg: -0.4 }).report.metrics;
+    for (const m of [early, late]) {
+      expect(m.terminal_dv_m_s as number).toBeGreaterThan(exact.terminal_dv_m_s as number);
+      expect(m.fuel_left_kg as number).toBeLessThan(exact.fuel_left_kg as number);
+    }
   });
 
-  it("un encendido excesivo agota el combustible y falla", () => {
+  it("encender muy pronto deja la ISS lejos y sin combustible para repetir", () => {
+    const { report, state } = playLevel1({ burnEarly_deg: 2 });
+    expect(report.outcome).toBe("failure");
+    expect(state.events.some((e) => e.trigger === "level1:miss-fuel")).toBe(true);
+  });
+
+  it("un contacto rápido es un choque", () => {
+    const { report, state } = playLevel1({ contactSpeed: 0.2 });
+    expect(report.outcome).toBe("failure");
+    expect(state.events.at(-1)?.trigger).toBe("level1:collision");
+  });
+
+  it("llegar sin carga es una misión parcial", () => {
+    expect(playLevel1({ picks: {} }).report.outcome).toBe("partial");
+  });
+
+  it("sin compensación la deriva orbital también se pilota", () => {
+    const { report } = playLevel1({ assist: false });
+    expect(report.outcome).toBe("success");
+    expect(report.metrics.rcs_pulses as number).toBeGreaterThan(
+      playLevel1().report.metrics.rcs_pulses as number,
+    );
+  });
+
+  it("un encendido excesivo pasa de la ISS y falla", () => {
     const { report } = playLevel1({ aim_m_s: 400 });
     expect(report.outcome).toBe("failure");
     expect(report.metrics.docked).toBe(false);
@@ -35,12 +75,7 @@ describe("nivel 1: servicio en órbita", () => {
   it("bloquea el despegue con sobrepeso", () => {
     const sim = createSimulation();
     sim.load("level1-repair", 1);
-    pickAll(sim, {
-      panel: "panel-spare",
-      antenna: "antenna-spare",
-      toolkit: "toolkit-std",
-      camera: "camera-insp",
-    });
+    pickAll(sim, { module: "harmony", supplies: "supplies-large" });
     const s = sim.act({ type: "launch" });
     expect(s.phase).toBe("hangar");
     expect(s.events.at(-1)?.trigger).toBe("level1:overweight");
@@ -50,9 +85,48 @@ describe("nivel 1: servicio en órbita", () => {
     const sim = createSimulation();
     const empty = sim.load("level1-repair", 1).delta_v_remaining_m_s ?? 0;
     const loaded =
-      sim.act({ type: "select-component", slot: "panel", componentId: "panel-spare" })
-        .delta_v_remaining_m_s ?? 0;
+      sim.act({ type: "select-component", slot: "module", componentId: "harmony" }).delta_v_remaining_m_s ??
+      0;
     expect(loaded).toBeLessThan(empty);
+  });
+
+  it("esperar junto a la estación gasta combustible y la ventana se acaba", () => {
+    const sim = createSimulation();
+    sim.load("level1-repair", 1);
+    pickAll(sim, LEVEL1_CARGO);
+    let s = sim.act({ type: "launch" });
+    while ((s.target_lead_deg ?? 0) > (s.ideal_lead_deg ?? 0)) s = sim.step(20);
+    s = sim.act({ type: "burn", delta_v_m_s: level1BurnDv(s) });
+    while (s.phase !== "approach") s = sim.step(60);
+    const fuel0 = s.fuel_kg ?? 0;
+    s = sim.step(600);
+    expect(s.fuel_kg ?? 0).toBeLessThan(fuel0 - 15);
+    while (s.phase === "approach") s = sim.step(60);
+    expect(s.events.at(-1)?.trigger).toBe("level1:approach-timeout");
+    expect(sim.report().outcome).toBe("failure");
+  });
+
+  it("con la carga máxima el combustible útil al llegar es justo", () => {
+    const heavy = playLevel1();
+    const light = playLevel1({ picks: { supplies: "supplies-small" } });
+    expect(heavy.report.outcome).toBe("success");
+    expect(heavy.report.metrics.fuel_left_kg as number).toBeLessThan(
+      light.report.metrics.fuel_left_kg as number,
+    );
+    expect((heavy.report.metrics.fuel_left_kg as number) - 200).toBeLessThan(300);
+  });
+
+  it("salir del corredor demasiado tiempo provoca el aborto", () => {
+    const sim = createSimulation();
+    sim.load("level1-repair", 1);
+    let s = sim.act({ type: "launch" });
+    while ((s.target_lead_deg ?? 0) > (s.ideal_lead_deg ?? 0)) s = sim.step(20);
+    s = sim.act({ type: "burn", delta_v_m_s: level1BurnDv(s) });
+    while (s.phase !== "approach") s = sim.step(60);
+    s = sim.act({ type: "rcs", x: 0, y: 0.5, z: 0 });
+    while (s.phase === "approach") s = sim.step(1);
+    expect(sim.report().outcome).toBe("failure");
+    expect(s.events.some((e) => e.trigger === "level1:corridor")).toBe(true);
   });
 });
 

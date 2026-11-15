@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { scenario } from "@ikaros/sim";
 import { MODELED_PARTS, matchesParker } from "./Spacecraft";
 
-const NOT_PARTS = new Set(["objective", "orbit", "launcher"]);
+// Carga para la estación (nivel 1): va en la bodega del transbordador, no es una pieza de la nave.
+const NOT_PARTS = new Set(["objective", "orbit", "launcher", "module", "supplies", "repair"]);
 
 describe("naves del hangar", () => {
   it("cada componente físico de los tres escenarios tiene modelo 3D", () => {

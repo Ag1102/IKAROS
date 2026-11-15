@@ -59,12 +59,12 @@ function NasaShip({ model, ...props }: ShipProps & { model: NasaModelInfo }) {
   );
 }
 
-/** Satélite objetivo del nivel 1: Hubble. */
-export function TargetSatellite(props: Omit<ShipProps, "realSize_km">) {
-  return <NasaShip {...props} model={MODELS.hubble} realSize_km={MODELS.hubble.size_km} />;
+/** Destino del nivel 1: la Estación Espacial Internacional. */
+export function Station(props: Omit<ShipProps, "realSize_km">) {
+  return <NasaShip {...props} model={MODELS.iss} realSize_km={MODELS.iss.size_km} />;
 }
 
-/** Vehículo de servicio del nivel 1: el transbordador, como en la misión real SM4 a Hubble. */
+/** Nave del nivel 1: el transbordador, que se acopló a la ISS entre 1998 y 2011. */
 export function Servicer(props: Omit<ShipProps, "realSize_km">) {
   return <NasaShip {...props} model={MODELS.shuttle} realSize_km={MODELS.shuttle.size_km} />;
 }
@@ -74,4 +74,4 @@ export function SmallSat(props: Omit<ShipProps, "realSize_km">) {
   return <NasaShip {...props} model={MODELS.landsat} realSize_km={MODELS.landsat.size_km} />;
 }
 
-for (const m of [MODELS.hubble, MODELS.shuttle, MODELS.landsat]) useGLTF.preload(m.url);
+for (const m of [MODELS.iss, MODELS.shuttle, MODELS.landsat]) useGLTF.preload(m.url);

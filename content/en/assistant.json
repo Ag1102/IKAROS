@@ -1,48 +1,63 @@
 [
   {
     "id": "l1-start",
-    "text": "On-orbit servicing is not science fiction: astronauts visited Hubble five times between 1993 and 2009 to repair and upgrade it.",
-    "source": "NASA, Hubble servicing missions"
+    "text": "The ISS is 109 m end to end and has a mass of 419,725 kg. It circles the Earth about 16 times a day.",
+    "source": "NASA, Space Station Facts and Figures"
   },
   {
     "id": "l1-launch",
-    "text": "To move from one circular orbit to another with the least fuel you use a Hohmann transfer: one burn to enter an ellipse and another to circularize.",
-    "source": "Hohmann transfer; NASA, Basics of Space Flight (JPL)"
+    "text": "To catch something in orbit you go lower: lower orbits are faster. That is why you wait in a chase orbit.",
+    "source": "Orbital mechanics: circular velocity v = √(μ/r)"
   },
   {
     "id": "l1-burn",
     "text": "Every m/s costs propellant. The Tsiolkovsky equation tells you how much: Δv = Isp · g0 · ln(m0/mf).",
-    "source": "Tsiolkovsky rocket equation; NASA Glenn, Beginner's Guide to Rockets"
+    "source": "Tsiolkovsky equation; NASA Glenn, Beginner's Guide to Rockets"
+  },
+  {
+    "id": "l1-rendezvous",
+    "text": "Near the station things get strange: thrusting forward raises you and drops you behind. The Clohessy-Wiltshire equations describe it.",
+    "source": "Clohessy-Wiltshire equations (relative motion in a circular orbit)"
+  },
+  {
+    "id": "l1-approach",
+    "text": "The shuttle moved to about 400 feet (122 m) in front of the station, and from there the commander flew by hand.",
+    "source": "Spaceflight Now, STS-132"
   },
   {
     "id": "l1-docked",
-    "text": "On Servicing Mission 4 (2009) the Atlantis crew performed five spacewalks on Hubble.",
-    "source": "NASA, Hubble Servicing Mission 4 (STS-125)"
+    "text": "On STS-120 (2007) Discovery carried the Harmony node, 14,288 kg, to the station.",
+    "source": "NASA JSC, Fact Sheet FS-2007-10-014"
   },
   {
-    "id": "l1-aos",
-    "text": "A satellite in low orbit passes over a ground station for a few minutes per orbit. Outside that window there is no link.",
-    "source": "NASA, CubeSat 101: Basic Concepts and Processes for First-Time CubeSat Developers"
+    "id": "l1-sunset",
+    "text": "An orbital night at 415 km lasts about 36 minutes: the ISS sees 16 sunrises a day.",
+    "source": "NASA, Space Station Facts and Figures (16 orbits a day)"
   },
   {
-    "id": "l1-los",
-    "text": "Loss of signal (LOS): the station has dropped below the horizon. The work waits for the next pass.",
-    "source": "NASA, CubeSat 101"
+    "id": "l1-collision",
+    "text": "The STS-111 commander called docking a very slow crash: a tenth of a foot per second.",
+    "source": "Spaceflight Now, STS-111"
   },
   {
     "id": "l1-miss",
-    "text": "Overshot? A negative burn lowers the orbit with the same Hohmann logic.",
+    "text": "Burn early and you end up behind the ISS; burn late and you end up ahead. The right lead is how far the ISS moves in half an orbit.",
     "source": "Hohmann transfer"
   },
   {
     "id": "l1-overweight",
-    "text": "Mass rules: everything you take up has to be pushed. That is why every mission has a mass budget.",
+    "text": "Mass rules: everything you carry up has to be pushed. That is why every mission has a mass budget.",
     "source": "NASA, Design and Develop Science Missions (space segment)"
   },
   {
+    "id": "l1-corridor",
+    "text": "If a vehicle leaves its corridor or enters the 200 m sphere without clearance, it must abort and back away.",
+    "source": "The Planetary Society, ISS approach"
+  },
+  {
     "id": "l1-complete",
-    "text": "Servicing mission complete. Hubble is still operating decades after its 1990 launch thanks to those repairs.",
-    "source": "NASA, Hubble Space Telescope"
+    "text": "On STS-120 Parazynski stitched the torn P6 array with clips, riding the end of the robotic arm.",
+    "source": "NASA/ESA, STS-120: P6 array repair (3 Nov 2007)"
   },
   {
     "id": "l2-start",

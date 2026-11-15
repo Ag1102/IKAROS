@@ -23,8 +23,8 @@ export function Credits({ onClose }: { onClose: () => void }) {
       <ul>
         <li>
           {tr(
-            "Hubble Space Telescope (A), Parker Solar Probe y Earth (A) — NASA 3D Resources.",
-            "Hubble Space Telescope (A), Parker Solar Probe and Earth (A) — NASA 3D Resources.",
+            "International Space Station (ISS) (B), Space Shuttle (A), Hubble Space Telescope (A), Landsat 8, CubeSat 2U, Parker Solar Probe, Earth (A) y Venus — NASA 3D Resources.",
+            "International Space Station (ISS) (B), Space Shuttle (A), Hubble Space Telescope (A), Landsat 8, CubeSat 2U, Parker Solar Probe, Earth (A) and Venus — NASA 3D Resources.",
           )}{" "}
           <a href="https://science.nasa.gov/3d-resources/" target="_blank" rel="noreferrer">
             science.nasa.gov/3d-resources

@@ -129,10 +129,10 @@ export function lesson(id: LessonId): Lesson {
     case "eva":
       return {
         text: tr(
-          "En la misión SM4 (2009) los astronautas hicieron 5 caminatas espaciales para reparar Hubble.",
-          "On mission SM4 (2009) astronauts made 5 spacewalks to repair Hubble.",
+          "En la STS-120 (2007) Parazynski cosió el panel P6 roto colgado del brazo robótico de la estación.",
+          "On STS-120 (2007) Parazynski stitched the torn P6 array while riding the station's robotic arm.",
         ),
-        source: "NASA, Hubble Servicing Mission 4",
+        source: "NASA/ESA, STS-120",
       };
     case "insertion":
       return {

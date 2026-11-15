@@ -13,11 +13,11 @@ export function menuLevels(): MenuLevel[] {
   return [
     {
       n: 1,
-      name: tr("Servicio en órbita", "On-orbit servicing"),
-      tag: "LEO · 480 km",
+      name: tr("Acople con la ISS", "Docking with the ISS"),
+      tag: "LEO · 415 km",
       text: tr(
-        "Reparar un satélite: transferencia de Hohmann y ventanas de comunicación.",
-        "Repair a satellite: Hohmann transfer and communication windows.",
+        "Persigue a la Estación Espacial y acóplate pilotando el transbordador.",
+        "Chase the Space Station and dock by flying the shuttle.",
       ),
       ready: true,
     },

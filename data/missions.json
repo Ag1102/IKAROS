@@ -49,5 +49,26 @@
     "source": "NASA, Hubble Servicing Mission 4 (STS-125, Atlantis, mayo 2009)",
     "retrieved": "2026-11-14",
     "origin": "real"
+  },
+  "sts120_harmony_mass_kg": {
+    "value": 14288,
+    "unit": "kg",
+    "source": "NASA JSC, Fact Sheet FS-2007-10-014: Node 2 Harmony, 14,288 kg al lanzamiento",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "shuttle_contact_speed_m_s": {
+    "value": 0.03,
+    "unit": "m/s",
+    "source": "Spaceflight Now, STS-111: el comandante describe el contacto a una décima de pie por segundo (0.03 m/s)",
+    "retrieved": "2026-11-14",
+    "origin": "real"
+  },
+  "iss_mass_kg": {
+    "value": 419725,
+    "unit": "kg",
+    "source": "NASA, Space Station Facts and Figures: 419,725 kg",
+    "retrieved": "2026-11-14",
+    "origin": "real"
   }
 }

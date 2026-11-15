@@ -116,20 +116,13 @@ describe("el resultado no depende del tamaño del paso", () => {
 });
 
 describe("misiones que no se traban", () => {
-  it("nivel 1 sin kit de herramientas termina al acoplar", () => {
+  it("nivel 1 sin encender termina cuando se cierra la ventana", () => {
     const sim = createSimulation();
     sim.load("level1-repair", 1);
-    pickAll(sim, { panel: "panel-spare", antenna: "antenna-spare" });
     let s = sim.act({ type: "launch" });
-    const r = (alt: number) => constants.earth_radius_km.value + alt;
-    const dv = physics.hohmannDeltaV(
-      constants.mu_earth_km3_s2.value,
-      r(s.altitude_km ?? 0),
-      r(s.target_altitude_km ?? 0),
-    );
-    s = sim.act({ type: "burn", delta_v_m_s: dv * 1000 });
     while (s.phase !== "complete") s = sim.step(600);
-    expect(s.resources.mission_elapsed_s).toBeLessThan(6 * 3600);
+    expect(s.resources.mission_elapsed_s).toBeLessThanOrEqual(12 * 3600 + 600);
+    expect(s.events.at(-1)?.trigger).toBe("level1:timeout");
     expect(sim.report().outcome).toBe("failure");
   });
 

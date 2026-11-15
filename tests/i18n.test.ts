@@ -78,17 +78,14 @@ describe("versión en inglés: contenido", () => {
   it("el español sigue siendo el idioma por defecto", () => {
     expect(scenario("level1-repair").title).toMatch(/^Nivel 1/);
     const sim = createSimulation();
-    expect(sim.load("level1-repair", 1).events[0]?.text).toMatch(/satélite/);
+    expect(sim.load("level1-repair", 1).events[0]?.text).toMatch(/acóplate/);
   });
 });
 
 describe("versión en inglés: motor", () => {
   it("nivel 1 completo sin textos en español", () => {
-    const { state, report } = playLevel1({
-      lang: "en",
-      picks: { panel: "panel-spare", toolkit: "toolkit-std" },
-    });
-    expect(report.outcome).toBe("partial");
+    const { state, report } = playLevel1({ lang: "en" });
+    expect(report.outcome).toBe("success");
     checkRun("nivel 1", state, report);
   });
 

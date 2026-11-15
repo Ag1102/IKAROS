@@ -99,38 +99,63 @@ export function playLevel3(opts: PilotOptions = {}) {
   return { sim, state: s, report: sim.report() };
 }
 
+export const LEVEL1_CARGO = { module: "harmony", supplies: "supplies-small", repair: "p6-repair-kit" };
+
+/** Δv de una transferencia de Hohmann desde la altitud actual hasta la de la ISS, m/s. */
+export function level1BurnDv(s: SimState): number {
+  const r = (alt: number) => constants.earth_radius_km.value + alt;
+  return (
+    Math.sign((s.target_altitude_km ?? 0) - (s.altitude_km ?? 0)) *
+    physics.hohmannDeltaV(
+      constants.mu_earth_km3_s2.value,
+      r(s.altitude_km ?? 0),
+      r(s.target_altitude_km ?? 0),
+    ) *
+    1000
+  );
+}
+
+/**
+ * Piloto del nivel 1: espera el adelanto justo, sube con Hohmann y se acerca al puerto a la
+ * velocidad indicada. `burnEarly_deg` adelanta el encendido; `contactSpeed` fija la llegada.
+ */
 export function playLevel1(
   opts: {
     picks?: Record<string, string>;
+    burnEarly_deg?: number;
     aim_m_s?: number;
+    contactSpeed?: number;
+    assist?: boolean;
     lang?: Lang;
     onStep?: (s: SimState) => void;
   } = {},
 ) {
   const sim = createSimulation({ lang: opts.lang });
   let s = sim.load("level1-repair", 1);
-  pickAll(sim, opts.picks ?? { panel: "panel-spare", antenna: "antenna-spare", toolkit: "toolkit-std" });
+  pickAll(sim, opts.picks ?? LEVEL1_CARGO);
   s = sim.act({ type: "launch" });
-  const r = (alt: number) => constants.earth_radius_km.value + alt;
+  if (opts.assist === false) s = sim.act({ type: "set-assist", on: false });
+  let burned = false;
   let guard = 0;
-  while (s.phase !== "complete" && guard++ < 100_000) {
-    if (s.phase === "transfer") {
-      const diff = (s.target_altitude_km ?? 0) - (s.altitude_km ?? 0);
-      const transferring = s.events.at(-1)?.trigger === "level1:burn";
-      if (!transferring && Math.abs(diff) > 0.5) {
-        const dv =
-          opts.aim_m_s ??
-          Math.sign(diff) *
-            physics.hohmannDeltaV(
-              constants.mu_earth_km3_s2.value,
-              r(s.altitude_km ?? 0),
-              r(s.target_altitude_km ?? 0),
-            ) *
-            1000;
-        s = sim.act({ type: "burn", delta_v_m_s: dv });
+  while (s.phase !== "complete" && guard++ < 200_000) {
+    if (s.phase === "phasing" && !burned) {
+      const gap = (s.target_lead_deg ?? 0) - (s.ideal_lead_deg ?? 0);
+      if (gap <= (opts.burnEarly_deg ?? 0)) {
+        s = sim.act({ type: "burn", delta_v_m_s: opts.aim_m_s ?? level1BurnDv(s) });
+        burned = true;
       }
     }
-    s = sim.step(60);
+    if (s.phase === "approach") {
+      const p = s.rel_position_m!;
+      const v = s.rel_velocity_m_s!;
+      const want = opts.contactSpeed ?? Math.min(0.5, 0.03 + Math.max(0, p.x) / 400);
+      const clampV = (x: number) => Math.max(-0.05, Math.min(0.05, x));
+      const dv = { x: -want - v.x, y: clampV(-p.y * 0.02) - v.y, z: clampV(-p.z * 0.02) - v.z };
+      if (Math.hypot(dv.x, dv.y, dv.z) > 0.005) s = sim.act({ type: "rcs", ...dv });
+      s = sim.step(1);
+    } else {
+      s = sim.step(20);
+    }
     opts.onStep?.(s);
   }
   return { sim, state: s, report: sim.report() };

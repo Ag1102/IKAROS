@@ -13,8 +13,9 @@ export type { Simulation } from "@ikaros/contracts";
 
 /** Segundos de misión que dura cada fase en el mock antes de pasar a la siguiente. */
 const PHASE_DURATION_S: Record<string, number> = {
-  transfer: 3600,
-  repair: 7200,
+  phasing: 3600,
+  rendezvous: 5400,
+  approach: 1200,
   operations: 3 * 86_400,
   cruise: 30 * 86_400,
   encounter: 10 * 86_400,
@@ -22,7 +23,7 @@ const PHASE_DURATION_S: Record<string, number> = {
 };
 
 const PHASES: Record<ScenarioId, string[]> = {
-  "level1-repair": ["hangar", "transfer", "repair", "complete"],
+  "level1-repair": ["hangar", "phasing", "rendezvous", "approach", "complete"],
   "level2-leo": ["hangar", "operations", "complete"],
   "level3-ikaros": ["hangar", "cruise", "encounter", "exit", "complete"],
 };
@@ -47,12 +48,19 @@ function baseState(scenario: ScenarioId): SimState {
         downlink_rate_kbps: 0,
         mission_elapsed_s: 0,
       },
-      altitude_km: 400,
-      target_altitude_km: 480,
-      delta_v_remaining_m_s: 120,
-      comm_window_open: false,
-      repair_progress_pct: 0,
-      mass_capacity_kg: 110,
+      altitude_km: 345,
+      target_altitude_km: 415,
+      inclination_deg: 51.6,
+      delta_v_remaining_m_s: 60,
+      fuel_kg: 2200,
+      fuel_capacity_kg: 2200,
+      fuel_reserve_kg: 200,
+      target_lead_deg: 12,
+      ideal_lead_deg: 1.4,
+      in_daylight: true,
+      rcs_assist: true,
+      in_corridor: true,
+      mass_capacity_kg: 16000,
     };
   }
   if (scenario === "level2-leo") {
@@ -157,10 +165,12 @@ export function createSimulation(): Simulation {
           state.solar_intensity_suns = 1 / (au * au);
         }
         if (state.scenario === "level1-repair") {
-          state.comm_window_open = state.resources.mission_elapsed_s % 5400 < 600;
-          if (state.phase === "repair" && state.comm_window_open) {
-            state.repair_progress_pct = Math.min(100, (state.repair_progress_pct ?? 0) + dt_s / 24);
-            if (state.repair_progress_pct >= 100) nextPhase();
+          // La ISS se acerca sola y el acercamiento final avanza a 0.1 m/s.
+          state.target_lead_deg = Math.max(0, (state.target_lead_deg ?? 0) - dt_s / 1000);
+          if (state.phase === "approach") {
+            const x = Math.max(0, (state.rel_position_m?.x ?? 122) - dt_s * 0.1);
+            state.rel_position_m = { x, y: 0, z: 0 };
+            state.rel_velocity_m_s = { x: -0.1, y: 0, z: 0 };
           }
         }
       }
@@ -183,7 +193,7 @@ export function createSimulation(): Simulation {
               (state.delta_v_remaining_m_s ?? 0) - Math.abs(action.delta_v_m_s),
             );
             if (
-              state.phase === "transfer" &&
+              state.phase === "phasing" &&
               Math.abs(state.altitude_km - (state.target_altitude_km ?? 0)) < 2
             ) {
               nextPhase();
@@ -209,6 +219,19 @@ export function createSimulation(): Simulation {
             e.id === action.eventId ? { ...e, resolved: action.choice } : e,
           );
           break;
+        case "rcs":
+          if (state.rel_velocity_m_s) {
+            state.rel_velocity_m_s = {
+              x: state.rel_velocity_m_s.x + action.x,
+              y: state.rel_velocity_m_s.y + action.y,
+              z: state.rel_velocity_m_s.z + action.z,
+            };
+          }
+          break;
+        case "set-assist":
+          state.rcs_assist = action.on;
+          break;
+        case "set-system":
         case "set-time-scale":
           break;
       }
