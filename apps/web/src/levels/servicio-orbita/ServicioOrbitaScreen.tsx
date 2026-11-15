@@ -28,13 +28,13 @@ import { ProxHud, maneuversLeft, useThrusters } from "./ProxHud";
 import { tr } from "../../i18n";
 import { useAtlas } from "../../atlas/Atlas";
 
-const ORBIT_SCALES: TimeScale[] = [
+const orbitScales = (): TimeScale[] => [
   { value: 0, label: tr("Pausa", "Pause") },
   { value: 60, label: "60×" },
   { value: 600, label: "600×" },
   { value: 2400, label: "2400×" },
 ];
-const PROX_SCALES: TimeScale[] = [
+const proxScales = (): TimeScale[] => [
   { value: 0, label: tr("Pausa", "Pause") },
   { value: 1, label: "1×" },
   { value: 5, label: "5×" },
@@ -231,7 +231,7 @@ function ServicioOrbitaGame({ onExit }: { onExit: () => void }) {
         onCredits={() => setOverlay("credits")}
         onExit={onExit}
         subtitle={def.title}
-        scales={approach ? PROX_SCALES : ORBIT_SCALES}
+        scales={approach ? proxScales() : orbitScales()}
       />
       {approach && <Pilot state={state} act={act} def={def} />}
       <footer className="orbit-note">{tr("H · ocultar paneles", "H · hide panels")}</footer>

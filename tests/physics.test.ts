@@ -81,6 +81,14 @@ describe("física con casos conocidos", () => {
     expect(physics.distanceAt(0.0442, 0.723, -t)).toBeCloseTo(0.2, 6);
   });
 
+  it("distanceAt converge también en la órbita de la zambullida (e ≈ 0,98)", () => {
+    const q = 1.2213 * rsunAu;
+    for (const r of [0.006, 0.01, 0.05, 0.1, 0.25, 0.5]) {
+      const t = physics.timeFromPerihelion(q, 0.723, r);
+      expect(physics.distanceAt(q, 0.723, t)).toBeCloseTo(r, 6);
+    }
+  });
+
   it("eclipse en LEO de 500 km ≈ 38 % de la órbita", () => {
     expect(physics.eclipseFraction(500)).toBeGreaterThan(0.35);
     expect(physics.eclipseFraction(500)).toBeLessThan(0.4);

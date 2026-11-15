@@ -124,7 +124,7 @@ export class Level1 extends Level {
     return s;
   }
 
-  // ---- Masa y combustible ----
+  // Masa y combustible
 
   private cargoMass(): number {
     return this.chosenAll().reduce((m, c) => m + c.mass_kg, 0);
@@ -180,7 +180,7 @@ export class Level1 extends Level {
     this.refresh();
   }
 
-  // ---- Acciones ----
+  // Acciones
 
   protected onAction(action: PlayerAction): void {
     if (action.type === "launch") return this.launch();
@@ -273,7 +273,7 @@ export class Level1 extends Level {
     this.checkReserve();
   }
 
-  // ---- Tiempo ----
+  // Tiempo
 
   protected substep(): number {
     return this.state.phase === "approach" ? 0.5 : 20;
@@ -585,7 +585,7 @@ export class Level1 extends Level {
     this.finish();
   }
 
-  // ---- Informe ----
+  // Informe
 
   report(): MissionReport {
     const cargo = this.cargoMass();

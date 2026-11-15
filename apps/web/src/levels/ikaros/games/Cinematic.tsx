@@ -85,6 +85,7 @@ export function Cinematic({
   useEffect(() => {
     const id = window.setTimeout(() => done.current(), DURATION * 1000 + 600);
     const onKey = (e: KeyboardEvent) => {
+      if (e.repeat) return;
       if (e.key === "Enter" || e.key === "Escape") done.current();
     };
     window.addEventListener("keydown", onKey);

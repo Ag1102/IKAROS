@@ -797,7 +797,7 @@ button.link {
   height: 300px;
 }
 
-/* ---------- Menú 3D ---------- */
+/* Menú 3D */
 
 .menu3d {
   position: relative;
@@ -1051,7 +1051,7 @@ kbd {
   }
 }
 
-/* ---------- Hangar de juego ---------- */
+/* Hangar de juego */
 
 .hangar-game {
   position: relative;
@@ -1346,7 +1346,7 @@ kbd {
   }
 }
 
-/* ---------- HUD de vuelo ---------- */
+/* HUD de vuelo */
 
 .shell .topbar {
   background: linear-gradient(180deg, rgba(3, 5, 7, 0.92), rgba(3, 5, 7, 0.55));
@@ -1456,7 +1456,7 @@ kbd {
   }
 }
 
-/* ---------- Lanzamiento e informe ---------- */
+/* Lanzamiento e informe */
 
 .launch-seq {
   position: fixed;
@@ -1634,7 +1634,7 @@ kbd {
   }
 }
 
-/* ---------- Progreso ---------- */
+/* Progreso */
 
 .lock-icon {
   vertical-align: -1px;
@@ -1661,7 +1661,7 @@ kbd {
   color: #eef3f5;
 }
 
-/* ---------- Modo juego ---------- */
+/* Modo juego */
 .dialog.wide {
   width: min(1080px, 100%);
 }
@@ -1847,7 +1847,7 @@ button.primary.big {
 @media (max-width: 900px) {
 }
 
-/* ---------- Nivel 3: supervivencia ---------- */
+/* Nivel 3: supervivencia */
 .cruise {
   display: grid;
   gap: 8px;
@@ -2012,7 +2012,7 @@ button.primary.big {
   font-size: 15px;
 }
 
-/* ---------- Nivel 3: minijuegos ---------- */
+/* Nivel 3: minijuegos */
 
 .game-layer {
   position: absolute;
@@ -2763,7 +2763,7 @@ body.dragging-part .drop-zone {
     0 0 26px rgba(224, 160, 48, 0.7);
 }
 
-/* ---------- Puntuación, teclas y aprendizaje ---------- */
+/* Puntuación, teclas y aprendizaje */
 
 .score-hud {
   position: absolute;
@@ -3176,7 +3176,7 @@ body.dragging-part .drop-zone {
   }
 }
 
-/* ---------- Pilares de Ikaros ---------- */
+/* Pilares de Ikaros */
 
 .pillars {
   position: absolute;
@@ -3384,7 +3384,7 @@ body.dragging-part .drop-zone {
   white-space: nowrap;
 }
 
-/* ---------- Nivel 1: acople con la ISS ---------- */
+/* Nivel 1: acople con la ISS */
 
 .fuel {
   display: grid;
@@ -3642,7 +3642,7 @@ button.primary.pulse {
     height: 90px;
   }
 }
-/* ---------- Atlas, control de misión ---------- */
+/* Atlas, control de misión */
 .atlas-kicker {
   margin: 0;
   font: 600 12px var(--font-mono);

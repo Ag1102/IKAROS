@@ -25,6 +25,7 @@ export function RecordBanner({
   useEffect(() => {
     const id = window.setTimeout(() => done.current(), 6000);
     const onKey = (e: KeyboardEvent) => {
+      if (e.repeat) return;
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         done.current();

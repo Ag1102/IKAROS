@@ -6,7 +6,7 @@ import { NOISE_GLSL } from "./noise.glsl";
 
 export const SUN_RADIUS = 3;
 
-// ---------- Fotosfera ----------
+// Fotosfera
 
 const surfaceVertex = /* glsl */ `
 varying vec3 vPos;
@@ -49,7 +49,7 @@ void main() {
 }
 `;
 
-// ---------- Corona ----------
+// Corona
 
 const coronaVertex = /* glsl */ `
 varying vec2 vUv;
@@ -81,7 +81,7 @@ void main() {
 }
 `;
 
-// ---------- Protuberancias ----------
+// Protuberancias
 
 const prominenceVertex = /* glsl */ `
 varying vec2 vUv;
@@ -109,7 +109,7 @@ void main() {
 }
 `;
 
-// ---------- Partículas de eyección ----------
+// Partículas de eyección
 
 const particleVertex = /* glsl */ `
 attribute float aLife;

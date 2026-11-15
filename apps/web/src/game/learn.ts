@@ -57,7 +57,7 @@ export function lesson(id: LessonId): Lesson {
           "La luz crece con 1/d²: en el perihelio bastan unos 34 cm² de celdas para dar 482 W.",
           "Light grows as 1/d²: at perihelion about 34 cm² of cells give 482 W.",
         ),
-        source: `${P}, p. 4 y 7-8`,
+        source: tr(`${P}, p. 4 y 7-8`, `${P}, pp. 4, 7-8`),
       };
     case "cme":
       return {
@@ -97,7 +97,7 @@ export function lesson(id: LessonId): Lesson {
           "⚗ Parker no recoge muestras: mide partículas y campos en el lugar con sus instrumentos.",
           "⚗ Parker collects no samples: it measures particles and fields in place with its instruments.",
         ),
-        source: "NASA, Parker Solar Probe: instrumentos",
+        source: tr("NASA, Parker Solar Probe: instrumentos", "NASA, Parker Solar Probe: instruments"),
       };
     case "eject":
       return {

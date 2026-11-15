@@ -9,11 +9,16 @@ const SCRAM_RESTART = 0.35;
 const HTS_DROP = 0.12;
 const HTS_BACK = 0.3;
 
+/** Tiempo en marcha de los pilares y medidores de la consola; sobreviven a los retos que la ocultan. */
 export interface PillarUptime {
   reactor_s: number;
   hts_s: number;
   total_s: number;
+  temp: number;
+  field: number;
 }
+
+export const freshUptime = (): PillarUptime => ({ reactor_s: 0, hts_s: 0, total_s: 0, temp: 0.3, field: 0.8 });
 
 /**
  * ⚗ Consola de los pilares durante el paso por el Sol. El reactor se calienta más cuanto más
@@ -34,11 +39,11 @@ export function PillarConsole({
   running: boolean;
   uptime: React.MutableRefObject<PillarUptime>;
 }) {
-  const [temp, setTemp] = useState(0.3);
-  const [field, setField] = useState(0.8);
+  const [temp, setTemp] = useState(uptime.current.temp);
+  const [field, setField] = useState(uptime.current.field);
   const [pumpReady, setPumpReady] = useState(true);
-  const t = useRef(0.3);
-  const f = useRef(0.8);
+  const t = useRef(uptime.current.temp);
+  const f = useRef(uptime.current.field);
   const charging = useRef(false);
   const cooldown = useRef(0);
   const live = useRef(state);
@@ -49,13 +54,22 @@ export function PillarConsole({
   const reactorOn = state.systems?.reactor !== false;
   const htsOn = state.systems?.hts !== false;
 
-  useKeys((k) => {
-    if ((k === "c" || k === "C") && cooldown.current <= 0 && running) {
-      t.current = Math.max(0, t.current - 0.32);
-      cooldown.current = 0.6;
-      setTemp(t.current);
-    }
-  });
+  useKeys(
+    (k) => {
+      if ((k === "c" || k === "C") && cooldown.current <= 0 && running) {
+        t.current = Math.max(0, t.current - 0.32);
+        uptime.current.temp = t.current;
+        cooldown.current = 0.6;
+        setTemp(t.current);
+      }
+      if ((k === "t" || k === "T") && running && live.current.attitude !== "antenna-to-earth")
+        actRef.current({ type: "set-attitude", attitude: "antenna-to-earth" });
+    },
+    (k) => {
+      if ((k === "t" || k === "T") && live.current.attitude === "antenna-to-earth")
+        actRef.current({ type: "set-attitude", attitude: "shield-to-sun" });
+    },
+  );
   useHoldSpace((down) => (charging.current = down));
 
   useFrameLoop((dt) => {
@@ -79,16 +93,18 @@ export function PillarConsole({
     if (!hts && f.current >= HTS_BACK) actRef.current({ type: "set-system", system: "hts", on: true });
 
     const u = uptime.current;
+    u.temp = t.current;
+    u.field = f.current;
     u.total_s += dt;
     if (on) u.reactor_s += dt;
     if (hts) u.hts_s += dt;
   }, running);
 
-  // Al salir del Sol se dejan los sistemas encendidos.
+  // Al ocultarse la consola (por un reto) la sonda vuelve a poner el escudo hacia el Sol.
   useEffect(
     () => () => {
-      actRef.current({ type: "set-system", system: "reactor", on: true });
-      actRef.current({ type: "set-system", system: "hts", on: true });
+      if (live.current.attitude === "antenna-to-earth")
+        actRef.current({ type: "set-attitude", attitude: "shield-to-sun" });
     },
     [],
   );

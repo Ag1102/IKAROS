@@ -1,6 +1,6 @@
 # @ikaros/sim
 
-Motor de simulación (Persona A). Uso general en el README raíz. Notas para el cliente:
+Motor de simulación. Uso general en el README raíz. Notas para el cliente:
 
 - En el hangar el reloj de misión no corre: `step` no hace nada hasta `launch`. Los límites de tiempo
   cuentan desde el lanzamiento.

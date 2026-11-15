@@ -228,6 +228,7 @@ export function useFinish<T>(onDone: (r: T) => void) {
     // Medio segundo de gracia para no saltar el dato con la misma pulsación del juego.
     const armed = window.setTimeout(() => window.addEventListener("keydown", onKey), 500);
     function onKey(e: KeyboardEvent) {
+      if (e.repeat) return;
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         go();

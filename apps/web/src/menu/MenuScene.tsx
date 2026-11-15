@@ -25,7 +25,7 @@ const SHOTS: Record<LevelN, { pos: THREE.Vector3; look: THREE.Vector3 }> = {
   2: { pos: new THREE.Vector3(-4.5, 2.2, 15.5), look: new THREE.Vector3(-4.6, 0, 0) },
 };
 
-// ---------- Cámara ----------
+// Cámara
 
 function CameraRig({ selected, motion }: { selected: LevelN; motion: number }) {
   const look = useRef(SHOTS[selected].look.clone());
@@ -43,7 +43,7 @@ function CameraRig({ selected, motion }: { selected: LevelN; motion: number }) {
   return null;
 }
 
-// ---------- Objetos ----------
+// Objetos
 
 function useNormalizedModel(url: string, size: number) {
   const { scene } = useGLTF(url);

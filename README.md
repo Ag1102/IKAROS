@@ -9,12 +9,12 @@ Lo marcado como ⚗ es teórico y está avisado en el juego.
 
 | Carpeta | Contenido | Dueño |
 |---|---|---|
-| `apps/web` | Cliente: escena 3D, interfaz, niveles | Persona B (Ricardo Díaz) |
+| `apps/web` | Cliente: escena 3D, interfaz, niveles | Ricardo Díaz |
 | `packages/contracts` | Tipos compartidos (el contrato) | Ambas |
-| `packages/sim` | Motor de simulación | Persona A (Camilo Cadena) |
-| `packages/sim-mock` | Simulación falsa para avanzar en paralelo | Persona A (Camilo Cadena) |
-| `data/` | Datos con fuente y escenarios | Persona A (Camilo Cadena) |
-| `content/` | Textos del asistente y glosario | Persona A (Camilo Cadena) |
+| `packages/sim` | Motor de simulación | Camilo Cadena |
+| `packages/sim-mock` | Simulación falsa para avanzar en paralelo | Camilo Cadena |
+| `data/` | Datos con fuente y escenarios | Camilo Cadena |
+| `content/` | Textos del asistente y glosario | Camilo Cadena |
 
 ## Puesta en marcha
 
@@ -75,8 +75,8 @@ Atlas guía cada nivel con voz: un prólogo al entrar, qué hacer en el hangar y
 curiosos cuando el motor emite ciertos eventos. Habla en el idioma del menú y se puede silenciar.
 
 - Guion: `content/atlas.json` (`trigger`: `prologue`, `hangar` o un `SimEvent.trigger` del motor).
-- Voz: clips pregenerados en `apps/web/public/atlas/<idioma>/<id>.mp3`. Si falta un clip, el
-  navegador usa su voz del sistema.
+- Voz: clips pregenerados en `apps/web/public/atlas/<idioma>/<id>.mp3`. Si falta un clip o está
+  desactualizado, la línea se muestra solo como texto.
 - Regenerar la voz tras cambiar el guion (Windows, con la voz local de Argo/Chatterbox):
   `npm run atlas:voz`. Solo rehace las líneas nuevas o cambiadas. `ATLAS_VOZ` apunta a la carpeta
   `voz` de Argo si no está en la ruta por defecto.
@@ -85,5 +85,4 @@ curiosos cuando el motor emite ciertos eventos. Habla en el idioma del menú y s
 
 ## Git
 
-Ramas cortas `a/<tema>` y `b/<tema>`; fusionar a `main` seguido. Cada quien hace commit
-con su propia identidad.
+Ramas cortas por tema; fusionar a `main` seguido.

@@ -94,6 +94,13 @@ function Ring({
     if (dashed) l.computeLineDistances();
     return l;
   }, [points, color, opacity, dashed]);
+  useEffect(
+    () => () => {
+      line.geometry.dispose();
+      (line.material as THREE.Material).dispose();
+    },
+    [line],
+  );
   return <primitive object={line} />;
 }
 
@@ -191,6 +198,13 @@ function Route({ points }: { points: [number, number][] }) {
     l.computeLineDistances();
     return l;
   }, [points]);
+  useEffect(
+    () => () => {
+      line.geometry.dispose();
+      (line.material as THREE.Material).dispose();
+    },
+    [line],
+  );
   return <primitive object={line} />;
 }
 
