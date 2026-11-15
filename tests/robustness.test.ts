@@ -191,3 +191,17 @@ describe("decisiones con pasos largos", () => {
     expect(s.events.some((e) => e.resolved === "timeout")).toBe(false);
   });
 });
+
+describe("respuesta tardía a una decisión", () => {
+  it("resolver con timeout cierra la decisión como si venciera el plazo", () => {
+    const sim = createSimulation();
+    sim.load("level3-ikaros", 1);
+    pickAll(sim, REAL_CONFIG);
+    let s = sim.act({ type: "launch" });
+    while (!s.events.some((e) => e.trigger === "level3:venus-window")) s = sim.step(86_400);
+    const ev = s.events.find((e) => e.trigger === "level3:venus-window")!;
+    s = sim.act({ type: "resolve-event", eventId: ev.id, choice: "timeout" });
+    expect(s.events.find((e) => e.id === ev.id)?.resolved).toBe("timeout");
+    expect(s.perihelion_rsun).toBe(38.7);
+  });
+});

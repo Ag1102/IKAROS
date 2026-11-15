@@ -98,7 +98,8 @@ export abstract class Level {
       if (this.finished) return;
       const ev = this.state.events.find((e) => e.id === action.eventId);
       if (!ev || ev.resolved || !ev.choices) return;
-      if (!ev.choices.some((c) => c.id === action.choice)) return;
+      // «timeout» es la respuesta de quien no actuó a tiempo: vale como el plazo vencido.
+      if (action.choice !== "timeout" && !ev.choices.some((c) => c.id === action.choice)) return;
       ev.resolved = action.choice;
       this.onChoice(ev, action.choice);
       return;
