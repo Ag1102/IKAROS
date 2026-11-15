@@ -3,10 +3,8 @@ import constantsJson from "../../../data/constants.json";
 import paperJson from "../../../data/paper-solar-probe-plus.json";
 import missionsJson from "../../../data/missions.json";
 import level1Json from "../../../data/scenarios/level1-repair.json";
-import level2Json from "../../../data/scenarios/level2-leo.json";
 import level3Json from "../../../data/scenarios/level3-ikaros.json";
 import level1En from "../../../data/en/scenarios/level1-repair.json";
-import level2En from "../../../data/en/scenarios/level2-leo.json";
 import level3En from "../../../data/en/scenarios/level3-ikaros.json";
 import sourcesEn from "../../../data/en/sources.json";
 
@@ -18,7 +16,6 @@ export const missions = missionsJson as Table;
 
 const scenarios: Record<ScenarioId, ScenarioDefinition> = {
   "level1-repair": level1Json as ScenarioDefinition,
-  "level2-leo": level2Json as ScenarioDefinition,
   "level3-ikaros": level3Json as ScenarioDefinition,
 };
 
@@ -37,7 +34,6 @@ interface ScenarioText {
 
 const scenariosEn: Record<ScenarioId, ScenarioText> = {
   "level1-repair": level1En,
-  "level2-leo": level2En,
   "level3-ikaros": level3En,
 };
 

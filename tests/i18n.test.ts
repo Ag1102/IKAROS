@@ -94,23 +94,6 @@ describe("versión en inglés: motor", () => {
     checkRun("nivel 1", state, report);
   });
 
-  it("nivel 2 completo sin textos en español", () => {
-    const sim = createSimulation({ lang: "en" });
-    sim.load("level2-leo", 3);
-    pickAll(sim, {
-      objective: "obj-fires",
-      instrument: "inst-thermal",
-      power: "pwr-small",
-      battery: "bat-small",
-      comms: "com-sband",
-      orbit: "orb-equatorial",
-      launcher: "lv-electron",
-    });
-    let s = sim.act({ type: "launch" });
-    for (let i = 0; i < 400 && s.phase !== "complete"; i++) s = sim.step(900);
-    checkRun("nivel 2", s, sim.report());
-  });
-
   it("nivel 3 con todas las decisiones sin textos en español", () => {
     const picks = {
       energy: "stirling",

@@ -1,8 +1,8 @@
 # Ikaros
 
 Juego 3D de diseño de misiones espaciales para el NASA Space Apps Challenge 2026
-(reto *Space Mission Design Game*). Tres niveles: reparar un satélite, misión LEO de
-observación, y Ikaros, basado en el diseño de energía de Solar Probe+ (Landis et al., AIAA 2008-5712).
+(reto *Space Mission Design Game*). Dos niveles: acople con la Estación Espacial
+Internacional e Ikaros, basado en el diseño de energía de Solar Probe+ (Landis et al., AIAA 2008-5712).
 Lo marcado como ⚗ es teórico y está avisado en el juego.
 
 ## Estructura

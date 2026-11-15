@@ -2,7 +2,6 @@
 import type { MissionReport, PlayerAction, ScenarioId, SimState, Simulation } from "@ikaros/contracts";
 import type { Level } from "./levels/base";
 import { Level1 } from "./levels/level1";
-import { Level2 } from "./levels/level2";
 import { Level3 } from "./levels/level3";
 import { sourceText, type Lang } from "./data";
 
@@ -14,8 +13,6 @@ function createLevel(id: ScenarioId, seed: number, lang: Lang): Level {
   switch (id) {
     case "level1-repair":
       return new Level1(seed, lang);
-    case "level2-leo":
-      return new Level2(seed, lang);
     case "level3-ikaros":
       return new Level3(seed, lang);
     default:

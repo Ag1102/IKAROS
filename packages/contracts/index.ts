@@ -2,7 +2,7 @@
 // Solo tipos. Los cambios se avisan a la otra persona y van en un commit aparte.
 // Unidades en el nombre del campo: _kg, _w, _km, _s, _c, _usd_m.
 
-export type ScenarioId = "level1-repair" | "level2-leo" | "level3-ikaros";
+export type ScenarioId = "level1-repair" | "level3-ikaros";
 
 /** Etiqueta de origen de cada dato: real (con cita) o teórico del juego. */
 export type DataOrigin = "real" | "theoretical";
@@ -52,7 +52,7 @@ export interface SimState {
   battery_capacity_wh?: number;
   delta_v_remaining_m_s?: number;
 
-  // Nivel 1 y 2 (órbita terrestre)
+  // Nivel 1 (órbita terrestre)
   altitude_km?: number;
   target_altitude_km?: number;
   inclination_deg?: number;

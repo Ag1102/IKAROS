@@ -5,7 +5,7 @@ import * as THREE from "three";
 // NASA). Convención: +Z es el frente (lo que mira la nave: la Tierra en los niveles 1 y 2,
 // el Sol en el nivel 3) y +Y es arriba.
 
-export type ShipKind = "servicer" | "smallsat" | "probe";
+export type ShipKind = "servicer" | "probe";
 export type Selection = Record<string, string> | undefined;
 
 const HIGHLIGHT = "#e0a030";
@@ -123,86 +123,6 @@ function Servicer({ s, hl }: { s: Selection; hl?: string | null }) {
           <mesh position={[0, 0.13, 0]}>
             <cylinderGeometry args={[0.07, 0.07, 0.02, 8]} />
             <Mat color="#5fb4c4" hl={hl === "camera"} glow="#2a6f7a" />
-          </mesh>
-        </group>
-      )}
-    </group>
-  );
-}
-
-// ---------- Nivel 2: satélite de observación ----------
-
-function SmallSat({ s, hl }: { s: Selection; hl?: string | null }) {
-  const power = s?.power;
-  const wing = power === "pwr-large" ? { w: 1.8, d: 0.75, x: 1.35 } : power ? { w: 1.1, d: 0.6, x: 1.0 } : null;
-  const battery = s?.battery;
-  const inst = s?.instrument;
-  const comms = s?.comms;
-  return (
-    <group>
-      <mesh>
-        <boxGeometry args={[0.8, 0.8, 0.8]} />
-        <Mat color="#c9b37a" metal={0.6} rough={0.4} />
-      </mesh>
-      {wing &&
-        [-1, 1].map((k) => (
-          <group key={k} position={[k * wing.x, 0, 0]}>
-            <mesh>
-              <boxGeometry args={[wing.w, 0.04, wing.d]} />
-              <Mat color="#27415f" hl={hl === "power"} metal={0.5} rough={0.35} />
-            </mesh>
-            {power === "pwr-large" && (
-              <mesh position={[0, 0.025, 0]}>
-                <boxGeometry args={[0.03, 0.01, wing.d]} />
-                <Mat color="#c9cdd0" hl={hl === "power"} />
-              </mesh>
-            )}
-          </group>
-        ))}
-      {battery && (
-        <mesh position={[0, -0.52, -0.1]}>
-          <boxGeometry args={battery === "bat-large" ? [0.5, 0.25, 0.35] : [0.28, 0.18, 0.22]} />
-          <Mat color="#5a6168" hl={hl === "battery"} />
-        </mesh>
-      )}
-      {inst === "inst-thermal" && (
-        <group position={[0, 0, 0.6]} rotation={X90}>
-          <mesh>
-            <cylinderGeometry args={[0.2, 0.2, 0.4, 10]} />
-            <Mat color="#1a1f24" hl={hl === "instrument"} />
-          </mesh>
-          <mesh position={[0, 0.21, 0]}>
-            <cylinderGeometry args={[0.16, 0.16, 0.02, 10]} />
-            <Mat color="#8a3b2b" hl={hl === "instrument"} glow="#5a1f12" />
-          </mesh>
-        </group>
-      )}
-      {inst === "inst-multispectral" && (
-        <group position={[0, 0, 0.5]}>
-          <mesh>
-            <boxGeometry args={[0.5, 0.3, 0.2]} />
-            <Mat color="#2b2f33" hl={hl === "instrument"} />
-          </mesh>
-          {[-0.17, -0.06, 0.06, 0.17].map((x) => (
-            <mesh key={x} position={[x, 0, 0.11]} rotation={X90}>
-              <cylinderGeometry args={[0.045, 0.045, 0.03, 8]} />
-              <Mat color="#5fb4c4" hl={hl === "instrument"} glow="#1f4a52" />
-            </mesh>
-          ))}
-        </group>
-      )}
-      {comms === "com-sband" &&
-        [-1, 1].map((k) => (
-          <mesh key={k} position={[k * 0.3, 0.3, -0.75]} rotation={[0.3, 0, 0]}>
-            <cylinderGeometry args={[0.015, 0.015, 0.7, 5]} />
-            <Mat color="#dfe3e6" hl={hl === "comms"} />
-          </mesh>
-        ))}
-      {comms === "com-xband" && (
-        <group position={[0, 0.5, 0.25]} rotation={[-Math.PI / 4, 0, 0]}>
-          <mesh>
-            <coneGeometry args={[0.22, 0.1, 12, 1, true]} />
-            <Mat color="#dfe3e6" hl={hl === "comms"} />
           </mesh>
         </group>
       )}
@@ -350,7 +270,6 @@ export function Spacecraft({
   return (
     <Normalized deps={deps}>
       {kind === "servicer" && <Servicer s={selected} hl={highlight} />}
-      {kind === "smallsat" && <SmallSat s={selected} hl={highlight} />}
       {kind === "probe" && <Probe s={selected} hl={highlight} />}
     </Normalized>
   );
@@ -378,14 +297,6 @@ export const MODELED_PARTS = new Set([
   "antenna-spare",
   "toolkit-std",
   "camera-insp",
-  "inst-thermal",
-  "inst-multispectral",
-  "pwr-small",
-  "pwr-large",
-  "bat-small",
-  "bat-large",
-  "com-sband",
-  "com-xband",
   "pv-cooled",
   "stirling",
   "fission-reactor",

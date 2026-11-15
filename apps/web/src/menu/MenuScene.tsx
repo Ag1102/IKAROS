@@ -22,11 +22,7 @@ const SHOTS: Record<LevelN, { pos: THREE.Vector3; look: THREE.Vector3 }> = {
     pos: EARTH.clone().add(new THREE.Vector3(7.4, 2.4, 0.4)),
     look: EARTH.clone().add(new THREE.Vector3(-0.2, 0.1, 2.9)),
   },
-  2: {
-    pos: EARTH.clone().add(new THREE.Vector3(5.6, 5.6, 2.0)),
-    look: EARTH.clone().add(new THREE.Vector3(-0.2, -0.3, 2.6)),
-  },
-  3: { pos: new THREE.Vector3(-4.5, 2.2, 15.5), look: new THREE.Vector3(-4.6, 0, 0) },
+  2: { pos: new THREE.Vector3(-4.5, 2.2, 15.5), look: new THREE.Vector3(-4.6, 0, 0) },
 };
 
 // ---------- Cámara ----------
@@ -236,10 +232,6 @@ function Hubble() {
   return <primitive object={useNormalizedModel(MODELS.hubble.url, 0.42)} />;
 }
 
-function Landsat() {
-  return <primitive object={useNormalizedModel(MODELS.landsat.url, 0.36)} />;
-}
-
 function Probe() {
   const model = useNormalizedModel(MODELS.parker.url, 0.55);
   const ref = useRef<THREE.Group>(null);
@@ -291,7 +283,7 @@ function Scene({
       <Stars radius={140} depth={60} count={2500} factor={3} saturation={0} fade speed={0.4 * motion} />
       <CameraRig selected={selected} motion={motion} />
 
-      <MissionNode level={level(3)} reticle={3.7} labelOffset={[0, -4.3, 0]} {...common}>
+      <MissionNode level={level(2)} reticle={3.7} labelOffset={[0, -4.3, 0]} {...common}>
         <Sun speed={motion} />
         <OrbitPath radius={5.4} tilt={[0.18, 0, 0.08]} color="#e0a030" opacity={0.18} />
         <Orbiter radius={5.4} tilt={[0.18, 0, 0.08]} period={60} phase={2.2} motion={motion}>
@@ -303,18 +295,10 @@ function Scene({
 
       <group position={EARTH}>
         <OrbitPath radius={1.65} tilt={[0.5, 0, 0.2]} color="#5fb4c4" opacity={0.35} />
-        <OrbitPath radius={1.85} tilt={[Math.PI / 2 - 0.15, 0.3, 0]} color="#5fb4c4" opacity={0.14} />
         <Orbiter radius={1.65} tilt={[0.5, 0, 0.2]} period={24} motion={motion}>
           <MissionNode level={level(1)} reticle={0.42} labelOffset={[0, -0.3, 0]} {...common}>
             <Suspense fallback={null}>
               <Hubble />
-            </Suspense>
-          </MissionNode>
-        </Orbiter>
-        <Orbiter radius={1.85} tilt={[Math.PI / 2 - 0.15, 0.3, 0]} period={30} phase={1.4} motion={motion}>
-          <MissionNode level={level(2)} reticle={0.32} labelOffset={[0, -0.25, 0]} {...common}>
-            <Suspense fallback={null}>
-              <Landsat />
             </Suspense>
           </MissionNode>
         </Orbiter>

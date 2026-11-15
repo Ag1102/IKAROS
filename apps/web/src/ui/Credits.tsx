@@ -23,8 +23,8 @@ export function Credits({ onClose }: { onClose: () => void }) {
       <ul>
         <li>
           {tr(
-            "International Space Station (ISS) (B), Space Shuttle (A), Hubble Space Telescope (A), Landsat 8, CubeSat 2U, Parker Solar Probe, Earth (A) y Venus — NASA 3D Resources.",
-            "International Space Station (ISS) (B), Space Shuttle (A), Hubble Space Telescope (A), Landsat 8, CubeSat 2U, Parker Solar Probe, Earth (A) and Venus — NASA 3D Resources.",
+            "International Space Station (ISS) (B), Space Shuttle (A), Hubble Space Telescope (A), CubeSat 2U, Parker Solar Probe, Earth (A) y Venus — NASA 3D Resources.",
+            "International Space Station (ISS) (B), Space Shuttle (A), Hubble Space Telescope (A), CubeSat 2U, Parker Solar Probe, Earth (A) and Venus — NASA 3D Resources.",
           )}{" "}
           <a href="https://science.nasa.gov/3d-resources/" target="_blank" rel="noreferrer">
             science.nasa.gov/3d-resources
@@ -94,7 +94,7 @@ export function Credits({ onClose }: { onClose: () => void }) {
         .
       </p>
 
-      <h3>{tr("Nivel 3 · Ikaros", "Level 3 · Ikaros")}</h3>
+      <h3>{tr("Nivel 2 · Ikaros", "Level 2 · Ikaros")}</h3>
       <p>
         {tr(
           "Basado en Landis et al., «Solar Power System Design for the Solar Probe+ Mission», AIAA 2008-5712 (NASA Glenn / JHU APL).",

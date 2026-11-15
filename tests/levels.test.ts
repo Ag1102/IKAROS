@@ -212,40 +212,6 @@ describe("nivel 3: Ikaros", () => {
   });
 });
 
-describe("nivel 2: observación LEO", () => {
-  const good = {
-    objective: "obj-fires",
-    instrument: "inst-thermal",
-    power: "pwr-small",
-    battery: "bat-large",
-    comms: "com-xband",
-    orbit: "orb-sso",
-    launcher: "lv-pegasus",
-  };
-
-  it("un diseño compatible opera 3 días y baja datos", () => {
-    const sim = createSimulation();
-    sim.load("level2-leo", 3);
-    pickAll(sim, good);
-    let s = sim.act({ type: "launch" });
-    expect(s.phase).toBe("operations");
-    while (s.phase !== "complete") s = sim.step(3600);
-    const r = sim.report();
-    expect(["success", "partial"]).toContain(r.outcome);
-    expect(r.metrics.data_downlinked_mb as number).toBeGreaterThan(0);
-  });
-
-  it("bloquea un lanzador sin capacidad para la órbita polar", () => {
-    const sim = createSimulation();
-    sim.load("level2-leo", 3);
-    pickAll(sim, { ...good, launcher: "lv-electron" });
-    const s = sim.act({ type: "launch" });
-    expect(s.resources.mass_kg).toBeGreaterThan(s.mass_capacity_kg ?? Infinity);
-    expect(s.phase).toBe("hangar");
-    expect(s.events.some((e) => e.trigger === "level2:launch-blocked")).toBe(true);
-  });
-});
-
 describe("contenido conectado con el motor", () => {
   it("los disparadores principales tienen texto del asistente", () => {
     for (const t of [

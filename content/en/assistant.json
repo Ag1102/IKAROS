@@ -60,31 +60,6 @@
     "source": "NASA/ESA, STS-120: P6 array repair (3 Nov 2007)"
   },
   {
-    "id": "l2-start",
-    "text": "Missions are designed by segments: launch, space, ground and user. This level goes through all of them.",
-    "source": "NASA, Design and Develop Science Missions"
-  },
-  {
-    "id": "l2-launch",
-    "text": "A sun-synchronous orbit passes over each latitude at the same local solar time: ideal for comparing images from different days.",
-    "source": "NASA Earth Observatory, Catalog of Earth Satellite Orbits"
-  },
-  {
-    "id": "l2-coverage",
-    "text": "Inclination limits the latitudes you can see: at 0° you only cover the equatorial band.",
-    "source": "NASA Earth Observatory, Catalog of Earth Satellite Orbits"
-  },
-  {
-    "id": "l2-storage",
-    "text": "Data that does not fit in memory is lost. The downlink matters as much as the instrument.",
-    "source": "NASA, CubeSat 101"
-  },
-  {
-    "id": "l2-brownout",
-    "text": "In low orbit, about a third of each orbit can be in eclipse: the battery keeps the spacecraft alive in Earth's shadow.",
-    "source": "Eclipse geometry in a circular orbit"
-  },
-  {
     "id": "l3-start",
     "text": "Ikaros is based on the power system design of Solar Probe+, the mission that flew as Parker Solar Probe.",
     "source": "Landis et al., AIAA 2008-5712; NASA, Parker Solar Probe"

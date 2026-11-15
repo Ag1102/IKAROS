@@ -15,7 +15,7 @@ interface AtlasLine {
 
 const root = join(__dirname, "..");
 const lines = JSON.parse(readFileSync(join(root, "content/atlas.json"), "utf8")) as AtlasLine[];
-const scenarios = ["level1-repair", "level2-leo", "level3-ikaros"];
+const scenarios = ["level1-repair", "level3-ikaros"];
 
 /** Todo el código del motor, para comprobar que cada disparador existe de verdad. */
 const engine = readdirSync(join(root, "packages/sim/src/levels"))

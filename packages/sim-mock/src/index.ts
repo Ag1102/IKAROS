@@ -16,7 +16,6 @@ const PHASE_DURATION_S: Record<string, number> = {
   phasing: 3600,
   rendezvous: 5400,
   approach: 1200,
-  operations: 3 * 86_400,
   cruise: 30 * 86_400,
   encounter: 10 * 86_400,
   exit: 86_400,
@@ -24,7 +23,6 @@ const PHASE_DURATION_S: Record<string, number> = {
 
 const PHASES: Record<ScenarioId, string[]> = {
   "level1-repair": ["hangar", "phasing", "rendezvous", "approach", "complete"],
-  "level2-leo": ["hangar", "operations", "complete"],
   "level3-ikaros": ["hangar", "cruise", "encounter", "exit", "complete"],
 };
 
@@ -61,25 +59,6 @@ function baseState(scenario: ScenarioId): SimState {
       rcs_assist: true,
       in_corridor: true,
       mass_capacity_kg: 16000,
-    };
-  }
-  if (scenario === "level2-leo") {
-    return {
-      ...common,
-      resources: {
-        mass_kg: 180,
-        power_generated_w: 220,
-        power_consumed_w: 140,
-        budget_usd_m: 120,
-        data_stored_mb: 0,
-        downlink_rate_kbps: 0,
-        mission_elapsed_s: 0,
-      },
-      altitude_km: 700,
-      inclination_deg: 98.2,
-      battery_wh: 400,
-      battery_capacity_wh: 400,
-      data_downlinked_mb: 0,
     };
   }
   return {

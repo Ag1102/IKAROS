@@ -8,13 +8,10 @@ import { tr, useLang } from "./i18n";
 const ServicioOrbitaScreen = lazy(() =>
   import("./levels/servicio-orbita/ServicioOrbitaScreen").then((m) => ({ default: m.ServicioOrbitaScreen })),
 );
-const ObservacionTierraScreen = lazy(() =>
-  import("./levels/observacion-tierra/ObservacionTierraScreen").then((m) => ({ default: m.ObservacionTierraScreen })),
-);
 const IkarosScreen = lazy(() => import("./levels/ikaros/IkarosScreen").then((m) => ({ default: m.IkarosScreen })));
 
-type Screen = "menu" | "servicio-orbita" | "observacion-tierra" | "ikaros";
-const SCREEN_BY_LEVEL: Record<number, Screen> = { 1: "servicio-orbita", 2: "observacion-tierra", 3: "ikaros" };
+type Screen = "menu" | "servicio-orbita" | "ikaros";
+const SCREEN_BY_LEVEL: Record<number, Screen> = { 1: "servicio-orbita", 2: "ikaros" };
 
 export function App() {
   const [screen, setScreen] = useState<Screen>("menu");
@@ -27,7 +24,6 @@ export function App() {
     return (
       <Suspense fallback={<p className="loading">{tr("Cargando nivel…", "Loading level…")}</p>}>
         {screen === "servicio-orbita" && <ServicioOrbitaScreen onExit={exit} />}
-        {screen === "observacion-tierra" && <ObservacionTierraScreen onExit={exit} />}
         {screen === "ikaros" && <IkarosScreen onExit={exit} />}
         <AchievementToast />
       </Suspense>

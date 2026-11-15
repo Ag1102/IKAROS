@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
 import { tr } from "../i18n";
 
-export type AchievementId = "first-orbit" | "perfect-orbit" | "dock-first-try" | "sun-survivor";
+export type AchievementId = "dock-first-try" | "sun-survivor";
 
 export function achievementName(id: AchievementId): string {
   return {
-    "first-orbit": tr("Primera órbita", "First orbit"),
-    "perfect-orbit": tr("Órbita perfecta", "Perfect orbit"),
     "dock-first-try": tr("Acople suave", "Soft docking"),
     "sun-survivor": tr("Sobreviviste al Sol", "You survived the Sun"),
   }[id];

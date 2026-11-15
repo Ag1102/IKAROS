@@ -84,41 +84,6 @@
     "origin": "real"
   },
   {
-    "id": "l2-start",
-    "trigger": "level2:start",
-    "text": "Las misiones se diseñan por segmentos: lanzamiento, espacio, tierra y usuario. Este nivel los recorre todos.",
-    "source": "NASA, Design and Develop Science Missions",
-    "origin": "real"
-  },
-  {
-    "id": "l2-launch",
-    "trigger": "level2:launch",
-    "text": "Una órbita heliosíncrona pasa por cada latitud a la misma hora solar: ideal para comparar imágenes de distintos días.",
-    "source": "NASA Earth Observatory, Catalog of Earth Satellite Orbits",
-    "origin": "real"
-  },
-  {
-    "id": "l2-coverage",
-    "trigger": "level2:coverage",
-    "text": "La inclinación limita las latitudes que ves: con 0° solo cubres la franja ecuatorial.",
-    "source": "NASA Earth Observatory, Catalog of Earth Satellite Orbits",
-    "origin": "real"
-  },
-  {
-    "id": "l2-storage",
-    "trigger": "level2:storage-full",
-    "text": "Los datos que no caben en memoria se pierden. El enlace de bajada es tan importante como el instrumento.",
-    "source": "NASA, CubeSat 101",
-    "origin": "real"
-  },
-  {
-    "id": "l2-brownout",
-    "trigger": "level2:brownout",
-    "text": "En órbita baja, cerca de un tercio de cada vuelta puede ser eclipse: la batería sostiene la nave a la sombra de la Tierra.",
-    "source": "Geometría de eclipse en órbita circular",
-    "origin": "real"
-  },
-  {
     "id": "l3-start",
     "trigger": "level3:start",
     "text": "Ikaros se basa en el diseño de energía de Solar Probe+, la misión que voló como Parker Solar Probe.",

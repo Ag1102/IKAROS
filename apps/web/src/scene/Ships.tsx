@@ -69,9 +69,4 @@ export function Servicer(props: Omit<ShipProps, "realSize_km">) {
   return <NasaShip {...props} model={MODELS.shuttle} realSize_km={MODELS.shuttle.size_km} />;
 }
 
-/** Satélite de observación del nivel 2: Landsat 8. */
-export function SmallSat(props: Omit<ShipProps, "realSize_km">) {
-  return <NasaShip {...props} model={MODELS.landsat} realSize_km={MODELS.landsat.size_km} />;
-}
-
-for (const m of [MODELS.iss, MODELS.shuttle, MODELS.landsat]) useGLTF.preload(m.url);
+for (const m of [MODELS.iss, MODELS.shuttle]) useGLTF.preload(m.url);

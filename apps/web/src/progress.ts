@@ -4,12 +4,13 @@ import { useSyncExternalStore } from "react";
 import type { MissionReport } from "@ikaros/contracts";
 
 const KEY = "ikaros-unlocked";
-export const LAST_LEVEL = 3;
+export const LAST_LEVEL = 2;
 
 function load(): number {
   try {
     const n = Number(window.localStorage.getItem(KEY));
-    if (Number.isInteger(n) && n >= 1 && n <= LAST_LEVEL) return n;
+    // Un progreso guardado con la antigua misión 3 abre todo lo que hay ahora.
+    if (Number.isInteger(n) && n >= 1) return Math.min(n, LAST_LEVEL);
   } catch {
     // Sin almacenamiento (modo privado, pruebas): se empieza desde el nivel 1.
   }
@@ -69,7 +70,8 @@ export function useUnlocked(): number {
 
 // ---- Estrellas por nivel (mejor resultado) ----
 
-const STARS_KEY = "ikaros-stars";
+// Clave nueva: las estrellas guardadas antes eran de otra numeración de misiones.
+const STARS_KEY = "ikaros-stars-v2";
 let stars: Record<number, number> = {};
 try {
   stars = JSON.parse(typeof window !== "undefined" ? (window.localStorage.getItem(STARS_KEY) ?? "{}") : "{}");

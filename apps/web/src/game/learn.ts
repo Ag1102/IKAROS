@@ -20,9 +20,6 @@ export type LessonId =
   | "reentry"
   | "hohmann"
   | "eva"
-  | "insertion"
-  | "inclination"
-  | "capture"
   | "cooling"
   | "record"
   | "dive";
@@ -134,22 +131,6 @@ export function lesson(id: LessonId): Lesson {
         ),
         source: "NASA/ESA, STS-120",
       };
-    case "insertion":
-      return {
-        text: tr(
-          "En órbita se cae todo el tiempo, pero tan de lado que la Tierra se curva antes: unos 7,5 km/s a 700 km.",
-          "In orbit you fall all the time, but so sideways the Earth curves away: about 7.5 km/s at 700 km.",
-        ),
-        source: "Ecuación vis-viva · NASA JPL",
-      };
-    case "inclination":
-      return {
-        text: tr(
-          "La inclinación decide qué latitudes ves: una órbita polar pasa sobre todo el planeta.",
-          "Inclination decides which latitudes you see: a polar orbit passes over the whole planet.",
-        ),
-        source: "NASA Earth Observatory, Catalog of Earth Satellite Orbits",
-      };
     case "cooling":
       return {
         text: tr(
@@ -176,14 +157,6 @@ export function lesson(id: LessonId): Lesson {
           "Ley del inverso del cuadrado; documento Proyecto Ikaros",
           "Inverse-square law; Proyecto Ikaros document",
         ),
-      };
-    case "capture":
-      return {
-        text: tr(
-          "Landsat 8 vuelve a fotografiar el mismo lugar cada 16 días desde su órbita heliosíncrona.",
-          "Landsat 8 images the same place again every 16 days from its sun-synchronous orbit.",
-        ),
-        source: "NASA/USGS, Landsat 8",
       };
   }
 }

@@ -1,7 +1,7 @@
 import { tr } from "../i18n";
 
 export interface MenuLevel {
-  n: 1 | 2 | 3;
+  n: 1 | 2;
   name: string;
   tag: string;
   text: string;
@@ -23,16 +23,6 @@ export function menuLevels(): MenuLevel[] {
     },
     {
       n: 2,
-      name: tr("Observación de la Tierra", "Earth observation"),
-      tag: tr("LEO · Heliosíncrona", "LEO · Sun-synchronous"),
-      text: tr(
-        "Diseña, lanza y opera un satélite en órbita baja durante 3 días.",
-        "Design, launch and operate a satellite in low Earth orbit for 3 days.",
-      ),
-      ready: true,
-    },
-    {
-      n: 3,
       name: "Ikaros",
       tag: tr("Perihelio · 9.5 R☉", "Perihelion · 9.5 R☉"),
       text: tr(

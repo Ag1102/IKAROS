@@ -249,8 +249,8 @@ function IkarosGame({ onExit }: { onExit: () => void }) {
   const stars = report ? starsFor(report.outcome, pilotRatio(score.ratings)) : 0;
   useEffect(() => {
     if (!report || stage.k !== "debrief") return;
-    recordResult(3, report.outcome);
-    recordStars(3, stars);
+    recordResult(2, report.outcome);
+    recordStars(2, stars);
     if (report.outcome === "success") unlock("sun-survivor");
   }, [report, stage.k, stars]);
 

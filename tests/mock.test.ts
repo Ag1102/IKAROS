@@ -3,7 +3,7 @@ import type { ScenarioId, Simulation } from "@ikaros/contracts";
 import { createSimulation as mock } from "../packages/sim-mock/src/index";
 import { createSimulation as real } from "../packages/sim/src/index";
 
-const ids: ScenarioId[] = ["level1-repair", "level2-leo", "level3-ikaros"];
+const ids: ScenarioId[] = ["level1-repair", "level3-ikaros"];
 
 describe.each([
   ["sim-mock", mock],

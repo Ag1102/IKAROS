@@ -6,16 +6,6 @@ import { createSimulation as createMock } from "../packages/sim-mock/src/index";
 import { pickAll, REAL_CONFIG } from "../packages/sim/src/autopilot";
 import { createRng } from "../packages/sim/src/rng";
 
-const LEO = {
-  objective: "obj-fires",
-  instrument: "inst-thermal",
-  power: "pwr-large",
-  battery: "bat-large",
-  comms: "com-xband",
-  orbit: "orb-sso",
-  launcher: "lv-pegasus",
-};
-
 function stepMany(sim: Simulation, total_s: number, dt_s: number): SimState {
   let s!: SimState;
   for (let t = 0; t < total_s - 1e-9; t += dt_s) s = sim.step(dt_s);
@@ -48,8 +38,7 @@ describe("entradas raras del cliente", () => {
 
   it("un step enorme termina y se limita a un año", () => {
     const sim = createSimulation();
-    sim.load("level2-leo", 1);
-    pickAll(sim, LEO);
+    sim.load("level1-repair", 1);
     sim.act({ type: "launch" });
     const s = sim.step(1e12);
     expect(s.phase).toBe("complete");
@@ -57,12 +46,11 @@ describe("entradas raras del cliente", () => {
 
   it("el reloj de misión no corre en el hangar", () => {
     const sim = createSimulation();
-    sim.load("level2-leo", 1);
-    pickAll(sim, LEO);
+    sim.load("level1-repair", 1);
     expect(sim.step(500_000).resources.mission_elapsed_s).toBe(0);
     let s = sim.act({ type: "launch" });
     s = sim.step(1);
-    expect(s.phase).toBe("operations");
+    expect(s.phase).toBe("phasing");
   });
 
   it("NaN en retract-array o tilt-array se ignora", () => {
@@ -99,20 +87,6 @@ describe("el resultado no depende del tamaño del paso", () => {
     expect(fine.hull_durability_pct).toBeCloseTo(coarse.hull_durability_pct ?? 0, 2);
     expect(fine.resources.data_stored_mb).toBeCloseTo(coarse.resources.data_stored_mb, 2);
   });
-
-  it("nivel 2: pasos de un fotograma también bajan datos", () => {
-    const a = createSimulation();
-    const b = createSimulation();
-    for (const sim of [a, b]) {
-      sim.load("level2-leo", 1);
-      pickAll(sim, LEO);
-      sim.act({ type: "launch" });
-    }
-    const fine = stepMany(a, 180, 1 / 60);
-    const coarse = b.step(180);
-    expect(fine.data_downlinked_mb).toBeGreaterThan(0);
-    expect(fine.data_downlinked_mb).toBeCloseTo(coarse.data_downlinked_mb ?? 0, 2);
-  });
 });
 
 describe("misiones que no se traban", () => {
@@ -135,16 +109,15 @@ describe("misiones que no se traban", () => {
     expect(s.altitude_km).toBeGreaterThanOrEqual(150);
   });
 
-  it("nivel 2 no da puntos sin lanzar", () => {
+  it("nivel 1 no da puntos sin lanzar", () => {
     const sim = createSimulation();
-    sim.load("level2-leo", 1);
+    sim.load("level1-repair", 1);
     expect(sim.report().score).toBe(0);
   });
 
   it("no se puede resolver una decisión tras terminar", () => {
     const sim = createSimulation();
-    sim.load("level2-leo", 1);
-    pickAll(sim, LEO);
+    sim.load("level1-repair", 1);
     sim.act({ type: "launch" });
     const s = sim.step(4 * 86_400);
     expect(s.phase).toBe("complete");
@@ -159,8 +132,8 @@ describe("misiones que no se traban", () => {
     expect(s.events.length).toBeLessThan(10);
   });
 
-  it("el mock llega a complete en los tres niveles", () => {
-    for (const id of ["level1-repair", "level2-leo", "level3-ikaros"] as const) {
+  it("el mock llega a complete en todos los niveles", () => {
+    for (const id of ["level1-repair", "level3-ikaros"] as const) {
       const sim = createMock();
       sim.load(id, 1);
       let s = sim.act({ type: "launch" });

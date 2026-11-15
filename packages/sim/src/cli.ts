@@ -1,5 +1,5 @@
 // Imprime la telemetría de una misión jugada por el piloto automático.
-// Uso: npm run telemetry -- [level1-repair|level2-leo|level3-ikaros] [semilla]
+// Uso: npm run telemetry -- [level1-repair|level3-ikaros] [semilla]
 import type { ScenarioId, SimState } from "@ikaros/contracts";
 import { playLevel1, playLevel3, pickAll } from "./autopilot";
 import { createSimulation } from "./index";

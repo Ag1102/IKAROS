@@ -11,7 +11,6 @@ y sin sugerir respaldo de NASA al proyecto.
 | `models/parker-solar-probe.glb` | `3D Models/Parker Solar Probe/Parker Solar Probe.glb` |
 | `textures/earth.jpg` | `Images and Textures/Earth (A)/Earth (A).jpg` |
 | `models/space-shuttle.glb` | `3D Models/Space Shuttle (A)/Space Shuttle (A).glb` |
-| `models/landsat-8.glb` | `3D Models/Landsat 8/Landsat 8.glb` |
 | `models/cubesat-2u.glb` | `3D Models/CubeSat - 2 RU Generic/CubeSat - 2 RU Generic.glb` |
 | `textures/venus.jpg` | `Images and Textures/Venus/Venus.jpg` |
 | `models/iss.glb` | `3D Models/International Space Station (ISS) (B)/International Space Station (ISS) (B).glb` (NASA/Michael D. Carbajal) |

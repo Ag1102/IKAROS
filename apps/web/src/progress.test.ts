@@ -8,15 +8,12 @@ describe("progreso de niveles", () => {
     expect(getUnlocked()).toBe(1);
     expect(isUnlocked(1)).toBe(true);
     expect(isUnlocked(2)).toBe(false);
-    expect(isUnlocked(3)).toBe(false);
   });
 
   it("una misión cumplida abre el nivel siguiente", () => {
+    expect(isUnlocked(2)).toBe(false);
     recordResult(1, "success");
     expect(isUnlocked(2)).toBe(true);
-    expect(isUnlocked(3)).toBe(false);
-    recordResult(2, "success");
-    expect(isUnlocked(3)).toBe(true);
   });
 
   it("un resultado parcial o fallido no abre nada", () => {
@@ -30,14 +27,13 @@ describe("progreso de niveles", () => {
     expect(getUnlocked()).toBe(1);
     recordResult(1, "success");
     recordResult(2, "success");
-    recordResult(3, "success");
-    expect(getUnlocked()).toBe(3);
+    expect(getUnlocked()).toBe(2);
   });
 
   it("repetir un nivel anterior no vuelve a bloquear los siguientes", () => {
     recordResult(1, "success");
     recordResult(2, "success");
     recordResult(1, "failure");
-    expect(getUnlocked()).toBe(3);
+    expect(getUnlocked()).toBe(2);
   });
 });

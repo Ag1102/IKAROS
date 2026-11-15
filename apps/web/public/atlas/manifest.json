@@ -40,54 +40,6 @@
       "text": "21f4f6d28bef",
       "voice": "base-e0.5-c0.3-t600-8f6c409c"
     },
-    "l2-prologue-1": {
-      "text": "bb1ae155f601",
-      "voice": "base-e0.5-c0.3-t600-8f6c409c"
-    },
-    "l2-prologue-2": {
-      "text": "e594f6bea490",
-      "voice": "base-e0.5-c0.3-t600-8f6c409c"
-    },
-    "l2-prologue-3": {
-      "text": "5b4c2aac118a",
-      "voice": "base-e0.5-c0.3-t600-8f6c409c"
-    },
-    "l2-hangar": {
-      "text": "a59c6b6c8889",
-      "voice": "base-e0.5-c0.3-t600-8f6c409c"
-    },
-    "l2-blocked": {
-      "text": "1be888d2d619",
-      "voice": "base-e0.5-c0.3-t600-8f6c409c"
-    },
-    "l2-launch": {
-      "text": "1446ea76a3b7",
-      "voice": "base-e0.5-c0.3-t600-8f6c409c"
-    },
-    "l2-coverage": {
-      "text": "90e9a8362c8e",
-      "voice": "base-e0.5-c0.3-t600-8f6c409c"
-    },
-    "l2-brownout": {
-      "text": "5119dbf48401",
-      "voice": "base-e0.5-c0.3-t600-8f6c409c"
-    },
-    "l2-storage": {
-      "text": "b5daf5770d6f",
-      "voice": "base-e0.5-c0.3-t600-8f6c409c"
-    },
-    "l2-failure-comms": {
-      "text": "2a1a31d1fe6a",
-      "voice": "base-e0.5-c0.3-t600-8f6c409c"
-    },
-    "l2-failure-power": {
-      "text": "de211f667272",
-      "voice": "base-e0.5-c0.3-t600-8f6c409c"
-    },
-    "l2-complete": {
-      "text": "a87094e85452",
-      "voice": "base-e0.5-c0.3-t600-8f6c409c"
-    },
     "l3-prologue-1": {
       "text": "27144d498974",
       "voice": "base-e0.5-c0.3-t600-8f6c409c"
@@ -208,54 +160,6 @@
     },
     "l1-complete": {
       "text": "b53aa0a11da0",
-      "voice": "base-e0.5-c0.3-t600-84ed6756"
-    },
-    "l2-prologue-1": {
-      "text": "f4e47a084d8f",
-      "voice": "base-e0.5-c0.3-t600-84ed6756"
-    },
-    "l2-prologue-2": {
-      "text": "24431188df64",
-      "voice": "base-e0.5-c0.3-t600-84ed6756"
-    },
-    "l2-prologue-3": {
-      "text": "9a4d113ac531",
-      "voice": "base-e0.5-c0.3-t600-84ed6756"
-    },
-    "l2-hangar": {
-      "text": "cfa2fb7ae52f",
-      "voice": "base-e0.5-c0.3-t600-84ed6756"
-    },
-    "l2-blocked": {
-      "text": "83d0fa0ee344",
-      "voice": "base-e0.5-c0.3-t600-84ed6756"
-    },
-    "l2-launch": {
-      "text": "2ac8c90d825b",
-      "voice": "base-e0.5-c0.3-t600-84ed6756"
-    },
-    "l2-coverage": {
-      "text": "27c2415563f6",
-      "voice": "base-e0.5-c0.3-t600-84ed6756"
-    },
-    "l2-brownout": {
-      "text": "4bc47d23deb3",
-      "voice": "base-e0.5-c0.3-t600-84ed6756"
-    },
-    "l2-storage": {
-      "text": "cbc9061200cf",
-      "voice": "base-e0.5-c0.3-t600-84ed6756"
-    },
-    "l2-failure-comms": {
-      "text": "92a7dfb306ce",
-      "voice": "base-e0.5-c0.3-t600-84ed6756"
-    },
-    "l2-failure-power": {
-      "text": "c837723be450",
-      "voice": "base-e0.5-c0.3-t600-84ed6756"
-    },
-    "l2-complete": {
-      "text": "8aedb331280c",
       "voice": "base-e0.5-c0.3-t600-84ed6756"
     },
     "l3-prologue-1": {
